@@ -83,7 +83,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
 
               {/* Revealed Date Text */}
               <span className="font-serif italic text-2xl sm:text-4xl md:text-5xl text-brand-goldDark select-none block">
-                Saturday, December 12, 2026
+                Wednesday, January 27, 2027
               </span>
             </motion.div>
           </div>

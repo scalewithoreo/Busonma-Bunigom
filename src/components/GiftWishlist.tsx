@@ -62,12 +62,12 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
   // Bank account details for gifts
   const bankAccounts = [
     {
-      accountName: 'Oreoluwa Okunade',
+      accountName: 'Marvin',
       bankName: 'Zenith Bank',
       accountNumber: '2209775057',
     },
     {
-      accountName: 'Oluwadara Alao',
+      accountName: 'Miracle',
       bankName: 'Providus Bank',
       accountNumber: '6506945948',
     }
@@ -252,7 +252,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
 
       setIsSubmitting(false);
       setJustGifted(pledge);
-      onNotify('Gift Recorded!', `Thank you ${giverName.trim()} for blessing Oreoluwa & Oluwadara!`);
+      onNotify('Gift Recorded!', `Thank you ${giverName.trim()} for blessing Miracle & Marvin!`);
     } catch (e) {
       console.error(e);
       onNotify('Error', 'Failed to save pledge. Please try again.');
@@ -285,7 +285,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
             <div className="absolute inset-0 bg-brand-espresso/10 group-hover:bg-transparent transition-colors duration-500 z-10" />
             <img loading="lazy" decoding="async" 
               src="/assets/0V3A8999.jpg" 
-              alt="Oreoluwa & Oluwadara - Our forever starts now"
+              alt="Miracle & Marvin - Our forever starts now"
               className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
             />
           </motion.div>
@@ -512,7 +512,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
                       Your gift of <span className="font-semibold">{justGifted.itemName}</span> ({(justGifted.amount).toLocaleString('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 })}) has been recorded with love.
                     </p>
                     <p className="text-brand-muted text-xs sm:text-[17px] font-sans max-w-md mx-auto leading-relaxed">
-                      Oreoluwa & Oluwadara deeply appreciate your kindness, generosity, and prayers as they build their new home together.
+                      Miracle & Marvin deeply appreciate your kindness, generosity, and prayers as they build their new home together.
                     </p>
                     <button
                       onClick={closeModal}
@@ -870,7 +870,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
                     </div>
                   </div>
                   <p className="text-[11px] text-brand-muted font-sans italic">
-                    Oreoluwa & Oluwadara deeply appreciate your love and prayers!
+                    Miracle & Marvin deeply appreciate your love and prayers!
                   </p>
                   <button
                     onClick={closeReminderModal}

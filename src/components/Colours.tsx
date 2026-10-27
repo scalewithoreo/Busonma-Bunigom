@@ -1,36 +1,36 @@
 import { FC, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const Colours: FC = () => {
   const looks = [
     {
       id: 'look-1',
-      src: '/assets/contemporary-palette-flatlay.jpg',
-      title: 'Pantone & Palette Moodboard',
-      category: 'Curated Flatlay',
-      caption: 'Vintage Wine (#75074B) slip dress, Forest Green (#334a33) double-breasted blazer, and champagne gold accessories.',
+      src: '/assets/miracle-marvin-3.jpg',
+      title: 'Editorial Noir & Scarlet Red Draping',
+      category: 'Black Tie Editorial',
+      caption: 'A striking statement: sweeping scarlet crimson gown paired with sharp midnight black tailoring for a high-contrast editorial entrance.',
     },
     {
       id: 'look-2',
-      src: '/assets/contemporary-redcarpet.jpg',
-      title: 'Modern Dinner Gala',
-      category: 'Style Inspiration',
-      caption: 'Inspiration for non-traditional, sharp tailoring and sweeping contemporary silhouettes.',
+      src: '/assets/miracle-marvin-2.jpg',
+      title: 'Velvet Burgundy & Crimson Florals',
+      category: 'Regal Contemporary',
+      caption: 'Bespoke deep burgundy velvet dinner jacket and sculptural architectural bridal couture with rich crimson garden accents.',
     },
     {
       id: 'look-3',
-      src: '/assets/contemporary-dinner-look.jpg',
-      title: 'Avant-Garde Evening',
-      category: 'Silhouettes',
-      caption: 'Architectural lines and refined luxury for a contemporary black-tie aesthetic.',
+      src: '/assets/miracle-marvin-1.jpg',
+      title: 'Chic Daytime Contemporary',
+      category: 'Modern Elegance',
+      caption: 'Sophisticated champagne silk and cream linen textures elevated by subtle ruby and gold fine jewelry.',
     },
     {
       id: 'look-4',
-      src: '/assets/moodboard_trad_couple.jpg',
-      title: 'Traditional Elegance & Aso Ebi',
-      category: 'Cultural Attire',
-      caption: 'Stunning Forest Green Agbada and Vintage Wine lace, beautifully complemented by a Champagne Gold Gele and Fila.',
+      src: '/assets/story-couple.jpg',
+      title: 'Evening Romance & Velvet Accents',
+      category: 'Intimate Luxury',
+      caption: 'Moody candlelight luxury with crimson silk accessories and understated red carpet glamour.',
     }
   ];
 
@@ -50,9 +50,9 @@ export const Colours: FC = () => {
 
   return (
     <section id="colours" className="py-24 sm:py-32 bg-brand-cream relative overflow-hidden">
-      {/* Abstract Background Shapes */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#75074B]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#334a33]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4"></div>
+      {/* Editorial Ambient Glows */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-black/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
       
       <div className="max-w-6xl mx-auto px-6 lg:px-8 relative z-10">
         {/* Section Header */}
@@ -63,7 +63,7 @@ export const Colours: FC = () => {
             viewport={{ once: true }}
             className="flex items-center justify-center gap-3 mb-4"
           >
-            <span className="text-[17px] font-sans tracking-[0.2em] uppercase text-brand-gold font-semibold">
+            <span className="text-[17px] font-sans tracking-[0.2em] uppercase text-brand-goldDark font-semibold">
               The Dress Code
             </span>
           </motion.div>
@@ -78,39 +78,40 @@ export const Colours: FC = () => {
           </motion.h2>
           
           <p className="font-sans text-brand-muted text-[17px] sm:text-lg mt-5 leading-relaxed max-w-2xl mx-auto">
-            We invite our guests to express themselves in beautiful <strong>traditional, contemporary, red carpet, or modern chic</strong> styles in shades of Vintage Wine and Forest Green with champagne gold accents.
+            Our dress code is <strong>High-Fashion Editorial & Contemporary Black-Tie</strong>. Think timeless architectural black and warm cream, electrified by <strong>bold touches and accents of scarlet and crimson red</strong>.
           </p>
         </div>
 
-        {/* Color Palette Bands */}
-        <div className="flex flex-col w-full h-[500px] sm:h-[600px] mb-16 rounded-3xl overflow-hidden shadow-2xl max-w-5xl mx-auto">
-          <div 
-            className="w-full h-1/2 relative flex items-center justify-center bg-cover bg-center"
-            style={{ backgroundImage: `url('/assets/vintage_wine_silk.jpg')` }}
-          >
-            <div className="absolute inset-0 bg-black/10"></div>
-            <motion.h3 
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="relative z-10 text-white/90 font-serif text-4xl sm:text-5xl md:text-6xl tracking-widest drop-shadow-lg"
-            >
-              Vintage Wine
-            </motion.h3>
+        {/* Color Palette Bands - High Contrast Editorial Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16 max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl">
+          {/* Editorial Noir */}
+          <div className="h-48 md:h-80 bg-neutral-900 text-white flex flex-col justify-end p-8 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+            <div className="relative z-10">
+              <span className="text-xs tracking-widest uppercase font-mono text-neutral-400 block mb-1">Base Neutral</span>
+              <h3 className="font-serif text-2xl sm:text-3xl text-neutral-100">Editorial Noir</h3>
+              <p className="text-xs text-neutral-400 mt-1 font-mono">#121212 • Black-Tie</p>
+            </div>
           </div>
-          <div 
-            className="w-full h-1/2 relative flex items-center justify-center bg-cover bg-center"
-            style={{ backgroundImage: `url('/assets/forest_green_silk.jpg')` }}
-          >
-            <div className="absolute inset-0 bg-black/10"></div>
-            <motion.h3 
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="relative z-10 text-white/90 font-serif text-4xl sm:text-5xl md:text-6xl tracking-widest drop-shadow-lg"
-            >
-              Forest Green
-            </motion.h3>
+
+          {/* Statement Red */}
+          <div className="h-48 md:h-80 bg-red-700 text-white flex flex-col justify-end p-8 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-t from-red-950/80 to-transparent" />
+            <div className="relative z-10">
+              <span className="text-xs tracking-widest uppercase font-mono text-red-200 block mb-1">Signature Accent</span>
+              <h3 className="font-serif text-2xl sm:text-3xl text-white">Scarlet & Crimson</h3>
+              <p className="text-xs text-red-200 mt-1 font-mono">#B91C1C • Dramatic Red Touches</p>
+            </div>
+          </div>
+
+          {/* Warm Champagne Alabaster */}
+          <div className="h-48 md:h-80 bg-[#f5ede4] text-brand-espresso flex flex-col justify-end p-8 relative overflow-hidden group border border-brand-sand/50">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#ebe0d4]/80 to-transparent" />
+            <div className="relative z-10">
+              <span className="text-xs tracking-widest uppercase font-mono text-brand-goldDark block mb-1">Warm Foundation</span>
+              <h3 className="font-serif text-2xl sm:text-3xl text-brand-espresso">Warm Alabaster</h3>
+              <p className="text-xs text-brand-muted mt-1 font-mono">#F5EDE4 • Champagne Cream</p>
+            </div>
           </div>
         </div>
 
@@ -122,7 +123,7 @@ export const Colours: FC = () => {
             viewport={{ once: true }}
             className="text-3xl sm:text-4xl font-serif text-brand-espresso mb-3"
           >
-            Style Inspiration
+            Style & Editorial Inspiration
           </motion.h3>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -131,11 +132,11 @@ export const Colours: FC = () => {
             transition={{ delay: 0.1 }}
             className="text-brand-muted text-[17px] sm:text-lg font-sans"
           >
-            Examples of gorgeous traditional and contemporary looks we love
+            Curated silhouettes featuring editorial tailoring and striking red statements
           </motion.p>
         </div>
 
-        {/* 4-Column Contemporary Lookbook Grid - Borderless */}
+        {/* Lookbook Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {looks.map((look, index) => (
             <motion.div
@@ -159,93 +160,69 @@ export const Colours: FC = () => {
                     <span className="text-white text-xs font-sans tracking-wider uppercase font-semibold">
                       Click to View
                     </span>
-                    <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
-                      <Maximize2 className="w-3.5 h-3.5" />
-                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-red-600/80 text-white text-[11px] font-sans font-medium tracking-wide">
+                      {look.category}
+                    </span>
                   </div>
                 </div>
 
-                <span className="text-[10px] uppercase tracking-widest font-sans font-bold text-brand-goldDark">
-                  {look.category}
-                </span>
-                <h3 className="font-serif text-2xl text-brand-espresso mt-1">
+                <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso group-hover:text-red-700 transition-colors">
                   {look.title}
-                </h3>
+                </h4>
+                <p className="text-brand-muted text-sm font-sans mt-2 leading-relaxed">
+                  {look.caption}
+                </p>
               </div>
-
-              <p className="text-brand-muted text-xs font-sans leading-relaxed mt-3 pt-3 border-t border-brand-sand/50">
-                {look.caption}
-              </p>
             </motion.div>
           ))}
         </div>
       </div>
 
-      {/* Lightbox Modal for Color Inspiration */}
+      {/* Lookbook Modal */}
       <AnimatePresence>
         {activeModalIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            role="dialog"
-            aria-modal="true"
-            tabIndex={-1}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setActiveModalIndex(null);
-              if (e.key === 'ArrowRight') handleNextModal();
-              if (e.key === 'ArrowLeft') handlePrevModal();
-            }}
-            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 outline-none"
+            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-8"
           >
-            {/* Close */}
             <button
               onClick={() => setActiveModalIndex(null)}
               className="absolute top-6 right-6 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-              aria-label="Close"
             >
               <X className="w-6 h-6" />
             </button>
 
-            {/* Prev */}
             <button
               onClick={handlePrevModal}
               className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-              aria-label="Previous"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
 
-            {/* Next */}
             <button
               onClick={handleNextModal}
               className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-              aria-label="Next"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
 
-            {/* Content */}
             <div className="max-w-4xl max-h-[85vh] flex flex-col items-center justify-center text-center">
-              <motion.img
-                key={looks[activeModalIndex].src}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+              <img
                 src={looks[activeModalIndex].src}
                 alt={looks[activeModalIndex].title}
-                className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
+                className="max-w-full max-h-[70vh] object-contain rounded-2xl shadow-2xl mb-4"
               />
-              <div className="mt-4">
-                <span className="text-xs uppercase tracking-widest text-brand-gold font-sans font-bold">
-                  {looks[activeModalIndex].category}
-                </span>
-                <h4 className="font-serif text-2xl text-brand-cream mt-0.5">
-                  {looks[activeModalIndex].title}
-                </h4>
-                <p className="text-[17px] font-sans text-brand-sand/90 mt-1 max-w-xl mx-auto">
-                  {looks[activeModalIndex].caption}
-                </p>
-              </div>
+              <span className="text-red-400 text-xs uppercase tracking-widest font-sans font-bold mb-1">
+                {looks[activeModalIndex].category}
+              </span>
+              <h3 className="font-serif text-2xl text-white">
+                {looks[activeModalIndex].title}
+              </h3>
+              <p className="text-neutral-300 text-sm max-w-lg mt-2 font-sans">
+                {looks[activeModalIndex].caption}
+              </p>
             </div>
           </motion.div>
         )}

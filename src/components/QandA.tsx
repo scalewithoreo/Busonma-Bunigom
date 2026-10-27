@@ -8,7 +8,7 @@ export const QandA: FC = () => {
   const faqs = [
     {
       question: "What’s the RSVP deadline?",
-      answer: "We kindly request that you RSVP on or before October 31st to help us finalize our preparations."
+      answer: "We kindly request that you RSVP on or before January 10th to help us finalize our preparations."
     },
     {
       question: "Can I bring a guest?",
@@ -32,7 +32,7 @@ export const QandA: FC = () => {
     },
     {
       question: "What’s the colour of the day?",
-      answer: "Our chosen colors are Vintage Wine and Forest Green, with Champagne Gold accents. We warmly invite our guests to wear traditional or contemporary styles in these stunning shades."
+      answer: "Our dress code is High-Fashion Editorial Black-Tie with statement touches and accents of Scarlet and Crimson Red, complemented by warm champagne and cream tones. We warmly invite our guests to express themselves in sharp contemporary or traditional styles with these rich accents."
     },
     {
       question: "Can we spray the couple with cash?",

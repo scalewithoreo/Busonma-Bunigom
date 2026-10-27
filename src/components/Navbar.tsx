@@ -126,7 +126,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
           >
             <img  decoding="sync" 
               src="/assets/logo.png" 
-              alt="O & D Logo" 
+              alt="Miracle & Marvin Logo" 
               className="h-16 sm:h-[90px] w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-300"
             />
           </Link>

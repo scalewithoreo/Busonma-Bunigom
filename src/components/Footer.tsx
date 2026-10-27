@@ -22,7 +22,7 @@ export const Footer: FC = () => {
         >
           <img loading="lazy" decoding="async" 
             src="/assets/logo.png" 
-            alt="O & D Logo" 
+            alt="Miracle & Marvin Logo" 
             className="h-24 sm:h-32 w-auto object-contain drop-shadow-md"
           />
         </motion.div>
@@ -37,7 +37,7 @@ export const Footer: FC = () => {
           Thank you for celebrating with us
         </motion.h2>
 
-        {/* Heading 2: Oluwadara & Oreoluwa */}
+        {/* Heading 2: Miracle & Marvin */}
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -45,15 +45,15 @@ export const Footer: FC = () => {
           transition={{ delay: 0.15 }}
           className="font-alex tracking-normal text-3xl sm:text-5xl md:text-6xl text-brand-gold my-4"
         >
-          Oluwadara & Oreoluwa
+          Miracle & Marvin
         </motion.p>
 
         <p className="text-sm font-sans tracking-[0.2em] uppercase text-brand-muted/70 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 justify-center mb-10">
           {import.meta.env.VITE_SITE_MODE === 'public' ? (
-            <span>December 2026</span>
+            <span>January 2027</span>
           ) : (
             <>
-              <span>Saturday, December 12, 2026</span>
+              <span>Wednesday, January 27, 2027</span>
               <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-brand-gold/30"></span>
               <span>Lagos, Nigeria</span>
             </>
@@ -71,19 +71,7 @@ export const Footer: FC = () => {
 
         {/* Copyright */}
         <div className="w-full pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 text-xs font-sans text-brand-muted">
-          <div>© 2026 Oluwadara & Oreoluwa. All Rights Reserved.</div>
-          <div className="hidden sm:block text-white/20">&bull;</div>
-          <div>
-            Built by{' '}
-            <a 
-              href="https://oreokunade.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-brand-gold hover:text-white transition-colors underline decoration-brand-gold/30 hover:decoration-white"
-            >
-              Oreoluwa Okunade
-            </a>
-          </div>
+          <div>© 2027 Miracle & Marvin. All Rights Reserved.</div>
         </div>
       </div>
     </footer>

@@ -42,8 +42,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Verify the PIN hash securely on the server
   const validHashes: Record<string, string> = {
-    '8c07cfdfbe255d306247038188b8020416cdb8c97260969c13cfb06378d8cba2': 'ore', // 1999
-    '39a7cc6fbd4379686efcca59317abe6ac88f6a35af4b043faa5e977ff3c9bf19': 'dara', // 2003
+    // Miracle & Marvin Wedding PINs (Salt: MiracleMarvin_Wedding_2027_Salt_)
+    '2fd02616507a0514c705fb51eb2c8edab3347ae9fe0296e69fd715ad350956d3': 'miracle', // 1111
+    '1decb05e4cabf700283b0854c2721d27610b24d0ac751b6a8853797c362c2ac7': 'marvin',  // 2222
+    '7d26db5aff55e1f3a953d2e7c8d7240605e2ca536a885c268880f996839f9859': 'groomsfamily', // 3333
+    '9c3f6f427de5a111c2fdcc2b4160e1bb35936be1f5b219f1572e2a88668b4702': 'bridesfamily', // 4444
+    '5b860abd7e59bbafb7d933b8646ea4d96eb77051ff56a32c91c0480a6bf311bd': 'custom1964', // 1964
+    '3c8d76ec3ed4a4ee1027fe0455fc72c2dd20e3fefd33cf17815333f76615c9fb': 'miracle', // 0000 emergency override
+    // Legacy support
+    '8c07cfdfbe255d306247038188b8020416cdb8c97260969c13cfb06378d8cba2': 'marvin',
+    '39a7cc6fbd4379686efcca59317abe6ac88f6a35af4b043faa5e977ff3c9bf19': 'miracle',
     'e13f99645f87a7c2aab8b5ae9074165318cde28e754a566087006120fca132e7': 'groomsfamily',
     '42ff322c7b6c9b702d027adeb217b1f226a41d71a86f9a9dcfdcf38a21cf515d': 'bridesfamily',
     'ec9de88936216680d2661d006be2e47b070650b6c8d5c177ccf7c4e13fe943d8': 'custom1964'

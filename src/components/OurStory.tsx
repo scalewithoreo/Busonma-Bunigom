@@ -39,8 +39,8 @@ export const OurStory: FC = () => {
           >
             <div className="aspect-[4/5] sm:aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl relative bg-brand-espresso border border-brand-gold/20">
               <img loading="lazy" decoding="async"
-                src="/assets/0V3A8914.jpg" 
-                alt="Ore and Dara"
+                src="/assets/story-couple.jpg" 
+                alt="Miracle and Marvin"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-brand-gold/10 mix-blend-multiply pointer-events-none" />
@@ -59,19 +59,19 @@ export const OurStory: FC = () => {
               "
             </div>
             <p className="relative z-10">
-              We met through a friend at church. I used to drive to church with my friend, Jemima Kponu, and one Sunday, Jemima brought Dara to tag along. We were introduced, exchanged pleasantries, and went in for the service.
+              Our journey began on a memorable Sunday at Celebration Church in Ikeja. We were introduced through mutual friends right after service in the church lobby, exchanging warm greetings before the rush of the crowd.
             </p>
             <p className="relative z-10">
-              After the service ended, Dara walked up to me and asked for my name. I told her my name, and she simply replied, <span className="italic font-serif">"okay..."</span> and was about to walk away.
+              A spontaneous conversation over lunch soon turned into hours of laughing, sharing our visions, talking through faith, creativity, and the dreams we carried for the future. From that day on, every conversation felt effortless, peaceful, and filled with genuine joy.
             </p>
             <p className="relative z-10">
-              Thankfully, I wasn't going to just let her leave like that. I asked, <span className="italic font-serif font-medium text-brand-espresso">"Is that all?"</span> and told her to sit down. 
+              What started as an instant connection steadily blossomed into an unbreakable partnership anchored in love and purpose. We quickly realized we didn't just want to do life in the same circles—we wanted to build forever together.
             </p>
             <p className="relative z-10">
-              We ended up talking, and that simple moment was the beginning of a truly beautiful friendship. From that day on, we built a bond that grew stronger with time, leading us to this very moment—ready to spend the rest of our lives together.
+              On January 27th, we stand before God and our dearest loved ones to celebrate the beginning of that forever.
             </p>
             <div className="pt-8 relative z-10">
-              <p className="font-serif italic text-2xl text-brand-goldDark">— Ore</p>
+              <p className="font-serif italic text-2xl text-brand-goldDark">— Marvin & Miracle</p>
             </div>
           </motion.div>
         </div>

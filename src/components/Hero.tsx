@@ -15,7 +15,7 @@ export const Hero: FC<HeroProps> = () => {
       <div className="absolute inset-0 z-0">
         <img  decoding="sync"
           src="/assets/hero-image-new.jpg"
-          alt="Oluwadara and Oreoluwa"
+          alt="Miracle & Marvin"
           className="w-full h-full object-cover object-[center_45%] scale-105 transition-transform duration-1000 ease-out"
         />
         {/* Layered Gradient Vignette matching reference mood */}
@@ -34,7 +34,7 @@ export const Hero: FC<HeroProps> = () => {
           >
             <img  decoding="sync" 
               src="/assets/logo.png" 
-              alt="Oluwadara & Oreoluwa Logo" 
+              alt="Miracle & Marvin Logo" 
               className="h-32 sm:h-44 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
             />
           </motion.div>
@@ -46,7 +46,7 @@ export const Hero: FC<HeroProps> = () => {
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="font-alex tracking-normal text-5xl sm:text-7xl md:text-8xl lg:text-[6.5rem] text-brand-cream leading-tight my-1 selection:text-brand-gold"
           >
-            Oluwadara & Oreoluwa
+            Miracle & Marvin
           </motion.h1>
 
           {/* Invitation Text */}
@@ -84,7 +84,7 @@ export const Hero: FC<HeroProps> = () => {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="font-serif italic text-2xl sm:text-3xl text-brand-cream/90 mb-2 sm:mb-3"
           >
-            December 2026
+            January 2027
           </motion.p>
         )}
 
@@ -95,7 +95,7 @@ export const Hero: FC<HeroProps> = () => {
           transition={{ duration: 0.8, delay: 0.9 }}
           className="font-sans text-brand-gold tracking-widest text-sm sm:text-base uppercase font-bold"
         >
-          #BecomingTheOkunades
+          #MiracleAndMarvin2027
         </motion.p>
 
 

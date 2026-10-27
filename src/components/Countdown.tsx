@@ -12,7 +12,7 @@ interface TimeLeft {
 
 export const Countdown: FC = () => {
   // Wedding target: Dec 12, 2026 11:00 AM Lagos Time (UTC+1)
-  const targetDate = new Date('2026-12-12T11:00:00+01:00').getTime();
+  const targetDate = new Date('2027-01-27T11:00:00+01:00').getTime();
 
   const calculateTimeLeft = (): TimeLeft => {
     const now = new Date().getTime();

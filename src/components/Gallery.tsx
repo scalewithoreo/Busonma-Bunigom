@@ -7,51 +7,51 @@ export const Gallery: FC = () => {
   const photos: GalleryPhoto[] = [
     {
       id: '1',
-      src: '/assets/0V3A8999.jpg',
-      alt: 'Couple walking under the archway',
-      caption: 'Our forever starts now',
-      featured: false,
-    },
-    {
-      id: '2',
-      src: '/assets/0V3A8960 1.jpg',
-      alt: 'Oreoluwa and Oluwadara smiling together',
-      caption: 'Joy in every shared smile',
-      featured: false,
-    },
-    {
-      id: '3',
-      src: '/assets/0V3A8979.jpg',
-      alt: 'Couple facing the historic colonial building',
-      caption: 'Two souls, one beautiful journey',
-      featured: false,
-    },
-    {
-      id: '4',
-      src: '/assets/0V3A8930.jpg',
-      alt: 'Oreoluwa and Oluwadara dancing along the colonnade',
-      caption: 'Every love story is beautiful, but ours is our favorite',
-      featured: true,
-    },
-    {
-      id: '5',
-      src: '/assets/0V3A8976.jpg',
-      alt: 'Close up tender moment with engagement ring',
+      src: '/assets/miracle-marvin-3.jpg',
+      alt: 'Miracle and Marvin black-tie editorial evening portrait',
       caption: 'Walking into forever, hand in hand',
       featured: false,
     },
     {
-      id: '6',
-      src: '/assets/0V3A8914.jpg',
-      alt: 'Romantic portrait of the couple',
+      id: '2',
+      src: '/assets/miracle-marvin-1.jpg',
+      alt: 'Miracle and Marvin smiling together in contemporary chic attire',
+      caption: 'Joy in every shared laugh',
+      featured: false,
+    },
+    {
+      id: '3',
+      src: '/assets/hero-image-new.jpg',
+      alt: 'Miracle and Marvin golden hour celebration portrait',
+      caption: 'Two souls, one divine journey',
+      featured: false,
+    },
+    {
+      id: '4',
+      src: '/assets/miracle-marvin-2.jpg',
+      alt: 'Regal editorial couture portrait of Miracle and Marvin',
+      caption: 'High-fashion elegance anchored in timeless devotion',
+      featured: true,
+    },
+    {
+      id: '5',
+      src: '/assets/story-couple.jpg',
+      alt: 'Romantic candlelight portrait of Miracle and Marvin',
       caption: 'In your eyes, I found my home',
       featured: false,
     },
     {
+      id: '6',
+      src: '/assets/miracle-marvin-1.jpg',
+      alt: 'Outdoor botanical portrait of the couple',
+      caption: 'Every love story is special, but ours is our favorite',
+      featured: false,
+    },
+    {
       id: '7',
-      src: '/assets/0V3A8849_(2).jpg',
-      alt: 'Oreoluwa and Oluwadara embracing with flowers',
-      caption: 'Laughter and light filled days',
+      src: '/assets/hero-image-new.jpg',
+      alt: 'Miracle and Marvin embracing on the terrace',
+      caption: 'Our forever starts on Wednesday, January 27, 2027',
       featured: true,
     },
   ];
@@ -146,7 +146,7 @@ export const Gallery: FC = () => {
                       {photo.caption}
                     </p>
                     <p className="text-brand-gold text-xs uppercase tracking-widest font-sans mt-1">
-                      Oreoluwa & Oluwadara
+                      Miracle & Marvin
                     </p>
                   </div>
                   <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">

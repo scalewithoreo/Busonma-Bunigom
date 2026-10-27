@@ -42,7 +42,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [reservations, setReservations] = useState<GiftReminder[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const getRoleCodeLimit = () => {
-    if (['ore', 'dara'].includes(role || '')) return Infinity;
+    if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '')) return Infinity;
     if (role === 'custom1964') return 20;
     return 100;
   };
@@ -75,7 +75,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       setIsLoading(true);
       const load = async () => {
         try {
-          if (['ore', 'dara'].includes(role || '')) {
+          if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '')) {
             const [loadedRsvps, loadedPledges, loadedCodes, loadedItems, loadedReservations] = await Promise.all([
               getStoredRsvps(),
               getStoredGiftPledgesAdmin(),
@@ -129,7 +129,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
   const filteredRsvps = useMemo(() => {
     let result = rsvps;
-    if (['ore', 'dara'].includes(role || '') && creatorFilter !== 'all') {
+    if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && creatorFilter !== 'all') {
       const creatorCodes = codes.filter(c => c.created_by === creatorFilter && c.is_used && c.used_by);
       const usedNames = creatorCodes.map(c => c.used_by!.trim().toLowerCase());
       result = result.filter(r => usedNames.includes(`${r.firstName.trim()} ${r.lastName.trim()}`.toLowerCase()));
@@ -138,7 +138,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   }, [rsvps, creatorFilter, role, codes]);
 
   const filteredCodes = useMemo(() => {
-    if (['ore', 'dara'].includes(role || '') && creatorFilter !== 'all') {
+    if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && creatorFilter !== 'all') {
       return codes.filter(c => c.created_by === creatorFilter);
     }
     return codes;
@@ -149,7 +149,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
     if (isNaN(amount) || amount < 1) amount = 1;
     if (amount > 100) amount = 100;
 
-    if (!['ore', 'dara'].includes(role || '') && codes.length + amount > roleCodeLimit) {
+    if (!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && codes.length + amount > roleCodeLimit) {
       alert(`You can only create up to ${roleCodeLimit} codes. You have ${codes.length} already.`);
       return;
     }
@@ -226,15 +226,15 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
 ‚ú® *A Gentle Reminder:* As much as we love little ones, this will be an adult-only celebration. Thank you so much for understanding!`;
 
       if (creatorRole === 'bridesfamily') {
-        return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of our daughter, *Oluwadara* and *Oreoluwa*, taking place on *Saturday, December 12th, 2026*!\n${codeSection}`;
+        return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of our daughter, *Miracle* and *Marvin*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
       } else if (creatorRole === 'groomsfamily') {
-        return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of our son, *Oreoluwa* and *Oluwadara*, taking place on *Saturday, December 12th, 2026*!\n${codeSection}`;
-      } else if (['ore', 'dara'].includes(creatorRole || '')) {
-        return `*WEDDING INVITATION üíç*\nWe are absolutely overjoyed to invite you to celebrate with us as we tie the knot on *Saturday, December 12th, 2026*!\n${codeSection}`;
+        return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of our son, *Marvin* and *Miracle*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
+      } else if (['miracle', 'marvin', 'ore', 'dara'].includes(creatorRole || '')) {
+        return `*WEDDING INVITATION üíç*\nWe are absolutely overjoyed to invite you to celebrate with us as we tie the knot on *Wednesday, January 27th, 2027*!\n${codeSection}`;
       }
       
       // Default for 'custom1964' or anything else
-      return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of *Oreoluwa* and *Oluwadara*, taking place on *Saturday, December 12th, 2026*!\n${codeSection}`;
+      return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of *Miracle* and *Marvin*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
     };
 
 
@@ -539,7 +539,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 px-6 sm:px-12 pt-8 pb-0 shrink-0 overflow-x-auto bg-brand-ivory z-10 border-b border-brand-sand/50" data-lenis-prevent="true">
-        {(['ore', 'dara'].includes(role || '') || ['custom1964', 'groomsfamily', 'bridesfamily'].includes(role)) && (
+        {(['miracle', 'marvin', 'ore', 'dara'].includes(role || '') || ['custom1964', 'groomsfamily', 'bridesfamily'].includes(role)) && (
           <button
             onClick={() => setActiveTab('rsvps')}
             className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
@@ -548,10 +548,10 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                 : 'bg-white text-brand-muted hover:bg-brand-sand/50'
             }`}
           >
-            <Users className="w-4 h-4" /> {!['ore', 'dara'].includes(role || '') ? 'My Guests RSVPs' : 'Guest RSVPs'}
+            <Users className="w-4 h-4" /> {!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') ? 'My Guests RSVPs' : 'Guest RSVPs'}
           </button>
         )}
-        {['ore', 'dara'].includes(role || '') && (
+        {['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
           <button
             onClick={() => setActiveTab('gifts')}
             className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
@@ -575,7 +575,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
           <KeyRound className="w-4 h-4" /> Invite Codes
         </button>
 
-        {['ore', 'dara'].includes(role || '') && (
+        {['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
           <>
             <button
               onClick={() => setActiveTab('wishlist')}
@@ -651,7 +651,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
 
 
                         {/* Creator Filter for Master */}
-                        {['ore', 'dara'].includes(role || '') && (
+                        {['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
                           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                             <div className="flex items-center gap-1.5 px-3 py-2 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-2">
                               <Filter className="w-3.5 h-3.5" /> Creator
@@ -714,14 +714,16 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                             'Submitted At': new Date(r.submittedAt).toLocaleString()
                           }));
 
-                          if (['ore', 'dara'].includes(role || '')) {
-                            const roles = ['ore', 'dara', 'custom1964', 'groomsfamily', 'bridesfamily'];
+                          if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '')) {
+                            const roles = ['miracle', 'marvin', 'ore', 'dara', 'custom1964', 'groomsfamily', 'bridesfamily'];
                             const roleLabels: Record<string, string> = {
-                              'ore': 'Ore',
-                                'dara': 'Dara',
-                              'custom1964': "Ore's Dad",
-                              'groomsfamily': "Ore's Mum",
-                              'bridesfamily': "Dara's Mum"
+                              'miracle': 'Miracle',
+                              'marvin': 'Marvin',
+                              'ore': 'Marvin',
+                              'dara': 'Miracle',
+                              'custom1964': "Coordinator",
+                              'groomsfamily': "Marvin's Family",
+                              'bridesfamily': "Miracle's Family"
                             };
                             
                             // Add a sheet for each creator
@@ -956,8 +958,8 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                     <input
                       type="number"
                       min="1"
-                      max={!['ore', 'dara'].includes(role || '') ? Math.max(0, roleCodeLimit - codes.length) : 100}
-                      disabled={!['ore', 'dara'].includes(role || '') && codes.length >= roleCodeLimit}
+                      max={!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') ? Math.max(0, roleCodeLimit - codes.length) : 100}
+                      disabled={!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && codes.length >= roleCodeLimit}
                       value={bulkGenAmount}
                       onChange={(e) => setBulkGenAmount(e.target.value)}
                       className="w-20 px-4 py-4 bg-brand-cream/50 border border-brand-sand/50 rounded-xl text-center font-sans font-bold text-brand-espresso focus:outline-none focus:border-brand-gold disabled:opacity-50"
@@ -965,7 +967,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                     />
                     <button
                       onClick={handleGenerateCode}
-                      disabled={isGenerating || (!['ore', 'dara'].includes(role || '') && codes.length >= roleCodeLimit)}
+                      disabled={isGenerating || (!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && codes.length >= roleCodeLimit)}
                       className="flex items-center gap-2 px-8 py-4 bg-brand-goldDark text-white text-sm font-sans font-bold uppercase tracking-wider rounded-2xl hover:bg-brand-espresso transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                     >
                       <Plus className="w-5 h-5" /> {isGenerating ? 'Wait...' : 'Generate'}
@@ -980,7 +982,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                       <div>
                         <div className="flex items-center gap-3">
                           <h3 className="font-serif text-2xl text-brand-espresso shrink-0">All Invite Codes</h3>
-                          {!['ore', 'dara'].includes(role || '') && (
+                          {!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold font-mono tracking-widest uppercase ${codes.length >= roleCodeLimit ? 'bg-rose-100 text-rose-700' : 'bg-brand-gold/20 text-brand-goldDark'}`}>
                               {codes.length} / {roleCodeLimit} Cap
                             </span>
@@ -991,7 +993,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                         </p>
                       </div>
 
-                      {['ore', 'dara'].includes(role || '') && (
+                      {['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
                         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                           <div className="flex items-center gap-1.5 px-3 py-2 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-2">
                             <Filter className="w-3.5 h-3.5" /> Creator
@@ -1047,14 +1049,16 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                               'Created At': new Date(c.created_at).toLocaleString()
                             }));
 
-                            if (['ore', 'dara'].includes(role || '')) {
-                              const roles = ['ore', 'dara', 'custom1964', 'groomsfamily', 'bridesfamily'];
+                            if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '')) {
+                              const roles = ['miracle', 'marvin', 'ore', 'dara', 'custom1964', 'groomsfamily', 'bridesfamily'];
                               const roleLabels: Record<string, string> = {
-                                'ore': 'Ore',
-                                'dara': 'Dara',
-                                'custom1964': "Ore's Dad",
-                                'groomsfamily': "Ore's Mum",
-                                'bridesfamily': "Dara's Mum"
+                                'miracle': 'Miracle',
+                                'marvin': 'Marvin',
+                                'ore': 'Marvin',
+                                'dara': 'Miracle',
+                                'custom1964': "Coordinator",
+                                'groomsfamily': "Marvin's Family",
+                                'bridesfamily': "Miracle's Family"
                               };
                               
                               roles.forEach(creatorRole => {

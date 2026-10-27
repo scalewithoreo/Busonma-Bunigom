@@ -1,11 +1,11 @@
 export const WEDDING_EVENT = {
-  title: "Oreoluwa & Oluwadara's Wedding",
-  description: "Join us in celebrating the joyful wedding of Oreoluwa & Oluwadara! Church Wedding at 11:00 AM at Celebration Church Int'l (Celebr8 Centre HQ) followed by Reception at 2:00 PM at Celebration Church Int'l (Celebr8 Centre HQ) (Annex 2).",
+  title: "Miracle & Marvin's Wedding",
+  description: "Join us in celebrating the joyful wedding of Miracle & Marvin! Church Wedding at 11:00 AM at Celebration Church Int'l (Celebr8 Centre HQ) followed by Reception at 2:00 PM at Celebration Church Int'l (Celebr8 Centre HQ) (Annex 2).",
   location: "Celebration Church Int'l (Celebr8 Centre HQ) (Annex 2), Vori Close, off Acme Road, Ogba, Lagos",
-  startDate: "20261212T070000Z", // 8:00 AM Lagos (WAT is UTC+1 -> 07:00 UTC) for Engagement start
-  endDate: "20261212T200000Z",
-  startLocal: "2026-12-12T08:00:00",
-  endLocal: "2026-12-12T21:00:00",
+  startDate: "20270127T100000Z", // 11:00 AM Lagos (WAT is UTC+1 -> 10:00 UTC)
+  endDate: "20270127T200000Z",   // 9:00 PM Lagos
+  startLocal: "2027-01-27T11:00:00",
+  endLocal: "2027-01-27T21:00:00",
 };
 
 export function getGoogleCalendarUrl(): string {
@@ -36,7 +36,7 @@ export function downloadIcsFile(): void {
   const icsData = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Oreoluwa and Oluwadara//Wedding Event//EN',
+    'PRODID:-//Miracle and Marvin//Wedding Event//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
@@ -54,7 +54,7 @@ export function downloadIcsFile(): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.setAttribute('download', 'Oreoluwa-and-Oluwadara-Wedding.ics');
+  link.setAttribute('download', 'Miracle-and-Marvin-Wedding.ics');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
