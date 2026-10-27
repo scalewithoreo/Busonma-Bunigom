@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Sparkles, ChevronDown, ArrowRight, X } from 'lucide-react';
+import { Volume2, Sparkles, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { audioManager } from '../utils/audio';
 
@@ -9,10 +9,8 @@ interface EnvelopeIntroProps {
 }
 
 export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
-  // Check if previously opened in this session
   const [isOpen, setIsOpen] = useState(false);
-  const [stage, setStage] = useState<'sealed' | 'breaking' | 'opened' | 'dismissed'>('sealed');
-  const [hasStartedAudio, setHasStartedAudio] = useState(false);
+  const [stage, setStage] = useState<'sealed' | 'opening' | 'dismissed'>('sealed');
 
   useEffect(() => {
     const alreadyOpened = sessionStorage.getItem('mm_envelope_opened');
@@ -20,11 +18,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
       setStage('dismissed');
     } else {
       setIsOpen(true);
-      // Lock background scrolling while envelope is active
       document.body.style.overflow = 'hidden';
     }
 
-    // Expose global replay function so users can replay the envelope from the footer or nav anytime
+    // Expose global replay function
     (window as any).replayWeddingEnvelope = () => {
       sessionStorage.removeItem('mm_envelope_opened');
       setStage('sealed');
@@ -41,35 +38,55 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
   const handleOpenEnvelope = () => {
     if (stage !== 'sealed') return;
 
-    // 1. Play background song
+    // 1. Play background song immediately
     try {
       audioManager.play();
-      setHasStartedAudio(true);
     } catch (e) {
       console.warn('Audio play failed:', e);
     }
 
-    // 2. Trigger micro confetti burst
+    // 2. Doctor Strange Golden Eldritch Spark Explosion
     try {
+      // Golden star & spark fireworks
       confetti({
-        particleCount: 45,
-        spread: 60,
-        origin: { y: 0.52 },
-        colors: ['#B91C1C', '#991B1B', '#F5EDE4', '#FFFFFF', '#D4AF37'],
+        particleCount: 70,
+        spread: 100,
+        origin: { y: 0.5 },
+        colors: ['#FFD700', '#FFB800', '#FFA500', '#FFF275', '#B91C1C', '#FFFFFF'],
+        startVelocity: 35,
+        gravity: 0.8,
+        ticks: 200,
         disableForReducedMotion: true,
       });
+
+      // Secondary fine spark shower
+      setTimeout(() => {
+        confetti({
+          particleCount: 40,
+          spread: 140,
+          origin: { y: 0.5 },
+          colors: ['#FFD700', '#FFA000', '#FFFFFF'],
+          startVelocity: 25,
+          gravity: 0.6,
+          ticks: 150,
+          disableForReducedMotion: true,
+        });
+      }, 150);
     } catch (e) {}
 
-    // 3. Advance to breaking stage
-    setStage('breaking');
+    // 3. Trigger 3D Opening Animation
+    setStage('opening');
 
-    // 4. Advance to fully opened flap & sliding card
+    // 4. Reveal Hero Section Immediately after smooth 3D unfolding (~0.95s)
     setTimeout(() => {
-      setStage('opened');
-    }, 600);
+      sessionStorage.setItem('mm_envelope_opened', 'true');
+      setStage('dismissed');
+      document.body.style.overflow = '';
+      if (onComplete) onComplete();
+    }, 1000);
   };
 
-  const handleDismiss = () => {
+  const handleSkip = () => {
     sessionStorage.setItem('mm_envelope_opened', 'true');
     setStage('dismissed');
     document.body.style.overflow = '';
@@ -83,349 +100,441 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
   return (
     <AnimatePresence>
       <motion.div
-        key="envelope-overlay"
+        key="full-envelope-wrapper"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[#121212]/92 backdrop-blur-xl overflow-hidden select-none"
+        className="fixed inset-0 z-50 w-screen h-screen overflow-hidden select-none bg-[#121212]"
+        style={{ perspective: '1400px' }}
       >
-        {/* Ambient atmospheric glow */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-[#B91C1C]/20 via-[#F5EDE4]/10 to-transparent rounded-full blur-3xl animate-pulseSlow" />
-        </div>
-
         {/* Top Control Bar: Audio indicator & Skip Button */}
-        <div className="absolute top-5 inset-x-5 sm:inset-x-8 flex items-center justify-between z-50">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white/80 text-xs font-sans tracking-widest uppercase">
-            <Volume2 className="w-3.5 h-3.5 text-[#B91C1C]" />
-            <span>Do 4 Love &bull; Snoh Aalegra</span>
+        <div className="absolute top-4 sm:top-6 inset-x-4 sm:inset-x-8 flex items-center justify-between z-[60] pointer-events-auto">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/90 text-xs font-sans tracking-widest uppercase shadow-md">
+            <Volume2 className="w-3.5 h-3.5 text-[#FFD700] animate-pulse" />
+            <span className="text-[11px] font-medium tracking-wider">Do 4 Love &bull; Snoh Aalegra</span>
           </div>
 
           <button
-            onClick={handleDismiss}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-[#F5EDE4] text-xs font-sans tracking-widest uppercase transition-all duration-200 hover:scale-105 active:scale-95"
-            aria-label="Skip into website"
+            onClick={handleSkip}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 hover:border-[#FFD700]/50 text-[#F5EDE4] text-xs font-sans tracking-widest uppercase transition-all duration-200 hover:scale-105 active:scale-95 shadow-md"
+            aria-label="Skip directly to website"
           >
-            <span>Skip to Website</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>Skip into Website</span>
+            <ArrowRight className="w-3.5 h-3.5 text-[#FFD700]" />
           </button>
         </div>
 
-        {/* Outer Phone/Card Frame Wrapper */}
-        <div className="relative w-full max-w-[380px] sm:max-w-[420px] h-[640px] sm:h-[680px] flex items-center justify-center perspective-[1200px]">
-          
-          {/* ================= INVITATION CARD (Slides up when envelope opens) ================= */}
+        {/* ================= FULL VIEWPORT 3D ENVELOPE ================= */}
+        <div className="relative w-full h-full flex items-center justify-center">
+
+          {/* Golden Portal Light Bloom behind flaps when opening */}
           <motion.div
-            initial={{ y: 70, scale: 0.88, opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.6 }}
             animate={
-              stage === 'opened'
-                ? { y: -80, scale: 1, opacity: 1, transition: { delay: 0.35, duration: 1.1, ease: [0.16, 1, 0.3, 1] } }
-                : { y: 70, scale: 0.88, opacity: 0 }
+              stage === 'opening'
+                ? { opacity: [0, 1, 0.8, 0], scale: [0.8, 1.8, 2.5, 3], transition: { duration: 1.1, ease: 'easeOut' } }
+                : { opacity: 0 }
             }
-            className="absolute z-20 w-[90%] max-w-[340px] sm:max-w-[360px] h-[520px] bg-[#FAF7F2] rounded-3xl p-6 sm:p-7 shadow-2xl border-2 border-[#B91C1C]/25 flex flex-col justify-between items-center text-center overflow-hidden"
+            className="absolute z-10 w-[500px] h-[500px] rounded-full pointer-events-none"
             style={{
-              backgroundImage: `radial-gradient(#B91C1C 0.6px, transparent 0.6px)`,
-              backgroundSize: '24px 24px',
-              backgroundColor: '#FAF7F2',
+              background: 'radial-gradient(circle, rgba(255, 215, 0, 0.95) 0%, rgba(255, 140, 0, 0.75) 30%, rgba(185, 28, 28, 0.5) 65%, transparent 75%)',
+              filter: 'blur(30px)',
             }}
-          >
-            {/* Elegant Floral Arch Border (SVG) */}
-            <div className="absolute inset-2 sm:inset-3 border border-[#B91C1C]/20 rounded-2xl pointer-events-none flex flex-col justify-between p-3">
-              <div className="flex justify-between text-[#B91C1C]/40 text-xs">
-                <span>✦</span>
-                <span>✦</span>
-              </div>
-              <div className="flex justify-between text-[#B91C1C]/40 text-xs">
-                <span>✦</span>
-                <span>✦</span>
-              </div>
-            </div>
+          />
 
-            {/* Top Monogram Crest */}
-            <div className="relative z-10 pt-2 flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border border-[#B91C1C]/30 flex items-center justify-center bg-[#F5EDE4]/70 mb-2">
-                <span className="font-alex text-2xl text-[#B91C1C]">M&M</span>
-              </div>
-              <p className="text-[10px] font-sans uppercase tracking-[0.3em] font-semibold text-[#B91C1C]">
-                The Wedding Celebration Of
-              </p>
-            </div>
-
-            {/* Couple Names */}
-            <div className="relative z-10 my-auto py-2">
-              <h2 className="font-alex text-5xl sm:text-6xl text-[#121212] leading-tight">
-                Miracle
-              </h2>
-              <span className="font-serif italic text-2xl text-[#B91C1C] my-0.5 block">&</span>
-              <h2 className="font-alex text-5xl sm:text-6xl text-[#121212] leading-tight">
-                Malvin
-              </h2>
-            </div>
-
-            {/* Event Details */}
-            <div className="relative z-10 space-y-1.5 pb-2">
-              <p className="font-serif text-lg sm:text-xl text-[#121212] font-medium tracking-wide">
-                Wednesday, January 27, 2027
-              </p>
-              <p className="text-xs font-sans uppercase tracking-widest text-[#6E6760]">
-                Celebration Church Int'l HQ &bull; Lagos
-              </p>
-              <div className="pt-1">
-                <span className="inline-block px-3 py-1 rounded-full bg-[#B91C1C]/10 text-[#B91C1C] text-[10px] font-sans font-bold uppercase tracking-widest">
-                  High-Fashion Editorial Black-Tie
-                </span>
-              </div>
-            </div>
-
-            {/* Enter Button Action */}
-            <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={handleDismiss}
-              className="relative z-10 w-full py-3.5 px-6 rounded-full bg-[#B91C1C] hover:bg-[#991B1B] text-white font-sans text-xs font-bold uppercase tracking-[0.25em] shadow-lg flex items-center justify-center gap-2 transition-colors mt-2"
-            >
-              <span>Enter Wedding Website</span>
-              <ArrowRight className="w-4 h-4" />
-            </motion.button>
-          </motion.div>
-
-          {/* ================= ENVELOPE BODY & FLAPS ================= */}
-          <div className="relative z-30 w-full h-[380px] sm:h-[410px] mt-28">
+          {/* Envelope Body Container - Covers Full Viewport */}
+          <div className="relative w-full h-full overflow-hidden shadow-2xl">
             
-            {/* Envelope Back Plate (Internal Pocket) */}
-            <div className="absolute inset-0 bg-[#E5D7C7] rounded-3xl shadow-2xl border border-[#D8C7B5] overflow-hidden">
-              {/* Inner Lining with Dark Luxury Aesthetic */}
-              <div className="absolute inset-0 bg-gradient-to-b from-[#181513] to-[#25201C] opacity-90 flex items-center justify-center">
-                <div className="w-32 h-32 rounded-full border border-[#B91C1C]/20 flex items-center justify-center">
-                  <span className="font-alex text-4xl text-[#B91C1C]/30">M & M</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Left Flap */}
-            <div
-              className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#F5EDE4] to-[#EBDDD0] shadow-md z-30 pointer-events-none"
+            {/* Base Paper Texture Background */}
+            <div 
+              className="absolute inset-0 bg-[#F5EDE4]"
               style={{
-                clipPath: 'polygon(0% 0%, 100% 50%, 0% 100%)',
-                borderTopLeftRadius: '24px',
-                borderBottomLeftRadius: '24px',
+                backgroundImage: `
+                  radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 0%, rgba(0,0,0,0.04) 100%),
+                  linear-gradient(rgba(18, 18, 18, 0.02) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(18, 18, 18, 0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: '100% 100%, 28px 28px, 28px 28px',
               }}
+            />
+
+            {/* Ambient vignette and lighting */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/30 pointer-events-none" />
+
+            {/* ================= LEFT FLAP ================= */}
+            <motion.div
+              initial={{ rotateY: 0 }}
+              animate={
+                stage === 'opening'
+                  ? { rotateY: -110, opacity: 0, transition: { duration: 0.85, ease: [0.65, 0, 0.35, 1] } }
+                  : { rotateY: 0 }
+              }
+              style={{
+                transformOrigin: 'left center',
+                transformStyle: 'preserve-3d',
+                clipPath: 'polygon(0% 0%, 50% 50%, 0% 100%)',
+              }}
+              className="absolute inset-0 z-20 bg-gradient-to-r from-[#EEDFD0] via-[#F5EDE4] to-[#E3D1BE] pointer-events-none"
             >
-              {/* Subtle Embossed Floral Line Pattern */}
-              <svg className="absolute inset-0 w-full h-full opacity-25 text-[#6E6760]" viewBox="0 0 200 400" fill="none" stroke="currentColor" strokeWidth="1">
-                <path d="M20 50 C 40 80, 80 120, 100 180 C 110 210, 120 260, 40 350" />
-                <path d="M50 100 Q 80 130 60 170" />
-                <circle cx="70" cy="120" r="3" fill="currentColor" />
-                <circle cx="95" cy="190" r="4" fill="currentColor" />
-                <circle cx="45" cy="320" r="3" fill="currentColor" />
+              {/* Embossed Paper Border & Bevel */}
+              <div className="absolute inset-0 shadow-[inset_10px_0_30px_rgba(0,0,0,0.08)]" />
+              {/* Subtle blind-embossed floral vines */}
+              <svg className="absolute inset-y-0 left-0 h-full w-2/5 opacity-30 text-[#8C7A6B]" viewBox="0 0 200 800" fill="none" stroke="currentColor" strokeWidth="1.2">
+                <path d="M40 0 C 80 150, 120 300, 70 450 C 30 580, 100 700, 60 800" />
+                <path d="M60 180 Q 120 220, 80 270" />
+                <path d="M70 380 Q 130 420, 90 480" />
+                <circle cx="85" cy="225" r="5" fill="currentColor" opacity="0.6" />
+                <circle cx="95" cy="425" r="5" fill="currentColor" opacity="0.6" />
               </svg>
-            </div>
+            </motion.div>
 
-            {/* Right Flap */}
-            <div
-              className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-[#F5EDE4] to-[#EBDDD0] shadow-md z-30 pointer-events-none"
+            {/* ================= RIGHT FLAP ================= */}
+            <motion.div
+              initial={{ rotateY: 0 }}
+              animate={
+                stage === 'opening'
+                  ? { rotateY: 110, opacity: 0, transition: { duration: 0.85, ease: [0.65, 0, 0.35, 1] } }
+                  : { rotateY: 0 }
+              }
               style={{
-                clipPath: 'polygon(100% 0%, 0% 50%, 100% 100%)',
-                borderTopRightRadius: '24px',
-                borderBottomRightRadius: '24px',
+                transformOrigin: 'right center',
+                transformStyle: 'preserve-3d',
+                clipPath: 'polygon(100% 0%, 50% 50%, 100% 100%)',
               }}
+              className="absolute inset-0 z-20 bg-gradient-to-l from-[#EEDFD0] via-[#F5EDE4] to-[#E3D1BE] pointer-events-none"
             >
-              {/* Subtle Embossed Floral Line Pattern */}
-              <svg className="absolute inset-0 w-full h-full opacity-25 text-[#6E6760]" viewBox="0 0 200 400" fill="none" stroke="currentColor" strokeWidth="1">
-                <path d="M180 50 C 160 80, 120 120, 100 180 C 90 210, 80 260, 160 350" />
-                <path d="M150 100 Q 120 130 140 170" />
-                <circle cx="130" cy="120" r="3" fill="currentColor" />
-                <circle cx="105" cy="190" r="4" fill="currentColor" />
-                <circle cx="155" cy="320" r="3" fill="currentColor" />
+              <div className="absolute inset-0 shadow-[inset_-10px_0_30px_rgba(0,0,0,0.08)]" />
+              <svg className="absolute inset-y-0 right-0 h-full w-2/5 opacity-30 text-[#8C7A6B]" viewBox="0 0 200 800" fill="none" stroke="currentColor" strokeWidth="1.2">
+                <path d="M160 0 C 120 150, 80 300, 130 450 C 170 580, 100 700, 140 800" />
+                <path d="M140 180 Q 80 220, 120 270" />
+                <path d="M130 380 Q 70 420, 110 480" />
+                <circle cx="115" cy="225" r="5" fill="currentColor" opacity="0.6" />
+                <circle cx="105" cy="425" r="5" fill="currentColor" opacity="0.6" />
               </svg>
-            </div>
+            </motion.div>
 
-            {/* Bottom Pocket Flap */}
-            <div
-              className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-[#F0E4D5] to-[#E6D6C4] shadow-lg z-30 pointer-events-none"
-              style={{
-                clipPath: 'polygon(0% 100%, 50% 15%, 100% 100%)',
-                borderBottomLeftRadius: '24px',
-                borderBottomRightRadius: '24px',
-              }}
-            >
-              {/* Subtle Bottom Crease Light */}
-              <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-black/5 to-transparent" />
-            </div>
-
-            {/* TOP FOLDING FLAP (Opens 180 degrees upward on click) */}
+            {/* ================= BOTTOM FLAP ================= */}
             <motion.div
               initial={{ rotateX: 0 }}
               animate={
-                stage === 'breaking' || stage === 'opened'
-                  ? {
-                      rotateX: 180,
-                      zIndex: stage === 'opened' ? 10 : 35,
-                      transition: { duration: 0.9, ease: [0.4, 0, 0.2, 1] },
-                    }
-                  : { rotateX: 0, zIndex: 35 }
+                stage === 'opening'
+                  ? { rotateX: 110, opacity: 0, transition: { duration: 0.85, ease: [0.65, 0, 0.35, 1] } }
+                  : { rotateX: 0 }
+              }
+              style={{
+                transformOrigin: 'bottom center',
+                transformStyle: 'preserve-3d',
+                clipPath: 'polygon(0% 100%, 50% 50%, 100% 100%)',
+              }}
+              className="absolute inset-0 z-25 bg-gradient-to-t from-[#E2CEB9] via-[#EFE2D2] to-[#F5EDE4] pointer-events-none"
+            >
+              <div className="absolute inset-0 shadow-[0_-12px_28px_rgba(0,0,0,0.12)]" />
+              {/* Bottom fold embossing */}
+              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/10 to-transparent" />
+            </motion.div>
+
+            {/* ================= TOP FLAP (Sealed with Wax Seal) ================= */}
+            <motion.div
+              initial={{ rotateX: 0 }}
+              animate={
+                stage === 'opening'
+                  ? { rotateX: -160, opacity: 0, transition: { duration: 0.85, ease: [0.65, 0, 0.35, 1] } }
+                  : { rotateX: 0 }
               }
               style={{
                 transformOrigin: 'top center',
                 transformStyle: 'preserve-3d',
-                clipPath: 'polygon(0% 0%, 50% 85%, 100% 0%)',
-                borderTopLeftRadius: '24px',
-                borderTopRightRadius: '24px',
+                clipPath: 'polygon(0% 0%, 50% 50%, 100% 0%)',
               }}
-              className="absolute inset-x-0 top-0 h-3/5 bg-gradient-to-b from-[#FAF4EC] to-[#EBDDD0] shadow-md flex items-center justify-center cursor-pointer"
+              className="absolute inset-0 z-30 bg-gradient-to-b from-[#FFFDF9] via-[#F5EDE4] to-[#E5D2BF] cursor-pointer"
               onClick={handleOpenEnvelope}
             >
-              {/* Backside shading when flipped */}
-              <div className="absolute inset-0 bg-[#E0D0BE]/40 pointer-events-none" />
+              {/* Pronounced flap edge shadow */}
+              <div className="absolute inset-0 shadow-[0_15px_35px_rgba(0,0,0,0.18)]" />
+              
+              {/* Blind-embossed floral lace along top triangle */}
+              <svg className="absolute inset-0 w-full h-full opacity-35 text-[#8C7A6B]" viewBox="0 0 1000 500" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M 0,0 Q 250,180 500,250 Q 750,180 1000,0" strokeDasharray="4 4" />
+                <circle cx="250" cy="120" r="6" fill="currentColor" opacity="0.4" />
+                <circle cx="500" cy="210" r="8" fill="currentColor" opacity="0.4" />
+                <circle cx="750" cy="120" r="6" fill="currentColor" opacity="0.4" />
+              </svg>
             </motion.div>
 
-            {/* ================= 3D WAX SEAL (Scarlet & Crimson #B91C1C) ================= */}
-            <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+            {/* ================= DOCTOR STRANGE ANIMATED ELDRITCH WAX SEAL ================= */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex items-center justify-center">
+
+              {/* Doctor Strange Eldritch Mandala & Sparks Layer */}
+              <div className="absolute pointer-events-none w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] flex items-center justify-center">
+                
+                {/* 1. Deep Core Golden Ambient Bloom */}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.15, 1],
+                    opacity: [0.65, 0.95, 0.65],
+                  }}
+                  transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                  className="absolute w-44 h-44 sm:w-56 sm:h-56 rounded-full"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(255, 200, 0, 0.7) 0%, rgba(255, 120, 0, 0.45) 50%, rgba(255, 80, 0, 0) 75%)',
+                    filter: 'blur(16px)',
+                  }}
+                />
+
+                {/* 2. Outer Eldritch Rune Ring (Rotating Counter-Clockwise) */}
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ repeat: Infinity, duration: 9, ease: 'linear' }}
+                  className="absolute w-[240px] h-[240px] sm:w-[290px] sm:h-[290px]"
+                >
+                  <svg viewBox="0 0 300 300" className="w-full h-full">
+                    {/* Outer rune ring */}
+                    <circle
+                      cx="150"
+                      cy="150"
+                      r="135"
+                      fill="none"
+                      stroke="#FFD700"
+                      strokeWidth="2"
+                      strokeDasharray="6 14 18 8 2 12 30 6"
+                      opacity="0.85"
+                      filter="drop-shadow(0 0 6px #FFA500)"
+                    />
+                    {/* Inscribed mystic squares & runes */}
+                    <rect
+                      x="55"
+                      y="55"
+                      width="190"
+                      height="190"
+                      fill="none"
+                      stroke="#FFB800"
+                      strokeWidth="1.2"
+                      opacity="0.6"
+                      transform="rotate(45 150 150)"
+                      strokeDasharray="10 8"
+                    />
+                    <circle
+                      cx="150"
+                      cy="150"
+                      r="120"
+                      fill="none"
+                      stroke="#FFA000"
+                      strokeWidth="1"
+                      strokeDasharray="4 6"
+                      opacity="0.7"
+                    />
+                  </svg>
+                </motion.div>
+
+                {/* 3. Middle Fiery Eldritch Sparks Ring (Rotating Fast Clockwise) */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 4.5, ease: 'linear' }}
+                  className="absolute w-[200px] h-[200px] sm:w-[240px] sm:h-[240px]"
+                >
+                  <svg viewBox="0 0 240 240" className="w-full h-full">
+                    <circle
+                      cx="120"
+                      cy="120"
+                      r="105"
+                      fill="none"
+                      stroke="#FFF275"
+                      strokeWidth="3.5"
+                      strokeDasharray="14 22 4 18 35 12"
+                      strokeLinecap="round"
+                      filter="drop-shadow(0 0 8px #FF9E00) drop-shadow(0 0 16px #FF5500)"
+                    />
+                    <circle
+                      cx="120"
+                      cy="120"
+                      r="95"
+                      fill="none"
+                      stroke="#FF8C00"
+                      strokeWidth="2"
+                      strokeDasharray="30 15 10 20"
+                      strokeLinecap="round"
+                      opacity="0.9"
+                    />
+                  </svg>
+                </motion.div>
+
+                {/* 4. Orbiting Fiery Sparks Shooting Outwards */}
+                {[...Array(12)].map((_, i) => {
+                  const angle = (i * 360) / 12;
+                  return (
+                    <motion.div
+                      key={i}
+                      animate={{
+                        scale: [0.6, 1.3, 0.6],
+                        opacity: [0.5, 1, 0.3],
+                        rotate: [0, 360],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 1.8 + (i % 4) * 0.4,
+                        ease: 'easeInOut',
+                        delay: i * 0.15,
+                      }}
+                      className="absolute w-2 h-2 rounded-full bg-[#FFF380]"
+                      style={{
+                        transform: `rotate(${angle}deg) translate(${85 + (i % 3) * 18}px)`,
+                        boxShadow: '0 0 10px #FF9E00, 0 0 20px #FF5500',
+                      }}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* The Realistic Crimson Wax Seal Button */}
               <motion.button
                 onClick={handleOpenEnvelope}
-                whileHover={stage === 'sealed' ? { scale: 1.08 } : {}}
-                whileTap={stage === 'sealed' ? { scale: 0.95 } : {}}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.94 }}
                 animate={
-                  stage === 'sealed'
+                  stage === 'opening'
                     ? {
-                        scale: [1, 1.04, 1],
-                        filter: [
-                          'drop-shadow(0 8px 18px rgba(185, 28, 28, 0.4))',
-                          'drop-shadow(0 12px 26px rgba(185, 28, 28, 0.65))',
-                          'drop-shadow(0 8px 18px rgba(185, 28, 28, 0.4))',
-                        ],
-                        transition: { repeat: Infinity, duration: 2.4, ease: 'easeInOut' },
-                      }
-                    : stage === 'breaking'
-                    ? {
-                        scale: 1.25,
-                        opacity: 0.85,
-                        rotate: 15,
-                        y: -15,
-                        transition: { duration: 0.45, ease: 'easeOut' },
+                        scale: [1, 1.4, 0],
+                        rotate: [0, 25, 60],
+                        opacity: [1, 0.9, 0],
+                        filter: 'brightness(2)',
+                        transition: { duration: 0.55, ease: 'easeIn' },
                       }
                     : {
-                        scale: 0.7,
-                        opacity: 0,
-                        y: -80,
-                        transition: { duration: 0.5, ease: 'easeIn' },
+                        scale: [1, 1.03, 1],
+                        transition: { repeat: Infinity, duration: 2.2, ease: 'easeInOut' },
                       }
                 }
-                className="relative group cursor-pointer focus:outline-none"
-                aria-label="Break wax seal and open invitation"
+                className="relative z-50 cursor-pointer focus:outline-none rounded-full"
+                aria-label="Click to break wax seal and open invitation"
               >
-                {/* Wax Seal SVG Body */}
-                <svg width="96" height="96" viewBox="0 0 100 100" className="w-20 h-20 sm:w-24 sm:h-24">
-                  <defs>
-                    {/* Realistic Red Wax Radial Gradient */}
-                    <radialGradient id="waxGradient" cx="38%" cy="32%" r="68%">
-                      <stop offset="0%" stopColor="#DC2626" />
-                      <stop offset="45%" stopColor="#B91C1C" />
-                      <stop offset="85%" stopColor="#881313" />
-                      <stop offset="100%" stopColor="#550A0A" />
-                    </radialGradient>
-
-                    {/* Wax Rim Bevel Gradient */}
-                    <linearGradient id="bevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="rgba(255, 255, 255, 0.4)" />
-                      <stop offset="50%" stopColor="rgba(185, 28, 28, 0.2)" />
-                      <stop offset="100%" stopColor="rgba(0, 0, 0, 0.6)" />
-                    </linearGradient>
-
-                    {/* Gold Monogram Gradient */}
-                    <linearGradient id="sealGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#FFF2D6" />
-                      <stop offset="50%" stopColor="#E5C396" />
-                      <stop offset="100%" stopColor="#B3864E" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Organic Wax Outer Perimeter */}
-                  <path
-                    d="M 50,4 
-                       C 58,3 67,6 74,12 
-                       C 82,18 89,26 92,35 
-                       C 95,44 96,54 92,63 
-                       C 88,72 82,81 74,87 
-                       C 66,93 56,96 46,95 
-                       C 36,94 27,90 20,83 
-                       C 12,76 7,67 5,57 
-                       C 3,47 6,37 11,29 
-                       C 16,21 24,14 33,9 
-                       C 40,5 45,4 50,4 Z"
-                    fill="url(#waxGradient)"
-                    stroke="url(#bevelGrad)"
-                    strokeWidth="1.8"
-                  />
-
-                  {/* Inner Debossed Concentric Ring */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="34"
-                    fill="#991B1B"
-                    stroke="#5A0808"
-                    strokeWidth="2.5"
-                    opacity="0.9"
-                  />
-
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="32"
-                    fill="none"
-                    stroke="url(#bevelGrad)"
-                    strokeWidth="1"
-                    opacity="0.7"
-                  />
-
-                  {/* Monogram Text: M&M in Luxury Calligraphy */}
-                  <text
-                    x="50"
-                    y="57"
-                    fontFamily="'Alex Brush', cursive"
-                    fontSize="27"
-                    fontWeight="normal"
-                    textAnchor="middle"
-                    fill="url(#sealGold)"
-                    filter="drop-shadow(0 1.5px 2px rgba(0,0,0,0.6))"
+                {/* Photorealistic 3D Wax Seal with Heavy Stamped Monogram */}
+                <div className="relative w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center">
+                  <svg
+                    viewBox="0 0 160 160"
+                    className="w-full h-full drop-shadow-[0_15px_30px_rgba(185,28,28,0.65)]"
                   >
-                    M&M
-                  </text>
-                </svg>
+                    <defs>
+                      {/* Deep Rich Scarlet Red Wax Radial Lighting */}
+                      <radialGradient id="deepWaxGradient" cx="35%" cy="30%" r="70%">
+                        <stop offset="0%" stopColor="#EF4444" />
+                        <stop offset="25%" stopColor="#DC2626" />
+                        <stop offset="55%" stopColor="#B91C1C" />
+                        <stop offset="80%" stopColor="#7F1D1D" />
+                        <stop offset="100%" stopColor="#450A0A" />
+                      </radialGradient>
 
-                {/* Sparkling Aura around Seal in sealed state */}
-                {stage === 'sealed' && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: [0.4, 0.9, 0.4], scale: [0.95, 1.1, 0.95] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute -inset-2 rounded-full border border-[#B91C1C]/40 pointer-events-none"
-                  />
-                )}
+                      {/* Glossy Curved Rim Highlight */}
+                      <linearGradient id="rimShine" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(255, 255, 255, 0.7)" />
+                        <stop offset="40%" stopColor="rgba(239, 68, 68, 0.3)" />
+                        <stop offset="70%" stopColor="rgba(69, 10, 10, 0.8)" />
+                        <stop offset="100%" stopColor="rgba(0, 0, 0, 0.9)" />
+                      </linearGradient>
+
+                      {/* Pure High-Carat Gold Foil Gradient for M&M */}
+                      <linearGradient id="goldMonogramGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFF8E7" />
+                        <stop offset="25%" stopColor="#FFE082" />
+                        <stop offset="55%" stopColor="#FFC107" />
+                        <stop offset="80%" stopColor="#D48806" />
+                        <stop offset="100%" stopColor="#874D00" />
+                      </linearGradient>
+
+                      {/* Monogram Bevel Drop Shadow */}
+                      <filter id="debossShadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="2.5" stdDeviation="1.5" floodColor="#3B0505" floodOpacity="0.9" />
+                      </filter>
+                    </defs>
+
+                    {/* Organic Molten Wax Outer Contour */}
+                    <path
+                      d="M 80,6
+                         C 94,5 108,9 120,18
+                         C 133,28 144,41 148,56
+                         C 152,70 151,86 144,100
+                         C 137,114 126,127 113,136
+                         C 99,145 83,148 67,146
+                         C 51,144 37,137 26,126
+                         C 15,115 8,101 6,86
+                         C 4,71 8,56 16,43
+                         C 25,30 38,20 52,13
+                         C 62,8 71,6 80,6 Z"
+                      fill="url(#deepWaxGradient)"
+                      stroke="url(#rimShine)"
+                      strokeWidth="2.5"
+                    />
+
+                    {/* Deep Concentric Stamped Well */}
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="54"
+                      fill="#8F1515"
+                      stroke="#450A0A"
+                      strokeWidth="3.5"
+                    />
+
+                    {/* Concentric Inner Bevel Circle */}
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="50"
+                      fill="none"
+                      stroke="url(#rimShine)"
+                      strokeWidth="1.5"
+                      opacity="0.8"
+                    />
+
+                    {/* Highly Pronounced M&M Monogram with Gold Foil & Deep Stamp */}
+                    <text
+                      x="80"
+                      y="92"
+                      fontFamily="'Playfair Display', Georgia, serif"
+                      fontSize="44"
+                      fontWeight="900"
+                      fontStyle="italic"
+                      letterSpacing="0.02em"
+                      textAnchor="middle"
+                      fill="url(#goldMonogramGradient)"
+                      filter="url(#debossShadow)"
+                      stroke="#FFE89C"
+                      strokeWidth="0.8"
+                    >
+                      M&M
+                    </text>
+
+                    {/* Top Arc Highlight Glare */}
+                    <path
+                      d="M 45,35 Q 80,24 115,35"
+                      fill="none"
+                      stroke="rgba(255, 255, 255, 0.45)"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
               </motion.button>
-            </div>
 
-            {/* Prompt Banner below seal when still sealed */}
-            {stage === 'sealed' && (
+              {/* Pulsing Action Callout below Wax Seal */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.3 }}
                 onClick={handleOpenEnvelope}
-                className="absolute -bottom-16 inset-x-0 flex flex-col items-center text-center cursor-pointer group"
+                className="absolute top-[110%] flex flex-col items-center cursor-pointer pointer-events-auto"
               >
-                <div className="flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-md border border-[#F5EDE4]/20 group-hover:bg-[#B91C1C]/80 group-hover:border-[#B91C1C] transition-all duration-300">
-                  <Sparkles className="w-3.5 h-3.5 text-[#B91C1C] group-hover:text-white transition-colors" />
-                  <span className="text-xs font-sans tracking-[0.2em] uppercase font-semibold text-[#F5EDE4]">
-                    Tap Wax Seal to Open
+                <div className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-black/60 hover:bg-[#B91C1C] border border-[#FFD700]/40 hover:border-[#FFD700] backdrop-blur-md shadow-[0_4px_25px_rgba(255,184,0,0.3)] transition-all duration-300 hover:scale-105 active:scale-95 group">
+                  <Sparkles className="w-4 h-4 text-[#FFD700] group-hover:rotate-12 transition-transform" />
+                  <span className="font-sans text-xs sm:text-sm tracking-[0.25em] uppercase font-bold text-white">
+                    Tap Wax Seal To Open
                   </span>
                 </div>
-                <p className="text-[11px] font-sans text-white/50 tracking-wider mt-2">
-                  Touch to unseal your invitation with music
+                <p className="text-[11px] font-sans text-white/70 tracking-widest uppercase mt-2 drop-shadow-md">
+                  Unseals directly into the celebration
                 </p>
               </motion.div>
-            )}
+
+            </div>
 
           </div>
         </div>
