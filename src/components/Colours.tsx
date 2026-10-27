@@ -85,7 +85,7 @@ export const Colours: FC = () => {
         {/* Color Palette Bands - High Contrast Editorial Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16 max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl">
           {/* Editorial Noir */}
-          <div className="h-48 md:h-80 bg-neutral-900 text-white flex flex-col justify-end p-8 relative overflow-hidden group">
+          <div className="h-48 md:h-80 bg-[#121212] text-white flex flex-col justify-end p-8 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
             <div className="relative z-10">
               <span className="text-xs tracking-widest uppercase font-mono text-neutral-400 block mb-1">Base Neutral</span>
@@ -95,17 +95,17 @@ export const Colours: FC = () => {
           </div>
 
           {/* Statement Red */}
-          <div className="h-48 md:h-80 bg-red-700 text-white flex flex-col justify-end p-8 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-t from-red-950/80 to-transparent" />
+          <div className="h-48 md:h-80 bg-[#B91C1C] text-white flex flex-col justify-end p-8 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#7F1D1D]/80 to-transparent" />
             <div className="relative z-10">
-              <span className="text-xs tracking-widest uppercase font-mono text-red-200 block mb-1">Signature Accent</span>
+              <span className="text-xs tracking-widest uppercase font-mono text-red-200 block mb-1">Primary Accent</span>
               <h3 className="font-serif text-2xl sm:text-3xl text-white">Scarlet & Crimson</h3>
               <p className="text-xs text-red-200 mt-1 font-mono">#B91C1C • Dramatic Red Touches</p>
             </div>
           </div>
 
           {/* Warm Champagne Alabaster */}
-          <div className="h-48 md:h-80 bg-[#f5ede4] text-brand-espresso flex flex-col justify-end p-8 relative overflow-hidden group border border-brand-sand/50">
+          <div className="h-48 md:h-80 bg-[#F5EDE4] text-brand-espresso flex flex-col justify-end p-8 relative overflow-hidden group border border-brand-sand/50">
             <div className="absolute inset-0 bg-gradient-to-t from-[#ebe0d4]/80 to-transparent" />
             <div className="relative z-10">
               <span className="text-xs tracking-widest uppercase font-mono text-brand-goldDark block mb-1">Warm Foundation</span>

@@ -551,7 +551,7 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
           )}
           <button
             onClick={onClose}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-cream/10 rounded-xl text-brand-cream hover:bg-brand-gold hover:text-brand-espresso transition-colors text-sm font-semibold tracking-wider uppercase"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-cream/10 rounded-xl text-brand-cream hover:bg-brand-primary hover:text-white transition-colors text-sm font-semibold tracking-wider uppercase"
           >
             <LogOut className="w-4 h-4" />
             <span>Log Out</span>
@@ -619,7 +619,7 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
             >
               <Clock className="w-4 h-4" /> Reservations
               {reservations.length > 0 && (
-                <span className="bg-brand-gold text-brand-espresso px-2 py-0.5 rounded-full text-[10px] ml-1">
+                <span className="bg-brand-primary text-white px-2 py-0.5 rounded-full text-[10px] ml-1">
                   {reservations.length}
                 </span>
               )}

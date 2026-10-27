@@ -394,7 +394,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
                 <div className="pt-2 flex flex-col gap-2">
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-xl bg-brand-goldDark text-white text-xs font-sans font-bold tracking-widest uppercase hover:bg-brand-espresso transition-colors shadow-md"
+                    className="w-full py-3.5 rounded-xl bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-bold tracking-widest uppercase transition-colors shadow-md"
                   >
                     Save New PIN
                   </button>

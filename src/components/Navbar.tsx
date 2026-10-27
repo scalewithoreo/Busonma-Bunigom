@@ -162,7 +162,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
             {!isPublicMode && (
               <button
                 onClick={onOpenRsvp}
-                className="px-6 py-2.5 rounded-full bg-brand-gold hover:bg-brand-cream text-brand-espresso text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md hover:scale-105"
+                className="px-6 py-2.5 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md hover:scale-105"
               >
                 RSVP Now
               </button>
@@ -206,7 +206,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-30 bg-[#1a1410] flex flex-col justify-center items-center p-6 md:hidden animate-fade-in">
+        <div className="fixed inset-0 z-30 bg-[#121212] flex flex-col justify-center items-center p-6 md:hidden animate-fade-in">
           <div className="text-center mb-8">
             <h3 className="font-alex text-4xl text-brand-cream">Miracle & Malvin</h3>
             <p className="text-brand-gold text-xs tracking-widest uppercase mt-2">
@@ -236,7 +236,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
                   setMobileMenuOpen(false);
                   onOpenRsvp();
                 }}
-                className="mt-4 w-full py-3.5 rounded-full bg-brand-gold text-brand-espresso font-sans text-[17px] font-semibold tracking-widest uppercase hover:bg-brand-cream transition-colors shadow-lg"
+                className="mt-4 w-full py-3.5 rounded-full bg-brand-primary text-white font-sans text-[17px] font-semibold tracking-widest uppercase hover:bg-brand-primaryDark transition-colors shadow-lg"
               >
                 Confirm Attendance
               </button>

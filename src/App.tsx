@@ -174,7 +174,7 @@ export function App() {
   );
 
   return (
-    <div className="min-h-screen bg-brand-cream text-brand-espresso font-sans selection:bg-brand-gold selection:text-brand-espresso">
+    <div className="min-h-screen bg-brand-cream text-brand-espresso font-sans selection:bg-brand-primary selection:text-white">
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
       
       <Routes>

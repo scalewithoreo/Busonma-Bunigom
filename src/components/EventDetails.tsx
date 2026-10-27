@@ -52,7 +52,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                     particleCount: 65,
                     spread: 80,
                     origin: { y: 0.45 },
-                    colors: ['#c5a880', '#75074B', '#334a33', '#ffffff', '#e6ca65'],
+                    colors: ['#B91C1C', '#991B1B', '#121212', '#ffffff', '#F5EDE4'],
                     disableForReducedMotion: true
                   });
                 }, 700);
@@ -67,7 +67,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 transition={{ duration: 1.1, delay: 0.4, ease: [0.77, 0, 0.175, 1] }}
                 className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-brand-espresso via-brand-espresso to-brand-gold/90 z-20 shadow-2xl flex items-center justify-end overflow-hidden"
               >
-                <div className="w-1.5 h-full bg-brand-gold shadow-[0_0_12px_#c5a880]" />
+                <div className="w-1.5 h-full bg-brand-primary shadow-[0_0_12px_#B91C1C]" />
               </motion.div>
 
               {/* Right Curtain */}
@@ -78,7 +78,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 transition={{ duration: 1.1, delay: 0.4, ease: [0.77, 0, 0.175, 1] }}
                 className="absolute top-0 bottom-0 right-0 bg-gradient-to-l from-brand-espresso via-brand-espresso to-brand-gold/90 z-20 shadow-2xl flex items-center justify-start overflow-hidden"
               >
-                <div className="w-1.5 h-full bg-brand-gold shadow-[0_0_12px_#c5a880]" />
+                <div className="w-1.5 h-full bg-brand-primary shadow-[0_0_12px_#B91C1C]" />
               </motion.div>
 
               {/* Revealed Date Text */}
@@ -206,7 +206,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 href="https://maps.google.com/?q=Celebration+Church+Int'l+(Celebr8+Centre+HQ),+Vori+Close,+off+Acme+Road,+Ogba,+Lagos"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-brand-gold hover:bg-brand-cream text-brand-espresso text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md"
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md"
               >
                 <span>Reception Directions (Maps)</span>
                 <ExternalLink className="w-4 h-4" />

@@ -175,7 +175,7 @@ export const Collaborate: FC<CollaborateProps> = ({ onNotify }) => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-brand-espresso text-brand-cream rounded-xl px-6 py-4 font-sans font-semibold tracking-widest uppercase text-sm hover:bg-brand-charcoal transition-colors disabled:opacity-70 flex justify-center items-center gap-2"
+                  className="w-full bg-brand-primary text-white rounded-xl px-6 py-4 font-sans font-semibold tracking-widest uppercase text-sm hover:bg-brand-primaryDark transition-colors disabled:opacity-70 flex justify-center items-center gap-2"
                 >
                   {isSubmitting ? (
                     <span className="w-5 h-5 border-2 border-brand-cream/30 border-t-brand-cream rounded-full animate-spin" />

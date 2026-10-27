@@ -93,7 +93,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
           particleCount: 100,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#c5a880', '#A80A4E', '#334a33'],
+          colors: ['#B91C1C', '#991B1B', '#121212', '#F5EDE4'],
         });
       }
       onNotify('RSVP Received', 'Thank you for responding!');
@@ -398,7 +398,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-full bg-brand-gold hover:bg-brand-goldDark text-brand-espresso hover:text-white font-sans text-[17px] font-semibold tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.01] disabled:opacity-50"
+                  className="w-full py-4 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white font-sans text-[17px] font-semibold tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.01] disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <span className="inline-block animate-pulse">Verifying Code & Submitting...</span>

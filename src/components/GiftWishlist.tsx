@@ -236,7 +236,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
           particleCount: 120,
           spread: 80,
           origin: { y: 0.6 },
-          colors: ['#c5a880', '#A80A4E', '#334a33', '#ffd700'],
+          colors: ['#B91C1C', '#991B1B', '#121212', '#F5EDE4'],
         });
       } catch (err) {}
 
@@ -386,7 +386,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
                       {item.formattedPrice}
                     </span>
                     {item.quantity > 1 && (
-                      <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-brand-gold/40 text-brand-espresso text-[9px] sm:text-[10px] font-sans font-bold uppercase tracking-wider self-start sm:self-auto">
+                      <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-brand-primary/15 text-brand-primary text-[9px] sm:text-[10px] font-sans font-bold uppercase tracking-wider self-start sm:self-auto">
                         Qty: {item.quantity} Needed
                       </span>
                     )}
@@ -403,7 +403,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
                     className={`w-full py-2 sm:py-3 rounded-xl text-[10px] sm:text-xs font-sans font-bold tracking-widest uppercase transition-all duration-200 shadow-sm flex items-center justify-center gap-1 sm:gap-2 ${
                       item.isFunded
                         ? 'bg-brand-sand/50 text-brand-muted hover:bg-brand-sand'
-                        : 'bg-brand-espresso hover:bg-brand-gold hover:text-brand-espresso text-brand-cream'
+                        : 'bg-brand-espresso hover:bg-brand-primary hover:text-white text-brand-cream'
                     }`}
                   >
                     <CreditCard className="w-3 sm:w-4 h-3 sm:h-4" />
@@ -791,7 +791,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full py-3.5 rounded-full bg-brand-gold hover:bg-brand-goldDark text-brand-espresso hover:text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full py-3.5 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {isSubmitting ? (
                           <span>Recording Gift...</span>
@@ -1021,7 +1021,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-3.5 rounded-full bg-brand-gold hover:bg-brand-goldDark text-brand-espresso hover:text-white text-xs font-sans font-bold tracking-widest uppercase transition-all duration-300 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full py-3.5 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-bold tracking-widest uppercase transition-all duration-300 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       <Heart className="w-4 h-4 fill-current" />
                       <span>{isSubmitting ? 'Reserving...' : 'Reserve'}</span>

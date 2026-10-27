@@ -54,11 +54,11 @@ export const FloatingRSVP: FC<FloatingRSVPProps> = ({ onRSVPClick }) => {
         >
           <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-full p-1.5 flex items-center gap-4 sm:gap-6 border border-brand-sand/30 hover:scale-105 transition-transform duration-300">
             <span className="pl-4 sm:pl-6 text-[15px] sm:text-lg font-sans font-medium tracking-wide text-brand-espresso whitespace-nowrap">
-              Saturday, Dec 12th
+              Wednesday, Jan 27th
             </span>
             <button 
               onClick={onRSVPClick}
-              className="bg-brand-charcoal text-brand-goldLight hover:bg-brand-espresso transition-colors px-6 sm:px-8 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-sans font-bold tracking-[0.2em] uppercase shadow-md"
+              className="bg-brand-primary text-white hover:bg-brand-primaryDark transition-colors px-6 sm:px-8 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-sans font-bold tracking-[0.2em] uppercase shadow-md"
             >
               RSVP
             </button>

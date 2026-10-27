@@ -8,19 +8,34 @@ export default {
     extend: {
       colors: {
         brand: {
-          beige: '#f5f5dc',
-          cream: '#faf8f2',
-          ivory: '#fcfbfa',
-          sand: '#eae3d2',
-          sandDark: '#d5cbb8',
-          gold: '#c5a880',
-          goldDark: '#997d59',
-          goldLight: '#e4d2bc',
-          wine: '#A80A4E',
-          espresso: '#141210',
-          charcoal: '#221f1c',
-          warmGray: '#383430',
-          muted: '#7a7268',
+          // Warm Foundation: Warm Alabaster
+          beige: '#F5EDE4',
+          cream: '#F5EDE4',
+          ivory: '#FAF6F0',
+          sand: '#EAE1D5',
+          sandDark: '#D8C7B5',
+          alabaster: '#F5EDE4',
+
+          // Signature Primary: Scarlet & Crimson (#B91C1C)
+          primary: '#B91C1C',
+          primaryDark: '#991B1B',
+          primaryLight: '#DC2626',
+          crimson: '#B91C1C',
+          scarlet: '#B91C1C',
+          red: '#B91C1C',
+
+          // Accent colors mapped to primary scarlet & crimson palette
+          gold: '#B91C1C',
+          goldDark: '#991B1B',
+          goldLight: '#DC2626',
+          wine: '#831843',
+
+          // Base Neutral: Editorial Noir (#121212)
+          noir: '#121212',
+          espresso: '#121212',
+          charcoal: '#1C1C1C',
+          warmGray: '#2A2A2A',
+          muted: '#6E6760',
         }
       },
       fontFamily: {

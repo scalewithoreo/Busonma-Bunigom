@@ -21,42 +21,44 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f5f5dc;
+  background: #F5EDE4;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c5a880;
+  background: #B91C1C;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #997d59;
+  background: #991B1B;
 }
 
 /* Elegant selection */
 ::selection {
-  background-color: #c5a880;
-  color: #141210;
+  background-color: #B91C1C;
+  color: #ffffff;
 }
 
 /* Luxury card glass effect */
 .luxury-glass {
-  background: rgba(253, 251, 247, 0.85);
+  background: rgba(245, 237, 228, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(197, 168, 128, 0.25);
+  border: 1px solid rgba(185, 28, 28, 0.2);
 }
 
 .luxury-glass-dark {
-  background: rgba(20, 18, 16, 0.8);
+  background: rgba(18, 18, 18, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(197, 168, 128, 0.2);
+  border: 1px solid rgba(185, 28, 28, 0.25);
 }
 
 /* Text glow */
-.gold-glow {
-  text-shadow: 0 0 20px rgba(197, 168, 128, 0.4);
+.gold-glow,
+.crimson-glow,
+.red-glow {
+  text-shadow: 0 0 20px rgba(185, 28, 28, 0.45);
 }
 
 /* Smooth fade in */
