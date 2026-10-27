@@ -1,0 +1,83 @@
+@font-face {
+  font-family: 'Laora';
+  src: url('/fonts/Laora.otf') format('opentype'),
+       url('/fonts/Laora.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5dc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c5a880;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #997d59;
+}
+
+/* Elegant selection */
+::selection {
+  background-color: #c5a880;
+  color: #141210;
+}
+
+/* Luxury card glass effect */
+.luxury-glass {
+  background: rgba(253, 251, 247, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 168, 128, 0.25);
+}
+
+.luxury-glass-dark {
+  background: rgba(20, 18, 16, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 168, 128, 0.2);
+}
+
+/* Text glow */
+.gold-glow {
+  text-shadow: 0 0 20px rgba(197, 168, 128, 0.4);
+}
+
+/* Smooth fade in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@font-face {
+  font-family: 'Belyga';
+  src: url('/fonts/Belyga.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}

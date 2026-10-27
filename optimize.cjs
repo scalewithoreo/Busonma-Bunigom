@@ -1,0 +1,1 @@
+const sharp = require('sharp'); const fs = require('fs'); const path = require('path'); const dir = 'public/assets'; fs.readdirSync(dir).forEach(file => { if (file.endsWith('.jpg') || file.endsWith('.png')) { const p = path.join(dir, file); sharp(p).resize({width: 1600, withoutEnlargement: true}).jpeg({quality: 75}).toBuffer().then(b => fs.writeFileSync(p, b)); } });
