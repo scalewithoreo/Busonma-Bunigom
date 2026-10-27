@@ -60,14 +60,28 @@ export const Footer: FC = () => {
           )}
         </p>
 
-        {/* Back to top button */}
-        <button
-          onClick={scrollToTop}
-          className="p-3.5 rounded-full bg-white/10 hover:bg-white/20 text-brand-cream transition-all duration-300 mb-12 group shadow-md"
-          aria-label="Back to top"
-        >
-          <ArrowUp className="w-5 h-5 text-brand-gold group-hover:-translate-y-0.5 transition-transform" />
-        </button>
+        {/* Back to top & Replay actions */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+          <button
+            onClick={() => {
+              if ((window as any).replayWeddingEnvelope) {
+                (window as any).replayWeddingEnvelope();
+                window.scrollTo({ top: 0, behavior: 'instant' });
+              }
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 hover:bg-[#B91C1C]/20 border border-white/10 hover:border-[#B91C1C]/50 text-xs font-sans tracking-widest uppercase text-brand-cream/80 hover:text-white transition-all shadow-sm"
+          >
+            <span>✉️ Replay Wax Seal Invitation</span>
+          </button>
+
+          <button
+            onClick={scrollToTop}
+            className="p-3.5 rounded-full bg-white/10 hover:bg-white/20 text-brand-cream transition-all duration-300 group shadow-md"
+            aria-label="Back to top"
+          >
+            <ArrowUp className="w-5 h-5 text-brand-gold group-hover:-translate-y-0.5 transition-transform" />
+          </button>
+        </div>
 
         {/* Copyright */}
         <div className="w-full pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 text-xs font-sans text-brand-muted">

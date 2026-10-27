@@ -15,8 +15,7 @@ class AudioManager {
     this.isMuted = false;
 
     // Safely restore saved playback position once metadata is loaded
-    // Setting currentTime before loadedmetadata can cause Range Request delays or InvalidStateErrors
-    const savedTime = sessionStorage.getItem('ore_dara_music_time');
+    const savedTime = sessionStorage.getItem('mm_music_time');
     if (savedTime) {
       const timeNum = parseFloat(savedTime);
       if (!isNaN(timeNum) && timeNum > 0) {
@@ -30,7 +29,7 @@ class AudioManager {
     this.audio.addEventListener('timeupdate', () => {
       if (this.audio && this.audio.currentTime > 0) {
         try {
-          sessionStorage.setItem('ore_dara_music_time', String(this.audio.currentTime));
+          sessionStorage.setItem('mm_music_time', String(this.audio.currentTime));
         } catch (e) {}
       }
     });
@@ -38,7 +37,7 @@ class AudioManager {
     window.addEventListener('beforeunload', () => {
       if (this.audio && this.audio.currentTime > 0) {
         try {
-          sessionStorage.setItem('ore_dara_music_time', String(this.audio.currentTime));
+          sessionStorage.setItem('mm_music_time', String(this.audio.currentTime));
         } catch (e) {}
       }
     });
@@ -75,6 +74,24 @@ class AudioManager {
     window.addEventListener('click', startOnInteraction, { once: true });
     window.addEventListener('touchstart', startOnInteraction, { once: true });
     window.addEventListener('scroll', startOnInteraction, { once: true });
+  }
+
+  play() {
+    if (!this.audio) {
+      this.init();
+    }
+    if (this.audio) {
+      this.audio.muted = false;
+      this.isMuted = false;
+      this.audio.play()
+        .then(() => {
+          this.isPlaying = true;
+          this.hasStarted = true;
+          this.isMuted = false;
+          this.notify();
+        })
+        .catch(() => {});
+    }
   }
 
   toggle() {
