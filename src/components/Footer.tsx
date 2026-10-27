@@ -22,7 +22,7 @@ export const Footer: FC = () => {
         >
           <img loading="lazy" decoding="async" 
             src="/assets/logo.png" 
-            alt="Miracle & Marvin Logo" 
+            alt="Miracle & Malvin Logo" 
             className="h-24 sm:h-32 w-auto object-contain drop-shadow-md"
           />
         </motion.div>
@@ -37,7 +37,7 @@ export const Footer: FC = () => {
           Thank you for celebrating with us
         </motion.h2>
 
-        {/* Heading 2: Miracle & Marvin */}
+        {/* Heading 2: Miracle & Malvin */}
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -45,7 +45,7 @@ export const Footer: FC = () => {
           transition={{ delay: 0.15 }}
           className="font-alex tracking-normal text-3xl sm:text-5xl md:text-6xl text-brand-gold my-4"
         >
-          Miracle & Marvin
+          Miracle & Malvin
         </motion.p>
 
         <p className="text-sm font-sans tracking-[0.2em] uppercase text-brand-muted/70 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 justify-center mb-10">
@@ -71,7 +71,7 @@ export const Footer: FC = () => {
 
         {/* Copyright */}
         <div className="w-full pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 text-xs font-sans text-brand-muted">
-          <div>© 2027 Miracle & Marvin. All Rights Reserved.</div>
+          <div>© 2027 Miracle & Malvin. All Rights Reserved.</div>
         </div>
       </div>
     </footer>

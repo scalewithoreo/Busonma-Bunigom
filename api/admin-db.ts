@@ -10,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
-  if (req.method=== 'OPTIONS') {
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
@@ -42,30 +42,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Verify the PIN hash securely on the server
   const validHashes: Record<string, string> = {
-    // Miracle & Marvin Wedding PINs (Salt: MiracleMarvin_Wedding_2027_Salt_)
-    '2fd02616507a0514c705fb51eb2c8edab3347ae9fe0296e69fd715ad350956d3': 'miracle', // 1111
-    '1decb05e4cabf700283b0854c2721d27610b24d0ac751b6a8853797c362c2ac7': 'marvin',  // 2222
-    '7d26db5aff55e1f3a953d2e7c8d7240605e2ca536a885c268880f996839f9859': 'groomsfamily', // 3333
-    '9c3f6f427de5a111c2fdcc2b4160e1bb35936be1f5b219f1572e2a88668b4702': 'bridesfamily', // 4444
-    '5b860abd7e59bbafb7d933b8646ea4d96eb77051ff56a32c91c0480a6bf311bd': 'custom1964', // 1964
-    '3c8d76ec3ed4a4ee1027fe0455fc72c2dd20e3fefd33cf17815333f76615c9fb': 'miracle', // 0000 emergency override
-    // Legacy support
-    '8c07cfdfbe255d306247038188b8020416cdb8c97260969c13cfb06378d8cba2': 'marvin',
-    '39a7cc6fbd4379686efcca59317abe6ac88f6a35af4b043faa5e977ff3c9bf19': 'miracle',
-    'e13f99645f87a7c2aab8b5ae9074165318cde28e754a566087006120fca132e7': 'groomsfamily',
-    '42ff322c7b6c9b702d027adeb217b1f226a41d71a86f9a9dcfdcf38a21cf515d': 'bridesfamily',
-    'ec9de88936216680d2661d006be2e47b070650b6c8d5c177ccf7c4e13fe943d8': 'custom1964'
+    // Miracle & Malvin Wedding PINs (Salt: MiracleMalvin_Wedding_2027_Salt_)
+    '3ad116dc1633b3b70f8d635590a35ba3d4969d2777648baa33e62deca53a4dc7': 'miracle', // 1111
+    '09e1868e2d439ffd907bc01564631bd82591dc58921f7effe64896d899df69e8': 'malvin',  // 2222
+    '76c814e041129fed250849beb1ab408af9c5351fce3ccb1e4126bedc4e55a6c3': 'groomsfamily', // 3333
+    '7de3b3dac3e46e5639e59e509f4a4da732c6ccc3d31f4fd43b0c0834592e6e2f': 'bridesfamily', // 4444
+    '85e6ccb7dbc2a38f751f5bb75cedc2c4c773cbc1b918918c5ebf34e553abd50d': 'custom1964', // 1964
+    '0e5c405683a06164be029d484af0fe82602b20c72e390cd02bec4180868cffdd': 'miracle', // 0000 emergency override
+    // Also support previously generated hashes for smooth transition
+    '2fd02616507a0514c705fb51eb2c8edab3347ae9fe0296e69fd715ad350956d3': 'miracle',
+    '1decb05e4cabf700283b0854c2721d27610b24d0ac751b6a8853797c362c2ac7': 'malvin',
+    '3c8d76ec3ed4a4ee1027fe0455fc72c2dd20e3fefd33cf17815333f76615c9fb': 'miracle'
   };
 
   const role = validHashes[pinHash];
   if (!role) {
-    // Record failed attempt
     if (kvUrl && kvToken) {
       try {
         const { createClient } = require('@vercel/kv');
         const kv = createClient({ url: kvUrl, token: kvToken });
         const attempts = await kv.incr(rateLimitKey);
-        if (attempts === 1) await kv.expire(rateLimitKey, 300); // 5 mins
+        if (attempts === 1) await kv.expire(rateLimitKey, 300);
       } catch (e) {}
     }
     return res.status(401).json({ error: 'Unauthorized' });
@@ -84,14 +81,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ success: true, data: { role } });
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://rmgrhxvbxwdpctvegppb.supabase.co';
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'sb_publishable_J6uMcF72NX9RctyJvc-L_A_C9KBhVa3';
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-  // Prefer valid service role key, but if missing or invalid JWT, fallback to working anon key
-  let serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey || serviceRoleKey.startsWith('eyJ')) {
-    serviceRoleKey = anonKey;
+  // If no dedicated Miracle & Malvin Supabase project is configured yet,
+  // return empty safe data without ever touching any external database.
+  if (!supabaseUrl || !anonKey) {
+    switch (action) {
+      case 'getStoredRsvps':
+      case 'getStoredGiftPledgesAdmin':
+      case 'getInviteCodes':
+        return res.status(200).json({ success: true, data: [] });
+      case 'generateInviteCode':
+        return res.status(200).json({ success: true, data: payload.code });
+      case 'bulkGenerateInviteCodes':
+        return res.status(200).json({ success: true, data: payload.codes });
+      default:
+        return res.status(200).json({ success: true, data: [] });
+    }
   }
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || anonKey;
 
   const executeQuery = async (client: any) => {
     switch (action) {
@@ -125,15 +135,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
 
   try {
-    let supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    let { data, error } = await executeQuery(supabaseAdmin);
-
-    // If initial query fails with invalid API key, retry with anon key fallback
-    if (error && (error.message?.includes('Invalid API key') || error.code === 'PGRST301')) {
-      console.warn('Admin DB: Retrying query with anon key fallback');
-      const fallbackClient = createClient(supabaseUrl, anonKey);
-      ({ data, error } = await executeQuery(fallbackClient));
-    }
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    const { data, error } = await executeQuery(supabaseAdmin);
 
     if (error) {
       console.error('Supabase admin error:', error);

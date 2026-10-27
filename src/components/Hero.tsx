@@ -15,7 +15,7 @@ export const Hero: FC<HeroProps> = () => {
       <div className="absolute inset-0 z-0">
         <img  decoding="sync"
           src="/assets/hero-image-new.jpg"
-          alt="Miracle & Marvin"
+          alt="Miracle & Malvin"
           className="w-full h-full object-cover object-[center_45%] scale-105 transition-transform duration-1000 ease-out"
         />
         {/* Layered Gradient Vignette matching reference mood */}
@@ -34,19 +34,19 @@ export const Hero: FC<HeroProps> = () => {
           >
             <img  decoding="sync" 
               src="/assets/logo.png" 
-              alt="Miracle & Marvin Logo" 
+              alt="Miracle & Malvin Logo" 
               className="h-32 sm:h-44 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
             />
           </motion.div>
 
-          {/* Couple Name - Belyga font with order: Oluwadara & Oreoluwa */}
+          {/* Couple Name - Miracle & Malvin */}
           <motion.h1
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="font-alex tracking-normal text-5xl sm:text-7xl md:text-8xl lg:text-[6.5rem] text-brand-cream leading-tight my-1 selection:text-brand-gold"
           >
-            Miracle & Marvin
+            Miracle & Malvin
           </motion.h1>
 
           {/* Invitation Text */}
@@ -95,7 +95,7 @@ export const Hero: FC<HeroProps> = () => {
           transition={{ duration: 0.8, delay: 0.9 }}
           className="font-sans text-brand-gold tracking-widest text-sm sm:text-base uppercase font-bold"
         >
-          #MiracleAndMarvin2027
+          #MiracleAndMalvin2027
         </motion.p>
 
 

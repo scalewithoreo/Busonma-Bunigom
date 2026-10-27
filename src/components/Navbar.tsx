@@ -126,7 +126,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
           >
             <img  decoding="sync" 
               src="/assets/logo.png" 
-              alt="Miracle & Marvin Logo" 
+              alt="Miracle & Malvin Logo" 
               className="h-16 sm:h-[90px] w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-300"
             />
           </Link>
@@ -208,9 +208,9 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-30 bg-[#1a1410] flex flex-col justify-center items-center p-6 md:hidden animate-fade-in">
           <div className="text-center mb-8">
-            <h3 className="font-alex text-4xl text-brand-cream">Oreoluwa & Oluwadara</h3>
+            <h3 className="font-alex text-4xl text-brand-cream">Miracle & Malvin</h3>
             <p className="text-brand-gold text-xs tracking-widest uppercase mt-2">
-              {isPublicMode ? 'December 2026' : 'December 12, 2026'}
+              {isPublicMode ? 'January 2027' : 'Wednesday, January 27, 2027'}
             </p>
           </div>
 

@@ -1,6 +1,6 @@
-// Admin Security & PIN Management for Miracle & Marvin's Wedding
+// Admin Security & PIN Management for Miracle & Malvin's Wedding
 
-export type AdminRole = 'miracle' | 'marvin' | 'groomsfamily' | 'bridesfamily' | 'custom1964';
+export type AdminRole = 'miracle' | 'malvin' | 'groomsfamily' | 'bridesfamily' | 'custom1964';
 
 export interface AdminRoleConfig {
   role: AdminRole;
@@ -9,14 +9,14 @@ export interface AdminRoleConfig {
   isMaster: boolean;
 }
 
-export const PIN_SALT = 'MiracleMarvin_Wedding_2027_Salt_';
+export const PIN_SALT = 'MiracleMalvin_Wedding_2027_Salt_';
 
-// Master recovery PIN that always grants Master Admin access (Miracle & Marvin)
+// Master recovery PIN that always grants Master Admin access (Miracle & Malvin)
 export const MASTER_EMERGENCY_PIN = '0000';
 
 export const INITIAL_ADMIN_ROLES: AdminRoleConfig[] = [
   { role: 'miracle', label: 'Miracle (Master Admin)', defaultPin: '1111', isMaster: true },
-  { role: 'marvin', label: 'Marvin (Master Admin)', defaultPin: '2222', isMaster: true },
+  { role: 'malvin', label: 'Malvin (Master Admin)', defaultPin: '2222', isMaster: true },
   { role: 'groomsfamily', label: "Groom's Family", defaultPin: '3333', isMaster: false },
   { role: 'bridesfamily', label: "Bride's Family", defaultPin: '4444', isMaster: false },
   { role: 'custom1964', label: 'Event Coordinator', defaultPin: '1964', isMaster: false },

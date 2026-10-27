@@ -7,42 +7,42 @@ export const Gallery: FC = () => {
   const photos: GalleryPhoto[] = [
     {
       id: '1',
-      src: '/assets/miracle-marvin-3.jpg',
-      alt: 'Miracle and Marvin black-tie editorial evening portrait',
+      src: '/assets/miracle-malvin-3.jpg',
+      alt: 'Miracle and Malvin black-tie editorial evening portrait',
       caption: 'Walking into forever, hand in hand',
       featured: false,
     },
     {
       id: '2',
-      src: '/assets/miracle-marvin-1.jpg',
-      alt: 'Miracle and Marvin smiling together in contemporary chic attire',
+      src: '/assets/miracle-malvin-1.jpg',
+      alt: 'Miracle and Malvin smiling together in contemporary chic attire',
       caption: 'Joy in every shared laugh',
       featured: false,
     },
     {
       id: '3',
       src: '/assets/hero-image-new.jpg',
-      alt: 'Miracle and Marvin golden hour celebration portrait',
+      alt: 'Miracle and Malvin golden hour celebration portrait',
       caption: 'Two souls, one divine journey',
       featured: false,
     },
     {
       id: '4',
-      src: '/assets/miracle-marvin-2.jpg',
-      alt: 'Regal editorial couture portrait of Miracle and Marvin',
+      src: '/assets/miracle-malvin-2.jpg',
+      alt: 'Regal editorial couture portrait of Miracle and Malvin',
       caption: 'High-fashion elegance anchored in timeless devotion',
       featured: true,
     },
     {
       id: '5',
       src: '/assets/story-couple.jpg',
-      alt: 'Romantic candlelight portrait of Miracle and Marvin',
+      alt: 'Romantic candlelight portrait of Miracle and Malvin',
       caption: 'In your eyes, I found my home',
       featured: false,
     },
     {
       id: '6',
-      src: '/assets/miracle-marvin-1.jpg',
+      src: '/assets/miracle-malvin-1.jpg',
       alt: 'Outdoor botanical portrait of the couple',
       caption: 'Every love story is special, but ours is our favorite',
       featured: false,
@@ -50,7 +50,7 @@ export const Gallery: FC = () => {
     {
       id: '7',
       src: '/assets/hero-image-new.jpg',
-      alt: 'Miracle and Marvin embracing on the terrace',
+      alt: 'Miracle and Malvin embracing on the terrace',
       caption: 'Our forever starts on Wednesday, January 27, 2027',
       featured: true,
     },
@@ -146,7 +146,7 @@ export const Gallery: FC = () => {
                       {photo.caption}
                     </p>
                     <p className="text-brand-gold text-xs uppercase tracking-widest font-sans mt-1">
-                      Miracle & Marvin
+                      Miracle & Malvin
                     </p>
                   </div>
                   <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">

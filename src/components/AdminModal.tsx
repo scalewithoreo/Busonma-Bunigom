@@ -6,7 +6,7 @@ import {
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
   getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, InviteCode,
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
-  getStoredReminders, deleteReservation
+  getStoredReminders, deleteReservation, clearMiracleMalvinDatabase
 } from '../utils/storage';
 import { sendReservationReminderEmail } from '../utils/email';
 import { RsvpSubmission, GiftPledge, WishlistItem, GiftReminder } from '../types';
@@ -42,7 +42,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [reservations, setReservations] = useState<GiftReminder[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const getRoleCodeLimit = () => {
-    if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '')) return Infinity;
+    if (['miracle', 'malvin', 'ore', 'dara'].includes(role || '')) return Infinity;
     if (role === 'custom1964') return 20;
     return 100;
   };
@@ -75,7 +75,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       setIsLoading(true);
       const load = async () => {
         try {
-          if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '')) {
+          if (['miracle', 'malvin', 'ore', 'dara'].includes(role || '')) {
             const [loadedRsvps, loadedPledges, loadedCodes, loadedItems, loadedReservations] = await Promise.all([
               getStoredRsvps(),
               getStoredGiftPledgesAdmin(),
@@ -129,7 +129,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
   const filteredRsvps = useMemo(() => {
     let result = rsvps;
-    if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && creatorFilter !== 'all') {
+    if (['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && creatorFilter !== 'all') {
       const creatorCodes = codes.filter(c => c.created_by === creatorFilter && c.is_used && c.used_by);
       const usedNames = creatorCodes.map(c => c.used_by!.trim().toLowerCase());
       result = result.filter(r => usedNames.includes(`${r.firstName.trim()} ${r.lastName.trim()}`.toLowerCase()));
@@ -138,7 +138,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   }, [rsvps, creatorFilter, role, codes]);
 
   const filteredCodes = useMemo(() => {
-    if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && creatorFilter !== 'all') {
+    if (['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && creatorFilter !== 'all') {
       return codes.filter(c => c.created_by === creatorFilter);
     }
     return codes;
@@ -149,7 +149,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
     if (isNaN(amount) || amount < 1) amount = 1;
     if (amount > 100) amount = 100;
 
-    if (!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && codes.length + amount > roleCodeLimit) {
+    if (!['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && codes.length + amount > roleCodeLimit) {
       alert(`You can only create up to ${roleCodeLimit} codes. You have ${codes.length} already.`);
       return;
     }
@@ -226,15 +226,15 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
 ‚ú® *A Gentle Reminder:* As much as we love little ones, this will be an adult-only celebration. Thank you so much for understanding!`;
 
       if (creatorRole === 'bridesfamily') {
-        return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of our daughter, *Miracle* and *Marvin*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
+        return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of our daughter, *Miracle* and *Malvin*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
       } else if (creatorRole === 'groomsfamily') {
-        return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of our son, *Marvin* and *Miracle*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
-      } else if (['miracle', 'marvin', 'ore', 'dara'].includes(creatorRole || '')) {
+        return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of our son, *Malvin* and *Miracle*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
+      } else if (['miracle', 'malvin', 'ore', 'dara'].includes(creatorRole || '')) {
         return `*WEDDING INVITATION üíç*\nWe are absolutely overjoyed to invite you to celebrate with us as we tie the knot on *Wednesday, January 27th, 2027*!\n${codeSection}`;
       }
       
       // Default for 'custom1964' or anything else
-      return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of *Miracle* and *Marvin*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
+      return `*WEDDING INVITATION üíç*\nIt gives us immense joy to announce the forthcoming wedding of *Miracle* and *Malvin*, taking place on *Wednesday, January 27th, 2027*!\n${codeSection}`;
     };
 
 
@@ -523,23 +523,45 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
       {/* Header */}
       <div className="bg-brand-espresso px-6 sm:px-12 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 shadow-md z-20">
         <div>
-          <h2 className="text-2xl font-serif text-brand-goldLight">Oluwadara & Oreoluwa</h2>
+          <h2 className="text-2xl font-serif text-brand-goldLight">Miracle & Malvin</h2>
           <p className="text-brand-cream/70 text-xs font-sans tracking-widest uppercase mt-1.5">
             Admin Dashboard
           </p>
         </div>
-        <button
-          onClick={onClose}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-cream/10 rounded-xl text-brand-cream hover:bg-brand-gold hover:text-brand-espresso transition-colors text-sm font-semibold tracking-wider uppercase"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Log Out</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && (
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to completely clear the guest list and reset the database for Miracle & Malvin? This will reset all RSVPs, invite codes, and pledges.')) {
+                  clearMiracleMalvinDatabase();
+                  setRsvps([]);
+                  setCodes([]);
+                  setPledges([]);
+                  setReservations([]);
+                  setWishlistItems(INITIAL_WISHLIST_ITEMS);
+                  onNotify('Database Cleared', 'Miracle & Malvin database has been reset fresh.');
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 bg-red-950/40 border border-red-500/30 rounded-xl text-red-300 hover:bg-red-900/60 transition-colors text-xs font-semibold tracking-wider uppercase"
+              title="Reset backend database"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Reset DB</span>
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-cream/10 rounded-xl text-brand-cream hover:bg-brand-gold hover:text-brand-espresso transition-colors text-sm font-semibold tracking-wider uppercase"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log Out</span>
+          </button>
+        </div>
       </div>
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 px-6 sm:px-12 pt-8 pb-0 shrink-0 overflow-x-auto bg-brand-ivory z-10 border-b border-brand-sand/50" data-lenis-prevent="true">
-        {(['miracle', 'marvin', 'ore', 'dara'].includes(role || '') || ['custom1964', 'groomsfamily', 'bridesfamily'].includes(role)) && (
+        {(['miracle', 'malvin', 'ore', 'dara'].includes(role || '') || ['custom1964', 'groomsfamily', 'bridesfamily'].includes(role)) && (
           <button
             onClick={() => setActiveTab('rsvps')}
             className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
@@ -548,10 +570,10 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                 : 'bg-white text-brand-muted hover:bg-brand-sand/50'
             }`}
           >
-            <Users className="w-4 h-4" /> {!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') ? 'My Guests RSVPs' : 'Guest RSVPs'}
+            <Users className="w-4 h-4" /> {!['miracle', 'malvin', 'ore', 'dara'].includes(role || '') ? 'My Guests RSVPs' : 'Guest RSVPs'}
           </button>
         )}
-        {['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
+        {['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && (
           <button
             onClick={() => setActiveTab('gifts')}
             className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
@@ -575,7 +597,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
           <KeyRound className="w-4 h-4" /> Invite Codes
         </button>
 
-        {['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
+        {['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && (
           <>
             <button
               onClick={() => setActiveTab('wishlist')}
@@ -651,7 +673,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
 
 
                         {/* Creator Filter for Master */}
-                        {['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
+                        {['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && (
                           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                             <div className="flex items-center gap-1.5 px-3 py-2 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-2">
                               <Filter className="w-3.5 h-3.5" /> Creator
@@ -714,15 +736,15 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                             'Submitted At': new Date(r.submittedAt).toLocaleString()
                           }));
 
-                          if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '')) {
-                            const roles = ['miracle', 'marvin', 'ore', 'dara', 'custom1964', 'groomsfamily', 'bridesfamily'];
+                          if (['miracle', 'malvin', 'ore', 'dara'].includes(role || '')) {
+                            const roles = ['miracle', 'malvin', 'ore', 'dara', 'custom1964', 'groomsfamily', 'bridesfamily'];
                             const roleLabels: Record<string, string> = {
                               'miracle': 'Miracle',
-                              'marvin': 'Marvin',
-                              'ore': 'Marvin',
+                              'malvin': 'Malvin',
+                              'ore': 'Malvin',
                               'dara': 'Miracle',
                               'custom1964': "Coordinator",
-                              'groomsfamily': "Marvin's Family",
+                              'groomsfamily': "Malvin's Family",
                               'bridesfamily': "Miracle's Family"
                             };
                             
@@ -958,8 +980,8 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                     <input
                       type="number"
                       min="1"
-                      max={!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') ? Math.max(0, roleCodeLimit - codes.length) : 100}
-                      disabled={!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && codes.length >= roleCodeLimit}
+                      max={!['miracle', 'malvin', 'ore', 'dara'].includes(role || '') ? Math.max(0, roleCodeLimit - codes.length) : 100}
+                      disabled={!['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && codes.length >= roleCodeLimit}
                       value={bulkGenAmount}
                       onChange={(e) => setBulkGenAmount(e.target.value)}
                       className="w-20 px-4 py-4 bg-brand-cream/50 border border-brand-sand/50 rounded-xl text-center font-sans font-bold text-brand-espresso focus:outline-none focus:border-brand-gold disabled:opacity-50"
@@ -967,7 +989,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                     />
                     <button
                       onClick={handleGenerateCode}
-                      disabled={isGenerating || (!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && codes.length >= roleCodeLimit)}
+                      disabled={isGenerating || (!['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && codes.length >= roleCodeLimit)}
                       className="flex items-center gap-2 px-8 py-4 bg-brand-goldDark text-white text-sm font-sans font-bold uppercase tracking-wider rounded-2xl hover:bg-brand-espresso transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                     >
                       <Plus className="w-5 h-5" /> {isGenerating ? 'Wait...' : 'Generate'}
@@ -982,7 +1004,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                       <div>
                         <div className="flex items-center gap-3">
                           <h3 className="font-serif text-2xl text-brand-espresso shrink-0">All Invite Codes</h3>
-                          {!['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
+                          {!['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && (
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold font-mono tracking-widest uppercase ${codes.length >= roleCodeLimit ? 'bg-rose-100 text-rose-700' : 'bg-brand-gold/20 text-brand-goldDark'}`}>
                               {codes.length} / {roleCodeLimit} Cap
                             </span>
@@ -993,7 +1015,7 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                         </p>
                       </div>
 
-                      {['miracle', 'marvin', 'ore', 'dara'].includes(role || '') && (
+                      {['miracle', 'malvin', 'ore', 'dara'].includes(role || '') && (
                         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                           <div className="flex items-center gap-1.5 px-3 py-2 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-2">
                             <Filter className="w-3.5 h-3.5" /> Creator
@@ -1049,15 +1071,15 @@ To help us finalize our guest list, please use your unique code üëâ *${code}* 
                               'Created At': new Date(c.created_at).toLocaleString()
                             }));
 
-                            if (['miracle', 'marvin', 'ore', 'dara'].includes(role || '')) {
-                              const roles = ['miracle', 'marvin', 'ore', 'dara', 'custom1964', 'groomsfamily', 'bridesfamily'];
+                            if (['miracle', 'malvin', 'ore', 'dara'].includes(role || '')) {
+                              const roles = ['miracle', 'malvin', 'ore', 'dara', 'custom1964', 'groomsfamily', 'bridesfamily'];
                               const roleLabels: Record<string, string> = {
                                 'miracle': 'Miracle',
-                                'marvin': 'Marvin',
-                                'ore': 'Marvin',
+                                'malvin': 'Malvin',
+                                'ore': 'Malvin',
                                 'dara': 'Miracle',
                                 'custom1964': "Coordinator",
-                                'groomsfamily': "Marvin's Family",
+                                'groomsfamily': "Malvin's Family",
                                 'bridesfamily': "Miracle's Family"
                               };
                               

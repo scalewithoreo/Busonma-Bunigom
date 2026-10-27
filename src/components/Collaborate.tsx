@@ -29,9 +29,9 @@ export const Collaborate: FC<CollaborateProps> = ({ onNotify }) => {
         </div>
       `;
 
-      // Send to Ore's email
+      // Send to couple's email
       const res = await sendEmail({
-        to: 'oreokunade@gmail.com',
+        to: 'miracleandmalvin@gmail.com',
         subject: `Wedding Collab: ${formData.name}`,
         html,
       });

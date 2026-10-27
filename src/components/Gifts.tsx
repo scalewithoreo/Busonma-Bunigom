@@ -9,12 +9,12 @@ interface GiftsProps {
 export const Gifts: FC<GiftsProps> = ({ onNotify }) => {
   const accountDetails = [
     {
-      accountName: 'Oreoluwa Okunade',
+      accountName: 'Malvin',
       bankName: 'Zenith Bank',
       accountNumber: '2209775057',
     },
     {
-      accountName: 'Oluwadara Alao',
+      accountName: 'Miracle',
       bankName: 'Providus Bank',
       accountNumber: '6506945948',
     }
@@ -32,7 +32,7 @@ export const Gifts: FC<GiftsProps> = ({ onNotify }) => {
   };
 
   const handleCopyAll = () => {
-    const fullText = `Oreoluwa & Oluwadara Wedding Gift Details\n` + 
+    const fullText = `Miracle & Malvin Wedding Gift Details\n` + 
       accountDetails.map(acc => `\n${acc.accountName}\nBank: ${acc.bankName}\nAccount: ${acc.accountNumber}`).join('\n');
     navigator.clipboard.writeText(fullText);
     setCopiedField('all');

@@ -173,7 +173,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
   const handleRestoreDefaults = () => {
     INITIAL_ADMIN_ROLES.forEach(r => resetRolePinToDefault(r.role));
     setResetSuccess('All PINs restored to default values.');
-    onNotify('Defaults Restored', 'Miracle: 1111 | Marvin: 2222');
+    onNotify('Defaults Restored', 'Miracle: 1111 | Malvin: 2222');
     setTimeout(() => {
       setIsResetModalOpen(false);
       setResetSuccess('');
@@ -211,7 +211,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
           <KeyRound className="w-8 h-8 text-brand-goldDark" />
         </div>
 
-        <h1 className="font-serif text-2xl sm:text-3xl text-brand-espresso mb-1">Miracle & Marvin</h1>
+        <h1 className="font-serif text-2xl sm:text-3xl text-brand-espresso mb-1">Miracle & Malvin</h1>
         <p className="text-xs uppercase tracking-widest text-brand-goldDark font-semibold mb-4">
           Admin Dashboard
         </p>
@@ -266,7 +266,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
             </button>
 
             <div className="text-[11px] font-mono text-brand-muted/80 bg-brand-sand/20 rounded-lg px-2.5 py-1.5 w-full text-center">
-              Defaults: Miracle (1111) • Marvin (2222) • Master (0000)
+              Defaults: Miracle (1111) • Malvin (2222) • Master (0000)
             </div>
           </div>
 

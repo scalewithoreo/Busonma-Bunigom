@@ -40,7 +40,7 @@ export const OurStory: FC = () => {
             <div className="aspect-[4/5] sm:aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl relative bg-brand-espresso border border-brand-gold/20">
               <img loading="lazy" decoding="async"
                 src="/assets/story-couple.jpg" 
-                alt="Miracle and Marvin"
+                alt="Miracle and Malvin"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-brand-gold/10 mix-blend-multiply pointer-events-none" />
@@ -71,7 +71,7 @@ export const OurStory: FC = () => {
               On January 27th, we stand before God and our dearest loved ones to celebrate the beginning of that forever.
             </p>
             <div className="pt-8 relative z-10">
-              <p className="font-serif italic text-2xl text-brand-goldDark">— Marvin & Miracle</p>
+              <p className="font-serif italic text-2xl text-brand-goldDark">— Malvin & Miracle</p>
             </div>
           </motion.div>
         </div>

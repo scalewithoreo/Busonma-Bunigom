@@ -6,21 +6,21 @@ export const Colours: FC = () => {
   const looks = [
     {
       id: 'look-1',
-      src: '/assets/miracle-marvin-3.jpg',
+      src: '/assets/miracle-malvin-3.jpg',
       title: 'Editorial Noir & Scarlet Red Draping',
       category: 'Black Tie Editorial',
       caption: 'A striking statement: sweeping scarlet crimson gown paired with sharp midnight black tailoring for a high-contrast editorial entrance.',
     },
     {
       id: 'look-2',
-      src: '/assets/miracle-marvin-2.jpg',
+      src: '/assets/miracle-malvin-2.jpg',
       title: 'Velvet Burgundy & Crimson Florals',
       category: 'Regal Contemporary',
       caption: 'Bespoke deep burgundy velvet dinner jacket and sculptural architectural bridal couture with rich crimson garden accents.',
     },
     {
       id: 'look-3',
-      src: '/assets/miracle-marvin-1.jpg',
+      src: '/assets/miracle-malvin-1.jpg',
       title: 'Chic Daytime Contemporary',
       category: 'Modern Elegance',
       caption: 'Sophisticated champagne silk and cream linen textures elevated by subtle ruby and gold fine jewelry.',
