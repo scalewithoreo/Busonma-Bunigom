@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -11,8 +11,6 @@ interface EnvelopeIntroProps {
 export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [stage, setStage] = useState<'sealed' | 'opening' | 'dismissed'>('sealed');
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const explosionRef = useRef(false);
 
   useEffect(() => {
     const alreadyOpened = sessionStorage.getItem('mm_envelope_opened');
@@ -28,7 +26,6 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
       sessionStorage.removeItem('mm_envelope_opened');
       setStage('sealed');
       setIsOpen(true);
-      explosionRef.current = false;
       document.body.style.overflow = 'hidden';
     };
 
@@ -38,171 +35,8 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
     };
   }, []);
 
-  // ================= DOCTOR STRANGE SPARK CANVAS =================
-  useEffect(() => {
-    if (stage === 'dismissed' || !isOpen) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    const width = (canvas.width = 380);
-    const height = (canvas.height = 380);
-    const cx = width / 2;
-    const cy = height / 2;
-    const ringRadius = 88; // Perfectly hugs the photorealistic wax seal rim
-
-    interface Spark {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      size: number;
-      alpha: number;
-      life: number;
-      maxLife: number;
-      color: string;
-    }
-
-    const sparks: Spark[] = [];
-    const colors = ['#FFF9A6', '#FFD700', '#FFA500', '#FF7700', '#FF3300', '#FFFFFF'];
-    let rotation = 0;
-
-    const createSpark = (fromCenter = false) => {
-      if (fromCenter) {
-        // Burst spark on tap
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 9 + 4;
-        return {
-          x: cx + Math.cos(angle) * (ringRadius * 0.7),
-          y: cy + Math.sin(angle) * (ringRadius * 0.7),
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          size: Math.random() * 3.5 + 1.5,
-          alpha: 1,
-          life: 0,
-          maxLife: Math.random() * 35 + 25,
-          color: colors[Math.floor(Math.random() * colors.length)],
-        };
-      }
-
-      // Orbital Doctor Strange fiery sparks
-      const angle = Math.random() * Math.PI * 2;
-      const tangAngle = angle + Math.PI / 2 + (Math.random() - 0.5) * 0.45;
-      const speed = Math.random() * 2.8 + 1.4;
-      const r = ringRadius + (Math.random() - 0.5) * 16;
-      return {
-        x: cx + Math.cos(angle) * r,
-        y: cy + Math.sin(angle) * r,
-        vx: Math.cos(tangAngle) * speed + (Math.random() - 0.5) * 1.2,
-        vy: Math.sin(tangAngle) * speed + (Math.random() - 0.5) * 1.2,
-        size: Math.random() * 2.5 + 0.8,
-        alpha: 1,
-        life: 0,
-        maxLife: Math.random() * 26 + 16,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      };
-    };
-
-    // Pre-populate sparks
-    for (let i = 0; i < 45; i++) {
-      sparks.push(createSpark());
-    }
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      rotation += 0.032;
-
-      // 1. Draw Doctor Strange Rotating Mystic Mandala Arcs
-      ctx.save();
-      ctx.translate(cx, cy);
-
-      // Outer dashed spinning fiery ring (clockwise)
-      ctx.rotate(rotation);
-      ctx.beginPath();
-      ctx.arc(0, 0, ringRadius + 5, 0, Math.PI * 2);
-      ctx.strokeStyle = '#FFB800';
-      ctx.lineWidth = 2.8;
-      ctx.setLineDash([14, 20, 28, 8, 4, 16]);
-      ctx.shadowColor = '#FF8C00';
-      ctx.shadowBlur = 16;
-      ctx.stroke();
-
-      // Inner counter-rotating ring
-      ctx.rotate(-rotation * 2.2);
-      ctx.beginPath();
-      ctx.arc(0, 0, ringRadius - 6, 0, Math.PI * 2);
-      ctx.strokeStyle = '#FFE066';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([10, 14, 18, 6]);
-      ctx.shadowColor = '#FF5500';
-      ctx.shadowBlur = 12;
-      ctx.stroke();
-
-      // Mystical geometric square
-      ctx.beginPath();
-      ctx.strokeRect(-ringRadius * 0.72, -ringRadius * 0.72, ringRadius * 1.44, ringRadius * 1.44);
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.45)';
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([6, 12]);
-      ctx.stroke();
-
-      ctx.restore();
-
-      // 2. Spawn and update Doctor Strange Sparks
-      if (sparks.length < 100) {
-        sparks.push(createSpark());
-        sparks.push(createSpark());
-      }
-
-      if (explosionRef.current) {
-        for (let k = 0; k < 12; k++) {
-          sparks.push(createSpark(true));
-        }
-      }
-
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const s = sparks[i];
-        s.x += s.vx;
-        s.y += s.vy;
-        s.life++;
-        s.alpha = 1 - s.life / s.maxLife;
-
-        if (s.life >= s.maxLife || s.alpha <= 0) {
-          sparks.splice(i, 1);
-          continue;
-        }
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-        ctx.fillStyle = s.color;
-        ctx.globalAlpha = Math.max(0, s.alpha);
-        ctx.shadowColor = s.color;
-        ctx.shadowBlur = 10;
-        ctx.fill();
-        ctx.restore();
-      }
-
-      animId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(animId);
-    };
-  }, [stage, isOpen]);
-
   const handleOpenEnvelope = () => {
     if (stage !== 'sealed') return;
-
-    // Trigger Doctor Strange spark explosion on canvas
-    explosionRef.current = true;
 
     // 1. Play background song immediately
     try {
@@ -217,7 +51,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
         particleCount: 55,
         spread: 95,
         origin: { y: 0.5 },
-        colors: ['#FFD700', '#FFA500', '#B91C1C', '#FFFFFF', '#FFF59D'],
+        colors: ['#B91C1C', '#991B1B', '#FFD700', '#F5EDE4', '#FFFFFF'],
         startVelocity: 32,
         gravity: 0.7,
         ticks: 170,
@@ -234,7 +68,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
       setStage('dismissed');
       document.body.style.overflow = '';
       if (onComplete) onComplete();
-    }, 950);
+    }, 900);
   };
 
   const handleSkip = () => {
@@ -266,40 +100,29 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
         style={{ perspective: '1600px' }}
       >
         {/* Subtle Ambient Light Vignette */}
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/25 to-black/80 pointer-events-none z-40" />
+        <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/20 to-black/80 pointer-events-none z-40" />
 
         {/* Sleek Minimalist Controls */}
         <div className="absolute top-4 sm:top-6 inset-x-4 sm:inset-x-8 flex items-center justify-between z-50 pointer-events-auto">
           {/* Audio pill: sleek & minimal */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/10 text-white/85 text-[11px] font-sans tracking-widest uppercase shadow-md">
-            <Volume2 className="w-3 h-3 text-[#FFD700] animate-pulse" />
-            <span className="opacity-90">Do 4 Love &bull; Snoh Aalegra</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/90 text-[11px] font-sans tracking-widest uppercase shadow-md">
+            <Volume2 className="w-3.5 h-3.5 text-[#B91C1C] animate-pulse" />
+            <span className="opacity-90 font-medium">Do 4 Love &bull; Snoh Aalegra</span>
           </div>
 
           {/* Skip pill: sleek & minimal */}
           <button
             onClick={handleSkip}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/45 hover:bg-black/75 backdrop-blur-md border border-white/10 hover:border-[#FFD700]/50 text-white/80 hover:text-white text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-md"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-md border border-white/10 hover:border-[#B91C1C]/60 text-white/90 hover:text-white text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-md"
             aria-label="Skip to website"
           >
             <span>Skip</span>
-            <ArrowRight className="w-3 h-3 text-[#FFD700]" />
+            <ArrowRight className="w-3.5 h-3.5 text-[#B91C1C]" />
           </button>
         </div>
 
         {/* ================= VOLUMETRIC 3D ENVELOPE ================= */}
         <div className="relative w-full h-full flex items-center justify-center">
-
-          {/* Inner Golden Backlight: Intense warm illumination glowing from inside the crevice */}
-          <div
-            className="absolute z-10 w-[450px] h-[450px] sm:w-[600px] sm:h-[600px] rounded-full pointer-events-none transition-transform duration-700"
-            style={{
-              background: 'radial-gradient(circle, rgba(255, 225, 140, 0.95) 0%, rgba(255, 175, 45, 0.75) 30%, rgba(185, 28, 28, 0.3) 60%, transparent 75%)',
-              filter: 'blur(40px)',
-              transform: stage === 'opening' ? 'scale(2.5)' : 'scale(1)',
-              opacity: stage === 'opening' ? 0.95 : 0.7,
-            }}
-          />
 
           {/* Envelope Body Container - Covers Full Viewport Responsively */}
           <div className="relative w-full h-full overflow-hidden">
@@ -310,8 +133,8 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
               style={paperTextureStyle}
             />
 
-            {/* Crevice Shading from Center Flap Junction */}
-            <div className="absolute inset-0 pointer-events-none bg-radial-gradient from-black/20 via-transparent to-black/15" />
+            {/* Subtle natural fold shading */}
+            <div className="absolute inset-0 pointer-events-none bg-radial-gradient from-black/15 via-transparent to-black/15" />
 
             {/* ================= LEFT FLAP (3D Felt-Pressed Cotton Paper) ================= */}
             <motion.div
@@ -368,24 +191,14 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
                 transformStyle: 'preserve-3d',
                 clipPath: 'polygon(0% 100%, 50% 50%, 100% 100%)',
               }}
-              className="absolute inset-0 z-25 pointer-events-none flex flex-col justify-end items-center pb-12 sm:pb-16"
+              className="absolute inset-0 z-25 pointer-events-none"
             >
               {/* Realistic deep pocket shadow over lower fold */}
               <div className="absolute inset-0 shadow-[0_-20px_36px_rgba(0,0,0,0.2)]" />
               <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/15 to-transparent" />
-
-              {/* Romantic Bottom Flap Calligraphy (like the reference image!) */}
-              <div className="relative z-30 text-center px-4 mb-2">
-                <p className="font-serif italic text-sm sm:text-base text-[#6E6358] tracking-wider leading-relaxed">
-                  Romantic storytelling through devotion & purpose
-                </p>
-                <p className="text-[10px] sm:text-[11px] font-sans tracking-[0.25em] uppercase text-[#8C7D6E] mt-1 font-medium">
-                  Wednesday, January 27, 2027 &bull; Lagos
-                </p>
-              </div>
             </motion.div>
 
-            {/* ================= TOP FLAP (With Fine-Art Monogram Stamp & Sealed by Wax) ================= */}
+            {/* ================= TOP FLAP (With EST. 2027 and Bold MIRACLE & MALVIN) ================= */}
             <motion.div
               initial={{ rotateX: 0 }}
               animate={
@@ -408,32 +221,20 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
               {/* Physical cotton paper edge highlight */}
               <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/35 via-transparent to-black/10 pointer-events-none" />
 
-              {/* Top Flap High-End Monogram Branding (Matching Reference Architecture!) */}
+              {/* Top Flap Typography: EST. 2027 & Bold, Pronounced Couple Name */}
               <div className="relative z-35 flex flex-col items-center text-center px-4 pointer-events-none">
-                {/* Arch / Curvature Tagline */}
-                <p className="text-[10px] sm:text-[11px] font-sans tracking-[0.3em] uppercase text-[#8C7D6E] mb-1 font-semibold">
-                  EST. 2027 &bull; LAGOS
+                <p className="text-xs sm:text-sm font-sans tracking-[0.35em] uppercase text-[#7A6B5C] mb-2 font-semibold">
+                  EST. 2027
                 </p>
 
-                {/* Elegant Fine-Art Typography */}
-                <h1 className="font-serif text-3xl sm:text-5xl text-[#2C241E] tracking-[0.18em] uppercase font-light drop-shadow-sm my-0.5">
+                <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl font-semibold text-[#1C1510] tracking-[0.22em] uppercase drop-shadow-sm my-1">
                   MIRACLE & MALVIN
                 </h1>
-
-                {/* Subtitle */}
-                <p className="text-[10px] sm:text-[11px] font-sans tracking-[0.28em] uppercase text-[#8C7D6E] font-medium mt-1">
-                  FINE ART WEDDING CELEBRATION
-                </p>
               </div>
             </motion.div>
 
-            {/* ================= DOCTOR STRANGE GLOW & PHOTOREALISTIC WAX SEAL ================= */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex items-center justify-center">
-
-              {/* Canvas: Doctor Strange Eldritch Sparks */}
-              <div className="absolute pointer-events-none w-[380px] h-[380px] flex items-center justify-center">
-                <canvas ref={canvasRef} className="w-[380px] h-[380px]" />
-              </div>
+            {/* ================= PHOTOREALISTIC WAX SEAL & BOLD CALLOUT ================= */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center">
 
               {/* The Photorealistic Wax Seal Button with Stamped M&M Monogram */}
               <motion.button
@@ -446,7 +247,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
                         scale: [1, 1.35, 0],
                         rotate: [0, 20, 50],
                         opacity: [1, 0.9, 0],
-                        filter: 'brightness(2.2)',
+                        filter: 'brightness(2)',
                         transition: { duration: 0.5, ease: 'easeIn' },
                       }
                     : {
@@ -458,27 +259,29 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
                 aria-label="Click to break wax seal and open invitation"
               >
                 {/* Genuine Photographic 3D Wax Seal Asset (with Organic Molten Edges & Debossed M&M) */}
-                <div className="relative w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center">
+                <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
                   <img
                     src="/assets/wax-seal-mm.png"
                     alt="Miracle & Malvin 3D Wax Seal"
-                    className="w-full h-full object-contain filter drop-shadow-[0_16px_32px_rgba(185,28,28,0.65)] drop-shadow-[0_6px_12px_rgba(0,0,0,0.5)] transition-transform duration-200 select-none pointer-events-none"
+                    className="w-full h-full object-contain filter drop-shadow-[0_18px_36px_rgba(185,28,28,0.7)] drop-shadow-[0_8px_16px_rgba(0,0,0,0.55)] transition-transform duration-200 select-none pointer-events-none"
                     draggable={false}
                   />
                 </div>
               </motion.button>
 
-              {/* Sleek, Ultra-Minimal Whisper Prompt */}
+              {/* Very Bold, Legible, Accessible "TAP TO UNSEAL" (Shifted down below seal) */}
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0.65, 1, 0.65] }}
-                transition={{ repeat: Infinity, duration: 2.2 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
                 onClick={handleOpenEnvelope}
-                className="absolute top-[108%] flex flex-col items-center cursor-pointer pointer-events-auto"
+                className="mt-8 flex flex-col items-center cursor-pointer pointer-events-auto"
               >
-                <span className="font-serif italic text-xs sm:text-sm tracking-[0.25em] text-[#FFE58F] drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]">
-                  Tap to Unseal
-                </span>
+                <div className="flex items-center gap-2.5 px-8 py-3 rounded-full bg-[#1A1410] hover:bg-[#B91C1C] text-white shadow-2xl hover:shadow-[0_8px_30px_rgba(185,28,28,0.4)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/15">
+                  <span className="font-sans font-extrabold text-xs sm:text-sm tracking-[0.28em] uppercase text-white">
+                    Tap to Unseal
+                  </span>
+                </div>
               </motion.div>
 
             </div>
