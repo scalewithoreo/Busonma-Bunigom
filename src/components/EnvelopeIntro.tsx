@@ -117,15 +117,15 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
         className="fixed inset-0 z-50 w-screen h-screen overflow-hidden select-none bg-[#0D0B0A]"
         style={{ perspective: '1800px' }}
       >
-        {/* Subtle Ambient Room Shadow */}
+        {/* Subtle Ambient Room Vignette */}
         <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/30 to-black/85 pointer-events-none z-40" />
 
-        {/* Minimalist Top Control Bar */}
+        {/* Minimalist Top Control Bar with Safe Margins */}
         <div className="absolute top-4 sm:top-6 inset-x-4 sm:inset-x-8 flex items-center justify-between z-50 pointer-events-auto">
-          {/* Fully Interactive Audio Pill (Click to Mute / Unmute directly from envelope) */}
+          {/* Fully Interactive Audio Pill */}
           <button
             onClick={handleAudioToggle}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white text-[11px] font-sans tracking-widest uppercase shadow-lg transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase shadow-lg transition-all active:scale-95 cursor-pointer"
             aria-label={isMuted || !isPlaying ? 'Unmute wedding music' : 'Mute wedding music'}
           >
             {isMuted || !isPlaying ? (
@@ -144,7 +144,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
           {/* Quick Skip Button */}
           <button
             onClick={handleSkip}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 hover:border-[#B91C1C]/60 text-white text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-lg cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/20 hover:border-[#B91C1C]/60 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-lg cursor-pointer"
             aria-label="Skip into website"
           >
             <span>Skip</span>
@@ -155,7 +155,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
         {/* ================= REALISTIC 3D ENVELOPE ================= */}
         <div className="relative w-full h-full flex items-center justify-center">
 
-          {/* Envelope Body Container - Fills Full Viewport Responsive */}
+          {/* Envelope Body Container - Fills Full Viewport */}
           <div className="relative w-full h-full overflow-hidden">
 
             {/* BASE COTTON PAPER SURFACE (Inside of envelope) */}
@@ -191,17 +191,6 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               {/* Inner crease shading */}
               <div className="absolute inset-0 shadow-[inset_-12px_0_35px_rgba(0,0,0,0.18)]" />
               <div className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/15" />
-
-              {/* Embossed Botanical Pattern along flap border matching video reference */}
-              <svg className="absolute inset-0 w-full h-full opacity-25" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M 10 50 Q 150 250 280 400"
-                  stroke="#8B7B6B"
-                  strokeWidth="1.5"
-                  strokeDasharray="4,6"
-                  fill="none"
-                />
-              </svg>
             </motion.div>
 
             {/* ================= RIGHT FLAP ================= */}
@@ -223,17 +212,6 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               {/* Inner crease shading */}
               <div className="absolute inset-0 shadow-[inset_12px_0_35px_rgba(0,0,0,0.18)]" />
               <div className="absolute inset-0 bg-gradient-to-l from-black/5 via-transparent to-black/15" />
-
-              {/* Embossed Botanical Pattern along flap border matching video reference */}
-              <svg className="absolute inset-0 w-full h-full opacity-25" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M 990 50 Q 850 250 720 400"
-                  stroke="#8B7B6B"
-                  strokeWidth="1.5"
-                  strokeDasharray="4,6"
-                  fill="none"
-                />
-              </svg>
             </motion.div>
 
             {/* ================= BOTTOM FLAP ================= */}
@@ -275,7 +253,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                 transformStyle: 'preserve-3d',
                 clipPath: 'polygon(0% 0%, 50% 50%, 100% 0%)',
               }}
-              className="absolute inset-0 cursor-pointer flex flex-col items-center pt-12 sm:pt-16"
+              className="absolute inset-0 cursor-pointer flex flex-col items-center pt-20 sm:pt-24 md:pt-28"
               onClick={handleOpenEnvelope}
             >
               {/* Heavy natural shadow cast by the thick cotton flap onto bottom layers */}
@@ -284,24 +262,24 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               {/* Physical paper edge highlight */}
               <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/35 via-transparent to-black/15 pointer-events-none" />
 
-              {/* Top Flap Typography: EST. 2027 & Bold, Pronounced MIRACLE & MALVIN */}
+              {/* Top Flap Typography: Shifted down comfortably below top bar, balanced & centralized */}
               <motion.div
                 animate={stage === 'opening' ? { opacity: 0 } : { opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="relative z-35 flex flex-col items-center text-center px-4 pointer-events-none"
+                className="relative z-35 flex flex-col items-center text-center px-4 max-w-xl pointer-events-none"
               >
-                <p className="text-xs sm:text-sm font-sans tracking-[0.35em] uppercase text-[#7A6B5C] mb-2 font-semibold">
+                <p className="text-[11px] sm:text-xs md:text-sm font-sans tracking-[0.32em] uppercase text-[#7A6B5C] mb-1.5 sm:mb-2 font-semibold">
                   EST. 2027
                 </p>
 
-                <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl font-semibold text-[#1C1510] tracking-[0.22em] uppercase drop-shadow-sm my-1">
+                <h1 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-[#1C1510] tracking-[0.16em] sm:tracking-[0.22em] uppercase drop-shadow-sm leading-tight">
                   MIRACLE & MALVIN
                 </h1>
               </motion.div>
             </motion.div>
 
-            {/* ================= WAX SEAL BUTTON & TAP PROMPT ================= */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center">
+            {/* ================= WAX SEAL & CENTRALIZED CONTROLS ================= */}
+            <div className="absolute top-[52%] sm:top-[51%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center pointer-events-auto">
 
               {/* Photorealistic Wax Seal Button with Stamped M&M Monogram */}
               <motion.button
@@ -312,7 +290,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                   stage === 'opening'
                     ? {
                         scale: 1.25,
-                        y: -55,
+                        y: -50,
                         rotate: 15,
                         opacity: 0,
                         filter: 'drop-shadow(0 25px 40px rgba(185,28,28,0.9))',
@@ -327,7 +305,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                 aria-label="Click to break wax seal and open invitation"
               >
                 {/* 3D Wax Seal Asset with Debossed M&M and Organic Edges */}
-                <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
+                <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 flex items-center justify-center">
                   <img
                     src="/assets/wax-seal-mm.png"
                     alt="Miracle & Malvin 3D Wax Seal"
@@ -337,7 +315,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                 </div>
               </motion.button>
 
-              {/* Bold, Accessible, High-Contrast "TAP TO UNSEAL" (Shifted down below seal) */}
+              {/* Sleek, Single-Line, Unbroken "TAP TO UNSEAL" Button (Fixed Mobile Line-Break) */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={
@@ -347,10 +325,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                 }
                 transition={{ delay: 0.15 }}
                 onClick={handleOpenEnvelope}
-                className="mt-8 flex flex-col items-center cursor-pointer pointer-events-auto"
+                className="mt-6 sm:mt-7 flex flex-col items-center justify-center cursor-pointer"
               >
-                <div className="flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#1A1410] hover:bg-[#B91C1C] text-white shadow-2xl hover:shadow-[0_8px_30px_rgba(185,28,28,0.5)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20">
-                  <span className="font-sans font-extrabold text-xs sm:text-sm tracking-[0.28em] uppercase text-white">
+                <div className="inline-flex items-center justify-center px-8 sm:px-10 py-3 sm:py-3.5 rounded-full bg-[#181310] hover:bg-[#B91C1C] text-white shadow-xl hover:shadow-[0_8px_30px_rgba(185,28,28,0.5)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20 whitespace-nowrap shrink-0">
+                  <span className="font-sans font-bold text-xs sm:text-sm tracking-[0.22em] uppercase text-white whitespace-nowrap select-none">
                     Tap to Unseal
                   </span>
                 </div>
