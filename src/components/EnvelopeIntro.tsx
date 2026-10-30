@@ -66,16 +66,16 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
       });
     } catch (e) {}
 
-    // 3. Initiate Staggered 4-Flap Opening Sequence
+    // 3. Initiate Slow Pull-Back Reveal Sequence
     setStage('opening');
     if (onOpeningStart) onOpeningStart();
 
-    // 4. Once all 4 flaps have sequentially opened (~2.3s total), dismiss the overlay
+    // 4. Once all 4 envelope parts have smoothly pulled back to the page edges (~1.5s), dismiss the overlay
     setTimeout(() => {
       setStage('dismissed');
       document.body.style.overflow = '';
       if (onComplete) onComplete();
-    }, 2350);
+    }, 1550);
   };
 
   const handleSkip = (e: React.MouseEvent) => {
@@ -139,147 +139,135 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
           <ArrowRight className="w-3.5 h-3.5 text-[#B91C1C]" />
         </button>
 
-        {/* ================= 4-FLAP STAGGERED REVEAL SURFACE ================= */}
-        <div className="relative w-full h-full">
+        {/* ================= 4-PART PULL-BACK REVEAL ENVELOPE ================= */}
+        <div className="relative w-full h-full overflow-hidden">
 
-          {/* ================= 1ST TO OPEN: TOP FLAP (Delay: 0.2s) ================= */}
+          {/* ================= TOP FLAP: SLOWLY PULLS UPWARDS ================= */}
           <motion.div
-            initial={{ rotateX: 0, y: 0, opacity: 1 }}
+            initial={{ y: 0, opacity: 1 }}
             animate={
               stage === 'opening'
                 ? {
-                    rotateX: 160,
-                    y: -140,
-                    opacity: [1, 1, 0.7, 0],
+                    y: '-105%',
+                    opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 0.85,
-                      delay: 0.2,
-                      times: [0, 0.4, 0.75, 1],
-                      ease: [0.4, 0, 0.2, 1],
+                      duration: 1.45,
+                      delay: 0.08,
+                      times: [0, 0.45, 0.85, 1],
+                      ease: [0.22, 1, 0.36, 1],
                     },
                   }
-                : { rotateX: 0, y: 0, opacity: 1 }
+                : { y: 0, opacity: 1 }
             }
             style={{
               ...paperTextureStyle,
-              transformOrigin: 'top center',
-              transformStyle: 'preserve-3d',
-              clipPath: 'polygon(0% 0%, 100% 0%, 50% 50%)',
+              clipPath: 'polygon(-0.5% -0.5%, 100.5% -0.5%, 50% 50.5%)',
             }}
-            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-20 sm:pt-24 md:pt-28"
+            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-16 sm:pt-20 md:pt-24"
             onClick={handleOpenEnvelope}
           >
-            {/* Natural bottom drop shadow cast over lower flaps */}
-            <div className="absolute inset-0 shadow-[0_24px_50px_rgba(0,0,0,0.35)]" />
-            <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/30 via-transparent to-black/15 pointer-events-none" />
+            {/* Soft depth shadow cast over lower flaps */}
+            <div className="absolute inset-0 shadow-[0_16px_40px_rgba(0,0,0,0.22)]" />
+            <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/30 via-transparent to-black/10 pointer-events-none" />
 
-            {/* Top Flap Typography */}
+            {/* Top Flap Typography: Generously spaced & strictly single-line */}
             <motion.div
-              animate={stage === 'opening' ? { opacity: 0 } : { opacity: 1 }}
-              transition={{ duration: 0.25 }}
-              className="relative z-35 flex flex-col items-center text-center px-4 max-w-xl pointer-events-none"
+              animate={stage === 'opening' ? { opacity: [1, 1, 0.7, 0] } : { opacity: 1 }}
+              transition={{ duration: 1.1 }}
+              className="relative z-35 flex flex-col items-center text-center px-4 max-w-full pointer-events-none select-none"
             >
-              <p className="text-[11px] sm:text-xs md:text-sm font-sans tracking-[0.32em] uppercase text-[#7A6B5C] mb-1.5 sm:mb-2 font-semibold">
-                EST. 2027
+              <p className="text-[11px] sm:text-xs md:text-sm font-sans tracking-[0.35em] uppercase text-[#7A6B5C] mb-3 sm:mb-4 md:mb-5 font-semibold whitespace-nowrap">
+                JAN 2027
               </p>
 
-              <h1 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-[#1C1510] tracking-[0.16em] sm:tracking-[0.22em] uppercase drop-shadow-sm leading-tight">
-                MIRACLE & MALVIN
+              <h1 className="font-serif text-lg xs:text-xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-[#1C1510] tracking-[0.14em] sm:tracking-[0.22em] uppercase drop-shadow-sm leading-none whitespace-nowrap">
+                MIRACLE &amp; MALVIN
               </h1>
             </motion.div>
           </motion.div>
 
-          {/* ================= 2ND TO OPEN: RIGHT FLAP (Delay: 0.65s) ================= */}
+          {/* ================= RIGHT FLAP: SLOWLY PULLS RIGHTWARDS ================= */}
           <motion.div
-            initial={{ rotateY: 0, x: 0, opacity: 1 }}
+            initial={{ x: 0, opacity: 1 }}
             animate={
               stage === 'opening'
                 ? {
-                    rotateY: 150,
-                    x: 140,
-                    opacity: [1, 1, 0.7, 0],
+                    x: '105%',
+                    opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 0.85,
-                      delay: 0.65,
-                      times: [0, 0.4, 0.75, 1],
-                      ease: [0.4, 0, 0.2, 1],
+                      duration: 1.45,
+                      delay: 0.08,
+                      times: [0, 0.45, 0.85, 1],
+                      ease: [0.22, 1, 0.36, 1],
                     },
                   }
-                : { rotateY: 0, x: 0, opacity: 1 }
+                : { x: 0, opacity: 1 }
             }
             style={{
               ...paperTextureStyle,
-              transformOrigin: 'right center',
-              transformStyle: 'preserve-3d',
-              clipPath: 'polygon(100% 0%, 100% 100%, 50% 50%)',
+              clipPath: 'polygon(100.5% -0.5%, 100.5% 100.5%, 49.5% 50%)',
             }}
             className="absolute inset-0 z-24 pointer-events-none"
           >
             {/* Crease shading */}
-            <div className="absolute inset-0 shadow-[inset_14px_0_35px_rgba(0,0,0,0.2)]" />
-            <div className="absolute inset-0 bg-gradient-to-l from-black/5 via-transparent to-black/15" />
+            <div className="absolute inset-0 shadow-[inset_14px_0_35px_rgba(0,0,0,0.18)]" />
+            <div className="absolute inset-0 bg-gradient-to-l from-black/5 via-transparent to-black/10" />
           </motion.div>
 
-          {/* ================= 3RD TO OPEN: LEFT FLAP (Delay: 1.05s) ================= */}
+          {/* ================= LEFT FLAP: SLOWLY PULLS LEFTWARDS ================= */}
           <motion.div
-            initial={{ rotateY: 0, x: 0, opacity: 1 }}
+            initial={{ x: 0, opacity: 1 }}
             animate={
               stage === 'opening'
                 ? {
-                    rotateY: -150,
-                    x: -140,
-                    opacity: [1, 1, 0.7, 0],
+                    x: '-105%',
+                    opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 0.85,
-                      delay: 1.05,
-                      times: [0, 0.4, 0.75, 1],
-                      ease: [0.4, 0, 0.2, 1],
+                      duration: 1.45,
+                      delay: 0.08,
+                      times: [0, 0.45, 0.85, 1],
+                      ease: [0.22, 1, 0.36, 1],
                     },
                   }
-                : { rotateY: 0, x: 0, opacity: 1 }
+                : { x: 0, opacity: 1 }
             }
             style={{
               ...paperTextureStyle,
-              transformOrigin: 'left center',
-              transformStyle: 'preserve-3d',
-              clipPath: 'polygon(0% 0%, 50% 50%, 0% 100%)',
+              clipPath: 'polygon(-0.5% -0.5%, 50.5% 50%, -0.5% 100.5%)',
             }}
             className="absolute inset-0 z-22 pointer-events-none"
           >
             {/* Crease shading */}
-            <div className="absolute inset-0 shadow-[inset_-14px_0_35px_rgba(0,0,0,0.2)]" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/15" />
+            <div className="absolute inset-0 shadow-[inset_-14px_0_35px_rgba(0,0,0,0.18)]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/10" />
           </motion.div>
 
-          {/* ================= 4TH TO OPEN: BOTTOM FLAP (Delay: 1.45s) ================= */}
+          {/* ================= BOTTOM FLAP: SLOWLY PULLS DOWNWARDS ================= */}
           <motion.div
-            initial={{ rotateX: 0, y: 0, opacity: 1 }}
+            initial={{ y: 0, opacity: 1 }}
             animate={
               stage === 'opening'
                 ? {
-                    rotateX: -140,
-                    y: 140,
-                    opacity: [1, 1, 0.7, 0],
+                    y: '105%',
+                    opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 0.85,
-                      delay: 1.45,
-                      times: [0, 0.4, 0.75, 1],
-                      ease: [0.4, 0, 0.2, 1],
+                      duration: 1.45,
+                      delay: 0.08,
+                      times: [0, 0.45, 0.85, 1],
+                      ease: [0.22, 1, 0.36, 1],
                     },
                   }
-                : { rotateX: 0, y: 0, opacity: 1 }
+                : { y: 0, opacity: 1 }
             }
             style={{
               ...paperTextureStyle,
-              transformOrigin: 'bottom center',
-              transformStyle: 'preserve-3d',
-              clipPath: 'polygon(0% 100%, 50% 50%, 100% 100%)',
+              clipPath: 'polygon(-0.5% 100.5%, 50% 49.5%, 100.5% 100.5%)',
             }}
             className="absolute inset-0 z-20 pointer-events-none"
           >
             {/* Bottom flap crease shadow */}
-            <div className="absolute inset-0 shadow-[0_-22px_45px_rgba(0,0,0,0.25)]" />
-            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/25 via-black/5 to-transparent" />
+            <div className="absolute inset-0 shadow-[0_-18px_40px_rgba(0,0,0,0.2)]" />
+            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/20 via-black/5 to-transparent" />
           </motion.div>
 
           {/* ================= WAX SEAL & TAP BUTTON ================= */}
