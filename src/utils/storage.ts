@@ -12,14 +12,14 @@ const MM_DB_PLEDGES = 'mm_db_pledges';
 const MM_DB_RESERVATIONS = 'mm_db_reservations';
 const MM_DB_WISHLIST = 'mm_db_wishlist';
 
-// Clean up any lingering legacy Ore & Dara cache from the browser immediately
+// Clean up any lingering legacy cache from the browser immediately
 try {
   if (typeof window !== 'undefined' && window.localStorage) {
     const keysToRemove = [
-      'ore_dara_user_active_rsvp',
-      'ore_dara_wedding_gift_reminders',
-      'ore_dara_admin_lockout_until',
-      'ore_dara_admin_attempts'
+      'legacy_user_active_rsvp',
+      'legacy_wedding_gift_reminders',
+      'legacy_admin_lockout_until',
+      'legacy_admin_attempts'
     ];
     keysToRemove.forEach(k => localStorage.removeItem(k));
   }
@@ -46,7 +46,7 @@ export function clearMiracleMalvinDatabase(): void {
 function isDedicatedSupabaseConfigured(): boolean {
   const url = import.meta.env.VITE_SUPABASE_URL || '';
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  // NEVER connect to Ore & Dara's database
+  // Isolated dedicated database only
   if (!url || !key || url.includes('rmgrhxvbxwdpctvegppb')) {
     return false;
   }
@@ -557,7 +557,7 @@ export async function unmarkInviteCodeAsShared(id: string): Promise<void> {
 
 export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[]> {
   const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
-  if (filterByRole && !['miracle', 'malvin', 'ore', 'dara'].includes(filterByRole)) {
+  if (filterByRole && !['miracle', 'malvin'].includes(filterByRole)) {
     return currentCodes.filter(c => c.created_by === filterByRole);
   }
   return currentCodes;

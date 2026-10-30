@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   
   // Try to use secure env vars first, fallback to VITE_ if user hasn't rotated them yet
   const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
-  const SENDER_EMAIL = process.env.EMAIL_SENDER || process.env.VITE_EMAIL_SENDER || "Ore & Dara's Wedding <onboarding@resend.dev>";
+  const SENDER_EMAIL = process.env.EMAIL_SENDER || process.env.VITE_EMAIL_SENDER || "Miracle & Malvin's Wedding <onboarding@resend.dev>";
 
   if (!RESEND_API_KEY) {
     console.error('Missing RESEND_API_KEY');

@@ -103,11 +103,9 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
         'master': 'Master',
         'miracle': 'Miracle',
         'malvin': 'Malvin',
-        'ore': 'Malvin',
-        'dara': 'Miracle',
-        'custom1964': "Coordinator",
         'groomsfamily': "Malvin's Family",
-        'bridesfamily': "Miracle's Family"
+        'bridesfamily': "Miracle's Family",
+        'custom1964': "Coordinator"
       };
       const creatorLabel = roleLabels[inviteCodeObj.created_by || 'master'] || 'Unknown';
 
