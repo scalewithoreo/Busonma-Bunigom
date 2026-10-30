@@ -120,37 +120,34 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
         {/* Subtle Ambient Room Vignette */}
         <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/30 to-black/85 pointer-events-none z-40" />
 
-        {/* Minimalist Top Control Bar with Safe Margins */}
-        <div className="absolute top-4 sm:top-6 inset-x-4 sm:inset-x-8 flex items-center justify-between z-50 pointer-events-auto">
-          {/* Fully Interactive Audio Pill */}
-          <button
-            onClick={handleAudioToggle}
-            className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase shadow-lg transition-all active:scale-95 cursor-pointer"
-            aria-label={isMuted || !isPlaying ? 'Unmute wedding music' : 'Mute wedding music'}
-          >
-            {isMuted || !isPlaying ? (
-              <>
-                <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-                <span className="opacity-80">Muted &bull; Tap to Play</span>
-              </>
-            ) : (
-              <>
-                <Volume2 className="w-3.5 h-3.5 text-[#B91C1C] animate-pulse" />
-                <span className="opacity-95 font-medium">Do 4 Love &bull; Tap to Mute</span>
-              </>
-            )}
-          </button>
+        {/* Audio Pill: Lower-Left on Mobile, Top-Left on Desktop */}
+        <button
+          onClick={handleAudioToggle}
+          className="fixed bottom-6 left-4 sm:bottom-auto sm:top-6 sm:left-8 z-50 flex items-center gap-2 px-3.5 py-2 sm:py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase shadow-2xl transition-all active:scale-95 cursor-pointer pointer-events-auto"
+          aria-label={isMuted || !isPlaying ? 'Unmute wedding music' : 'Mute wedding music'}
+        >
+          {isMuted || !isPlaying ? (
+            <>
+              <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="opacity-80">Muted &bull; Tap to Play</span>
+            </>
+          ) : (
+            <>
+              <Volume2 className="w-3.5 h-3.5 text-[#B91C1C] animate-pulse" />
+              <span className="opacity-95 font-medium">Do 4 Love &bull; Tap to Mute</span>
+            </>
+          )}
+        </button>
 
-          {/* Quick Skip Button */}
-          <button
-            onClick={handleSkip}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/20 hover:border-[#B91C1C]/60 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-lg cursor-pointer"
-            aria-label="Skip into website"
-          >
-            <span>Skip</span>
-            <ArrowRight className="w-3.5 h-3.5 text-[#B91C1C]" />
-          </button>
-        </div>
+        {/* Quick Skip Button: Top-Right on all viewports */}
+        <button
+          onClick={handleSkip}
+          className="fixed top-4 sm:top-6 right-4 sm:right-8 z-50 flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/20 hover:border-[#B91C1C]/60 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-lg cursor-pointer pointer-events-auto"
+          aria-label="Skip into website"
+        >
+          <span>Skip</span>
+          <ArrowRight className="w-3.5 h-3.5 text-[#B91C1C]" />
+        </button>
 
         {/* ================= REALISTIC 3D ENVELOPE ================= */}
         <div className="relative w-full h-full flex items-center justify-center">
