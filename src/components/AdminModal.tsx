@@ -1,6 +1,6 @@
-import { useState, useEffect, FC, useMemo } from 'react';
+import { useState, useEffect, FC, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Copy, Check, LogOut, Filter, Heart, Clock, X, Edit2 } from 'lucide-react';
+import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Copy, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload } from 'lucide-react';
 import { 
   getStoredRsvps, deleteRsvp,
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
@@ -68,6 +68,8 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [newItemDesc, setNewItemDesc] = useState('');
   const [isSubmittingItem, setIsSubmittingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -415,9 +417,64 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
     });
   };
 
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file (PNG, JPG, JPEG, WEBP).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        // Optimize on canvas to max 1000px so storage remains fast and lightweight
+        const maxDim = 1000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          setNewItemImage(dataUrl);
+        } else {
+          setNewItemImage(event.target?.result as string);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddWishlistItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItemName || !newItemPrice || !newItemImage) return;
+    if (!newItemName.trim()) {
+      alert('Please enter an item name.');
+      return;
+    }
+    if (!newItemImage) {
+      alert('Please upload an image from your device or provide an image link.');
+      return;
+    }
 
     const priceNum = parseInt(newItemPrice.replace(/\D/g, ''), 10) || 0;
     if (priceNum <= 0) {
@@ -480,14 +537,12 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
     setEditingItemId(item.id);
     setNewItemName(item.name);
     setNewItemCategory(item.category);
-    setNewItemPrice(String(item.price));
+    setNewItemPrice(item.price.toLocaleString('en-US'));
     setNewItemQuantity(String(item.quantity));
     setNewItemImage(item.image);
     setNewItemDesc(item.description);
+    setImageInputMode(item.image.startsWith('data:') ? 'upload' : 'url');
     setIsAddingItem(true);
-    setTimeout(() => {
-      document.getElementById('wishlist-form-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
   };
 
   const handleDeleteWishlistItem = async (id: string) => {
@@ -1211,78 +1266,271 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-8"
               >
-                {/* Wishlist Action */}
+                {/* Wishlist Action Header */}
                 <div className="bg-white p-8 rounded-3xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
                   <div>
                     <h3 className="font-serif text-2xl text-brand-espresso mb-2">Manage Wishlist</h3>
                     <p className="text-base font-sans text-brand-muted">
-                      Add, view, or remove items from the wedding registry.
+                      Add, view, edit, or remove items from the wedding registry.
                     </p>
                   </div>
                   <button
                     onClick={() => {
-                      if (isAddingItem) {
-                        setIsAddingItem(false);
-                        setEditingItemId(null);
-                        setNewItemName('');
-                        setNewItemPrice('');
-                        setNewItemImage('');
-                        setNewItemDesc('');
-                        setNewItemQuantity('1');
-                      } else {
-                        setIsAddingItem(true);
-                        setTimeout(() => {
-                          document.getElementById('wishlist-form-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 50);
-                      }
+                      setEditingItemId(null);
+                      setNewItemName('');
+                      setNewItemPrice('');
+                      setNewItemImage('');
+                      setNewItemDesc('');
+                      setNewItemQuantity('1');
+                      setNewItemCategory('Living & Comfort');
+                      setImageInputMode('upload');
+                      setIsAddingItem(true);
                     }}
-                    className="flex items-center gap-2 px-8 py-4 bg-brand-goldDark text-white text-sm font-sans font-bold uppercase tracking-wider rounded-2xl hover:bg-brand-espresso transition-colors shrink-0"
+                    className="flex items-center gap-2 px-8 py-4 bg-[#B91C1C] hover:bg-red-800 text-white text-sm font-sans font-bold uppercase tracking-wider rounded-2xl transition-all shadow-md hover:shadow-lg shrink-0 cursor-pointer"
                   >
-                    <Plus className="w-5 h-5" /> {isAddingItem ? 'Cancel' : 'Add Item'}
+                    <Plus className="w-5 h-5" /> Add Wishlist Item
                   </button>
                 </div>
 
-                {isAddingItem && (
-                  <div id="wishlist-form-container" className="bg-white p-8 rounded-3xl shadow-sm scroll-mt-24">
-                    <h3 className="font-serif text-xl text-brand-espresso mb-6">{editingItemId ? 'Edit Wishlist Item' : 'Add New Wishlist Item'}</h3>
-                    <form onSubmit={handleAddWishlistItem} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-2">Item Name</label>
-                          <input required value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-3 rounded-xl border border-brand-sand bg-white" placeholder="e.g. Microwave Oven" />
+                {/* Wishlist Add / Edit Modal Popup */}
+                <AnimatePresence>
+                  {isAddingItem && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+                      <div 
+                        className="fixed inset-0"
+                        onClick={() => {
+                          if (!isSubmittingItem) {
+                            setIsAddingItem(false);
+                            setEditingItemId(null);
+                          }
+                        }}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                        transition={{ duration: 0.2 }}
+                        className="relative z-10 bg-white rounded-3xl shadow-2xl border border-brand-sand/60 w-full max-w-xl max-h-[92vh] overflow-y-auto p-6 sm:p-8"
+                        data-lenis-prevent="true"
+                      >
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between border-b border-brand-sand/30 pb-5 mb-6">
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-11 h-11 rounded-2xl bg-[#B91C1C]/10 flex items-center justify-center text-[#B91C1C]">
+                              <Gift className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h3 className="font-serif text-2xl text-brand-espresso">
+                                {editingItemId ? 'Edit Registry Item' : 'Add New Registry Item'}
+                              </h3>
+                              <p className="text-xs text-brand-muted font-sans mt-0.5">
+                                Upload a photo, set price, and describe what you want.
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAddingItem(false);
+                              setEditingItemId(null);
+                            }}
+                            className="p-2 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/30 rounded-full transition-colors cursor-pointer"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
                         </div>
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-2">Category</label>
-                          <select value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value as any)} className="w-full p-3 rounded-xl border border-brand-sand bg-white">
-                            <option value="Living & Comfort">Living & Comfort</option>
-                            <option value="Kitchen & Dining">Kitchen & Dining</option>
-                            <option value="Home & Bedding">Home & Bedding</option>
-                            <option value="Milestone Gift">Milestone Gift</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-2">Price (NGN)</label>
-                          <input required value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-3 rounded-xl border border-brand-sand bg-white" placeholder="e.g. 50000" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-2">Quantity Needed</label>
-                          <input type="number" min="1" required value={newItemQuantity} onChange={(e) => setNewItemQuantity(e.target.value)} className="w-full p-3 rounded-xl border border-brand-sand bg-white" />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-2">Image URL</label>
-                          <input required value={newItemImage} onChange={(e) => setNewItemImage(e.target.value)} className="w-full p-3 rounded-xl border border-brand-sand bg-white" placeholder="https://example.com/image.jpg" />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-2">Description</label>
-                          <textarea required value={newItemDesc} onChange={(e) => setNewItemDesc(e.target.value)} className="w-full p-3 rounded-xl border border-brand-sand bg-white" rows={3} placeholder="A short description..." />
-                        </div>
-                      </div>
-                      <button type="submit" disabled={isSubmittingItem} className="px-8 py-3 bg-brand-espresso text-white rounded-xl text-sm font-bold uppercase tracking-wider hover:bg-brand-goldDark transition-colors">
-                        {isSubmittingItem ? 'Saving...' : editingItemId ? 'Save Changes' : 'Add to Wishlist'}
-                      </button>
-                    </form>
-                  </div>
-                )}
+
+                        {/* Modal Form */}
+                        <form onSubmit={handleAddWishlistItem} className="space-y-5">
+                          {/* Photo Upload Area */}
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-2">
+                              Item Photo <span className="text-red-500">*</span>
+                            </label>
+                            
+                            <input 
+                              type="file" 
+                              ref={fileInputRef} 
+                              onChange={handleImageFileChange} 
+                              accept="image/*" 
+                              className="hidden" 
+                            />
+
+                            {newItemImage ? (
+                              <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-brand-cream/40 border border-brand-sand/60">
+                                <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-xl overflow-hidden border border-brand-sand shadow-sm bg-white">
+                                  <img src={newItemImage} alt="Uploaded item preview" className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-1.5 flex-1">
+                                  <p className="text-xs text-brand-espresso font-bold">Photo Selected</p>
+                                  <p className="text-[11px] text-brand-muted">This image will appear on the guest registry card.</p>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => fileInputRef.current?.click()}
+                                      className="px-3 py-1.5 rounded-lg bg-white border border-brand-sand text-[11px] font-bold uppercase tracking-wider text-brand-espresso hover:bg-brand-sand/30 transition-colors cursor-pointer"
+                                    >
+                                      Change Photo
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setNewItemImage('')}
+                                      className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold uppercase tracking-wider hover:bg-rose-100 transition-colors cursor-pointer"
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex flex-col items-center justify-center p-6 sm:p-7 rounded-2xl border-2 border-dashed border-brand-sand hover:border-[#B91C1C]/70 bg-brand-cream/30 hover:bg-brand-cream/60 transition-all cursor-pointer group text-center"
+                              >
+                                <div className="w-12 h-12 rounded-2xl bg-[#B91C1C]/10 flex items-center justify-center text-[#B91C1C] mb-2.5 group-hover:scale-110 transition-transform">
+                                  <Upload className="w-6 h-6" />
+                                </div>
+                                <p className="text-sm font-bold text-brand-espresso mb-0.5">
+                                  Click to upload photo from your device
+                                </p>
+                                <p className="text-xs text-brand-muted font-sans">
+                                  Supports PNG, JPG, JPEG, WEBP from your computer or phone
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Optional URL Fallback */}
+                            <div className="mt-2 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setImageInputMode(imageInputMode === 'upload' ? 'url' : 'upload')}
+                                className="text-[11px] font-sans text-brand-goldDark hover:underline cursor-pointer"
+                              >
+                                {imageInputMode === 'upload' ? 'Or paste an image web URL' : 'Use device photo upload instead'}
+                              </button>
+                            </div>
+
+                            {imageInputMode === 'url' && (
+                              <div className="mt-2">
+                                <input
+                                  type="url"
+                                  value={newItemImage}
+                                  onChange={(e) => setNewItemImage(e.target.value)}
+                                  placeholder="https://example.com/product-image.jpg"
+                                  className="w-full p-3 rounded-xl border border-brand-sand bg-white text-xs font-sans focus:outline-none focus:border-brand-gold"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Item Name & Category */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-1.5">
+                                Item Name <span className="text-red-500">*</span>
+                              </label>
+                              <input 
+                                required 
+                                value={newItemName} 
+                                onChange={(e) => setNewItemName(e.target.value)} 
+                                className="w-full p-3.5 rounded-xl border border-brand-sand bg-white text-sm focus:outline-none focus:border-brand-gold" 
+                                placeholder="e.g. Smart 4K Television" 
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-1.5">
+                                Category <span className="text-red-500">*</span>
+                              </label>
+                              <select 
+                                value={newItemCategory} 
+                                onChange={(e) => setNewItemCategory(e.target.value as any)} 
+                                className="w-full p-3.5 rounded-xl border border-brand-sand bg-white text-sm focus:outline-none focus:border-brand-gold"
+                              >
+                                <option value="Living & Comfort">Living & Comfort</option>
+                                <option value="Kitchen & Dining">Kitchen & Dining</option>
+                                <option value="Home & Bedding">Home & Bedding</option>
+                                <option value="Milestone Gift">Milestone Gift</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Price & Quantity */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-1.5">
+                                Price (NGN) <span className="text-red-500">*</span>
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-brand-muted">â‚¦</span>
+                                <input 
+                                  required 
+                                  type="text"
+                                  value={newItemPrice} 
+                                  onChange={(e) => {
+                                    const raw = e.target.value.replace(/\D/g, '');
+                                    setNewItemPrice(raw ? parseInt(raw, 10).toLocaleString('en-US') : '');
+                                  }} 
+                                  className="w-full pl-8 pr-3.5 py-3.5 rounded-xl border border-brand-sand bg-white text-sm font-semibold focus:outline-none focus:border-brand-gold" 
+                                  placeholder="e.g. 150,000" 
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-1.5">
+                                Quantity Needed <span className="text-red-500">*</span>
+                              </label>
+                              <input 
+                                type="number" 
+                                min="1" 
+                                required 
+                                value={newItemQuantity} 
+                                onChange={(e) => setNewItemQuantity(e.target.value)} 
+                                className="w-full p-3.5 rounded-xl border border-brand-sand bg-white text-sm focus:outline-none focus:border-brand-gold" 
+                              />
+                            </div>
+                          </div>
+
+                          {/* Description */}
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso mb-1.5">
+                              Description / Note to Guests <span className="text-red-500">*</span>
+                            </label>
+                            <textarea 
+                              required 
+                              value={newItemDesc} 
+                              onChange={(e) => setNewItemDesc(e.target.value)} 
+                              className="w-full p-3.5 rounded-xl border border-brand-sand bg-white text-sm focus:outline-none focus:border-brand-gold resize-none" 
+                              rows={3} 
+                              placeholder="Add model, specifications, or a sweet note to guests..." 
+                            />
+                          </div>
+
+                          {/* Modal Footer Actions */}
+                          <div className="flex items-center justify-end gap-3 pt-4 border-t border-brand-sand/30">
+                            <button
+                              type="button"
+                              disabled={isSubmittingItem}
+                              onClick={() => {
+                                setIsAddingItem(false);
+                                setEditingItemId(null);
+                              }}
+                              className="px-6 py-3 rounded-xl border border-brand-sand text-brand-muted text-xs font-bold uppercase tracking-wider hover:bg-brand-sand/30 transition-colors cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              type="submit" 
+                              disabled={isSubmittingItem} 
+                              className="px-8 py-3 bg-[#B91C1C] hover:bg-red-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer"
+                            >
+                              {isSubmittingItem ? 'Saving...' : editingItemId ? 'Save Changes' : 'Add to Wishlist'}
+                            </button>
+                          </div>
+                        </form>
+                      </motion.div>
+                    </div>
+                  )}
+                </AnimatePresence>
 
                 {/* Wishlist Table */}
                 <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
