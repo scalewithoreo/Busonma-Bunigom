@@ -70,12 +70,12 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
     setStage('opening');
     if (onOpeningStart) onOpeningStart();
 
-    // 4. Once all 4 envelope parts have smoothly pulled back to the page edges (~1.5s), dismiss the overlay
+    // 4. Once all 4 envelope parts have smoothly pulled back to the page edges (~3.0s), dismiss the overlay
     setTimeout(() => {
       setStage('dismissed');
       document.body.style.overflow = '';
       if (onComplete) onComplete();
-    }, 1550);
+    }, 3100);
   };
 
   const handleSkip = (e: React.MouseEvent) => {
@@ -151,10 +151,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                     y: '-105%',
                     opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 1.45,
-                      delay: 0.08,
-                      times: [0, 0.45, 0.85, 1],
-                      ease: [0.22, 1, 0.36, 1],
+                      duration: 2.7,
+                      delay: 0.1,
+                      times: [0, 0.55, 0.88, 1],
+                      ease: [0.18, 1, 0.32, 1],
                     },
                   }
                 : { y: 0, opacity: 1 }
@@ -178,7 +178,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
             {/* Top Flap Typography: Positioned higher in the widest part of the flap, never clipped, strictly single-line */}
             <motion.div
               animate={stage === 'opening' ? { opacity: [1, 1, 0.7, 0] } : { opacity: 1 }}
-              transition={{ duration: 1.1 }}
+              transition={{ duration: 2.2 }}
               className="relative z-35 flex flex-col items-center text-center px-4 max-w-full pointer-events-none select-none"
             >
               <p className="text-[10px] sm:text-xs md:text-sm font-sans tracking-[0.32em] uppercase text-[#7A6B5C] mb-2 sm:mb-3 font-semibold whitespace-nowrap">
@@ -200,10 +200,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                     x: '105%',
                     opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 1.45,
-                      delay: 0.08,
-                      times: [0, 0.45, 0.85, 1],
-                      ease: [0.22, 1, 0.36, 1],
+                      duration: 2.7,
+                      delay: 0.1,
+                      times: [0, 0.55, 0.88, 1],
+                      ease: [0.18, 1, 0.32, 1],
                     },
                   }
                 : { x: 0, opacity: 1 }
@@ -228,10 +228,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                     x: '-105%',
                     opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 1.45,
-                      delay: 0.08,
-                      times: [0, 0.45, 0.85, 1],
-                      ease: [0.22, 1, 0.36, 1],
+                      duration: 2.7,
+                      delay: 0.1,
+                      times: [0, 0.55, 0.88, 1],
+                      ease: [0.18, 1, 0.32, 1],
                     },
                   }
                 : { x: 0, opacity: 1 }
@@ -256,10 +256,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                     y: '105%',
                     opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 1.45,
-                      delay: 0.08,
-                      times: [0, 0.45, 0.85, 1],
-                      ease: [0.22, 1, 0.36, 1],
+                      duration: 2.7,
+                      delay: 0.1,
+                      times: [0, 0.55, 0.88, 1],
+                      ease: [0.18, 1, 0.32, 1],
                     },
                   }
                 : { y: 0, opacity: 1 }
@@ -286,12 +286,12 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               animate={
                 stage === 'opening'
                   ? {
-                      scale: 1.3,
-                      y: -65,
-                      rotate: 18,
+                      scale: 1.25,
+                      y: -40,
+                      rotate: 12,
                       opacity: 0,
                       filter: 'drop-shadow(0 25px 40px rgba(185,28,28,0.95))',
-                      transition: { duration: 0.45, ease: 'easeOut' },
+                      transition: { duration: 0.65, ease: 'easeOut' },
                     }
                   : {
                       scale: [1, 1.025, 1],
