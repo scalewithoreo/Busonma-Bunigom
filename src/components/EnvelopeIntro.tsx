@@ -159,7 +159,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                   }
                 : { y: 0, opacity: 1 }
             }
-            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-16 xs:pt-20 sm:pt-28 md:pt-32"
+            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-[18vh] sm:pt-[20vh] md:pt-[22vh]"
             onClick={handleOpenEnvelope}
           >
             {/* The clipped paper flap background (ClipPath applied ONLY to background so typography is NEVER clipped) */}
@@ -175,17 +175,17 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/30 via-transparent to-black/10 pointer-events-none" />
             </div>
 
-            {/* Top Flap Typography: Brought down and increased font, strictly single-line */}
+            {/* Top Flap Typography: Moved down toward center with noticeably larger font sizes */}
             <motion.div
               animate={stage === 'opening' ? { opacity: [1, 1, 0.7, 0] } : { opacity: 1 }}
               transition={{ duration: 5.0, times: [0, 0.7, 0.92, 1] }}
               className="relative z-35 flex flex-col items-center text-center px-4 max-w-full pointer-events-none select-none"
             >
-              <p className="text-[11px] sm:text-xs md:text-sm lg:text-base font-sans tracking-[0.32em] uppercase text-[#7A6B5C] mb-3 sm:mb-4 font-semibold whitespace-nowrap">
+              <p className="text-xs xs:text-sm sm:text-base md:text-lg font-sans tracking-[0.3em] uppercase text-[#7A6B5C] mb-2.5 sm:mb-3.5 font-semibold whitespace-nowrap">
                 JANUARY 2027
               </p>
 
-              <h1 className="font-serif text-lg xs:text-xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-[#1C1510] tracking-[0.12em] sm:tracking-[0.2em] uppercase drop-shadow-sm leading-none whitespace-nowrap">
+              <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-[#1C1510] tracking-[0.08em] xs:tracking-[0.1em] sm:tracking-[0.18em] uppercase drop-shadow-sm leading-none whitespace-nowrap">
                 MIRACLE &amp; MALVIN
               </h1>
             </motion.div>
