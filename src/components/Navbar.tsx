@@ -125,7 +125,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
             className="flex items-center group transition-transform duration-300 hover:scale-105"
           >
             <img  decoding="sync" 
-              src="/assets/logo.png" 
+              src="/assets/logo-mm.png?v=2027" 
               alt="Miracle & Malvin Logo" 
               className="h-16 sm:h-[90px] w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-300"
             />

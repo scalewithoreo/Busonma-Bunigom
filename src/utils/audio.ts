@@ -3,16 +3,15 @@ class AudioManager {
   private listeners: Set<() => void> = new Set();
   public isPlaying = false;
   public isMuted = false;
-  public hasStarted = false;
+  public userHasInteracted = false;
 
   init() {
     if (this.audio) return;
     this.audio = new Audio('/assets/do4love.mp3');
-    this.audio.preload = 'auto'; // Force browser to start downloading immediately
+    this.audio.preload = 'auto';
     this.audio.volume = 0.65;
     this.audio.loop = true;
-    this.audio.muted = false;
-    this.isMuted = false;
+    this.audio.muted = this.isMuted;
 
     // Safely restore saved playback position once metadata is loaded
     const savedTime = sessionStorage.getItem('mm_music_time');
@@ -42,38 +41,17 @@ class AudioManager {
       }
     });
 
-    // Autoplay attempt unmuted
+    // Try starting unmuted if allowed by browser policy
     this.audio.play()
       .then(() => {
         this.isPlaying = true;
-        this.hasStarted = true;
-        this.isMuted = false;
         this.notify();
       })
       .catch(() => {
-        // Autoplay policy waiting for user gesture
+        // Autoplay policy: waiting for user gesture
         this.isPlaying = false;
         this.notify();
       });
-
-    const startOnInteraction = () => {
-      if (this.audio && !this.hasStarted) {
-        this.audio.muted = false;
-        this.isMuted = false;
-        this.audio.play()
-          .then(() => {
-            this.isPlaying = true;
-            this.hasStarted = true;
-            this.isMuted = false;
-            this.notify();
-          })
-          .catch(() => {});
-      }
-    };
-
-    window.addEventListener('click', startOnInteraction, { once: true });
-    window.addEventListener('touchstart', startOnInteraction, { once: true });
-    window.addEventListener('scroll', startOnInteraction, { once: true });
   }
 
   play() {
@@ -81,13 +59,11 @@ class AudioManager {
       this.init();
     }
     if (this.audio) {
-      this.audio.muted = false;
-      this.isMuted = false;
+      // Respect user's mute state
+      this.audio.muted = this.isMuted;
       this.audio.play()
         .then(() => {
           this.isPlaying = true;
-          this.hasStarted = true;
-          this.isMuted = false;
           this.notify();
         })
         .catch(() => {});
@@ -97,21 +73,44 @@ class AudioManager {
   toggle() {
     if (!this.audio) {
       this.init();
-      return;
     }
+    if (!this.audio) return;
 
     if (this.audio.paused) {
-      this.audio.muted = false;
       this.isMuted = false;
+      this.audio.muted = false;
       this.audio.play().then(() => {
         this.isPlaying = true;
         this.notify();
-      });
+      }).catch(() => {});
     } else {
+      // Toggle mute
       this.isMuted = !this.isMuted;
       this.audio.muted = this.isMuted;
       this.notify();
     }
+  }
+
+  mute() {
+    this.isMuted = true;
+    if (this.audio) {
+      this.audio.muted = true;
+    }
+    this.notify();
+  }
+
+  unmute() {
+    this.isMuted = false;
+    if (this.audio) {
+      this.audio.muted = false;
+      if (this.audio.paused) {
+        this.audio.play().then(() => {
+          this.isPlaying = true;
+          this.notify();
+        }).catch(() => {});
+      }
+    }
+    this.notify();
   }
 
   stop() {

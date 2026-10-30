@@ -21,7 +21,7 @@ export const Footer: FC = () => {
           className="mb-6 flex items-center justify-center"
         >
           <img loading="lazy" decoding="async" 
-            src="/assets/logo.png" 
+            src="/assets/logo-mm.png?v=2027" 
             alt="Miracle & Malvin Logo" 
             className="h-24 sm:h-32 w-auto object-contain drop-shadow-md"
           />

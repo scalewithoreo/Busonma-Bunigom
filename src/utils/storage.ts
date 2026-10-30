@@ -396,9 +396,10 @@ export async function saveReminder(reminder: {
   itemPrice: string;
   email: string;
   reservedByName?: string;
+  guestName?: string;
   relation?: string;
   isAnonymous?: boolean;
-}): Promise<void> {
+}): Promise<GiftReminder> {
   const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
   const now = Date.now();
@@ -409,7 +410,7 @@ export async function saveReminder(reminder: {
     itemName: reminder.itemName,
     itemPrice: reminder.itemPrice,
     email: reminder.email,
-    reservedByName: reminder.reservedByName,
+    reservedByName: reminder.reservedByName || reminder.guestName,
     relation: reminder.relation,
     isAnonymous: reminder.isAnonymous,
     remindDate: new Date(now + FIVE_DAYS_MS).toISOString(),
@@ -419,6 +420,7 @@ export async function saveReminder(reminder: {
 
   const current = getLocalDb<GiftReminder[]>(MM_DB_RESERVATIONS, []);
   setLocalDb(MM_DB_RESERVATIONS, [newReminder, ...current]);
+  return newReminder;
 }
 
 export function getLocalReminders(): string[] {

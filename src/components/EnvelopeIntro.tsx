@@ -1,91 +1,105 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, ArrowRight } from 'lucide-react';
+import { Volume2, VolumeX, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { audioManager } from '../utils/audio';
 
 interface EnvelopeIntroProps {
   onComplete?: () => void;
+  onOpeningStart?: () => void;
 }
 
-export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpeningStart }) => {
+  // Always start as 'sealed' so refreshing the site restarts the envelope animation
   const [stage, setStage] = useState<'sealed' | 'opening' | 'dismissed'>('sealed');
 
+  // Track music playback and mute state reactively
+  const [isPlaying, setIsPlaying] = useState(audioManager.isPlaying);
+  const [isMuted, setIsMuted] = useState(audioManager.isMuted);
+
   useEffect(() => {
-    const alreadyOpened = sessionStorage.getItem('mm_envelope_opened');
-    if (alreadyOpened === 'true') {
-      setStage('dismissed');
-    } else {
-      setIsOpen(true);
+    // Lock scrolling while envelope is active
+    if (stage !== 'dismissed') {
       document.body.style.overflow = 'hidden';
     }
 
-    // Expose global replay function
+    // Subscribe to AudioManager changes
+    const unsubscribe = audioManager.subscribe(() => {
+      setIsPlaying(audioManager.isPlaying);
+      setIsMuted(audioManager.isMuted);
+    });
+
+    // Global replay function for developer testing or UI triggers
     (window as any).replayWeddingEnvelope = () => {
-      sessionStorage.removeItem('mm_envelope_opened');
       setStage('sealed');
-      setIsOpen(true);
       document.body.style.overflow = 'hidden';
     };
 
     return () => {
       document.body.style.overflow = '';
+      unsubscribe();
       delete (window as any).replayWeddingEnvelope;
     };
-  }, []);
+  }, [stage]);
 
   const handleOpenEnvelope = () => {
     if (stage !== 'sealed') return;
 
-    // 1. Play background song immediately
+    // 1. Play song if not muted by the user
     try {
-      audioManager.play();
+      if (!audioManager.isMuted) {
+        audioManager.play();
+      }
     } catch (e) {
       console.warn('Audio play failed:', e);
     }
 
-    // 2. Confetti sparkle blast
+    // 2. Confetti sparkle blast from seal center
     try {
       confetti({
-        particleCount: 55,
-        spread: 95,
+        particleCount: 50,
+        spread: 85,
         origin: { y: 0.5 },
-        colors: ['#B91C1C', '#991B1B', '#FFD700', '#F5EDE4', '#FFFFFF'],
-        startVelocity: 32,
-        gravity: 0.7,
-        ticks: 170,
+        colors: ['#B91C1C', '#991B1B', '#E5A93C', '#F5EDE4', '#FFFFFF'],
+        startVelocity: 28,
+        gravity: 0.75,
+        ticks: 150,
         disableForReducedMotion: true,
       });
     } catch (e) {}
 
-    // 3. 3D flap unsealing
+    // 3. Initiate opening animation sequence
     setStage('opening');
+    if (onOpeningStart) onOpeningStart();
 
-    // 4. Reveal Hero Section Immediately
+    // 4. Reveal website hero section once the flap has fully opened
     setTimeout(() => {
-      sessionStorage.setItem('mm_envelope_opened', 'true');
       setStage('dismissed');
       document.body.style.overflow = '';
       if (onComplete) onComplete();
-    }, 900);
+    }, 1300);
   };
 
-  const handleSkip = () => {
-    sessionStorage.setItem('mm_envelope_opened', 'true');
+  const handleSkip = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setStage('dismissed');
     document.body.style.overflow = '';
     if (onComplete) onComplete();
   };
 
-  if (stage === 'dismissed' || !isOpen) {
+  const handleAudioToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    audioManager.toggle();
+  };
+
+  if (stage === 'dismissed') {
     return null;
   }
 
-  // Authentic 350gsm Felt-Pressed Cotton Paper Background Styling
-  const paperTextureStyle = {
+  // 350gsm Felt-Pressed Cotton Paper Texture
+  const paperTextureStyle: React.CSSProperties = {
     backgroundImage: `url('/assets/cotton-paper-texture.jpg')`,
-    backgroundSize: '800px auto',
+    backgroundSize: '750px auto',
     backgroundColor: '#F7F3EE',
   };
 
@@ -93,55 +107,77 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
     <AnimatePresence>
       <motion.div
         key="photoreal-3d-envelope"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } }}
+        initial={{ opacity: 1 }}
+        animate={{
+          opacity: stage === 'opening' ? [1, 1, 0.9, 0] : 1,
+          scale: stage === 'opening' ? [1, 1, 1.03, 1.06] : 1,
+        }}
+        exit={{ opacity: 0, transition: { duration: 0.4 } }}
+        transition={{ duration: 1.3, times: [0, 0.6, 0.85, 1], ease: 'easeInOut' }}
         className="fixed inset-0 z-50 w-screen h-screen overflow-hidden select-none bg-[#0D0B0A]"
-        style={{ perspective: '1600px' }}
+        style={{ perspective: '1800px' }}
       >
-        {/* Subtle Ambient Light Vignette */}
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/20 to-black/80 pointer-events-none z-40" />
+        {/* Subtle Ambient Room Shadow */}
+        <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/30 to-black/85 pointer-events-none z-40" />
 
-        {/* Sleek Minimalist Controls */}
+        {/* Minimalist Top Control Bar */}
         <div className="absolute top-4 sm:top-6 inset-x-4 sm:inset-x-8 flex items-center justify-between z-50 pointer-events-auto">
-          {/* Audio pill: sleek & minimal */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/90 text-[11px] font-sans tracking-widest uppercase shadow-md">
-            <Volume2 className="w-3.5 h-3.5 text-[#B91C1C] animate-pulse" />
-            <span className="opacity-90 font-medium">Do 4 Love &bull; Snoh Aalegra</span>
-          </div>
+          {/* Fully Interactive Audio Pill (Click to Mute / Unmute directly from envelope) */}
+          <button
+            onClick={handleAudioToggle}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white text-[11px] font-sans tracking-widest uppercase shadow-lg transition-all active:scale-95 cursor-pointer"
+            aria-label={isMuted || !isPlaying ? 'Unmute wedding music' : 'Mute wedding music'}
+          >
+            {isMuted || !isPlaying ? (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+                <span className="opacity-80">Muted &bull; Tap to Play</span>
+              </>
+            ) : (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-[#B91C1C] animate-pulse" />
+                <span className="opacity-95 font-medium">Do 4 Love &bull; Tap to Mute</span>
+              </>
+            )}
+          </button>
 
-          {/* Skip pill: sleek & minimal */}
+          {/* Quick Skip Button */}
           <button
             onClick={handleSkip}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-md border border-white/10 hover:border-[#B91C1C]/60 text-white/90 hover:text-white text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-md"
-            aria-label="Skip to website"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 hover:border-[#B91C1C]/60 text-white text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-lg cursor-pointer"
+            aria-label="Skip into website"
           >
             <span>Skip</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#B91C1C]" />
           </button>
         </div>
 
-        {/* ================= VOLUMETRIC 3D ENVELOPE ================= */}
+        {/* ================= REALISTIC 3D ENVELOPE ================= */}
         <div className="relative w-full h-full flex items-center justify-center">
 
-          {/* Envelope Body Container - Covers Full Viewport Responsively */}
+          {/* Envelope Body Container - Fills Full Viewport Responsive */}
           <div className="relative w-full h-full overflow-hidden">
 
-            {/* BASE COTTON PAPER SURFACE (Beneath flaps) */}
+            {/* BASE COTTON PAPER SURFACE (Inside of envelope) */}
             <div
               className="absolute inset-0"
               style={paperTextureStyle}
             />
 
-            {/* Subtle natural fold shading */}
-            <div className="absolute inset-0 pointer-events-none bg-radial-gradient from-black/15 via-transparent to-black/15" />
+            {/* Internal Warm Golden Glow that shines through when the top flap flips open */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={stage === 'opening' ? { opacity: 0.85 } : { opacity: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="absolute inset-0 bg-gradient-to-t from-[#B91C1C]/15 via-[#F5B853]/25 to-transparent pointer-events-none z-10"
+            />
 
-            {/* ================= LEFT FLAP (3D Felt-Pressed Cotton Paper) ================= */}
+            {/* ================= LEFT FLAP ================= */}
             <motion.div
               initial={{ rotateY: 0 }}
               animate={
                 stage === 'opening'
-                  ? { rotateY: -115, opacity: 0, transition: { duration: 0.8, ease: [0.65, 0, 0.35, 1] } }
+                  ? { rotateY: -35, opacity: 0.5, transition: { duration: 0.85, delay: 0.2, ease: [0.65, 0, 0.35, 1] } }
                   : { rotateY: 0 }
               }
               style={{
@@ -152,17 +188,28 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
               }}
               className="absolute inset-0 z-20 pointer-events-none"
             >
-              {/* Deep diagonal seam drop-shadow */}
-              <div className="absolute inset-0 shadow-[inset_-10px_0_30px_rgba(0,0,0,0.18)]" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/10" />
+              {/* Inner crease shading */}
+              <div className="absolute inset-0 shadow-[inset_-12px_0_35px_rgba(0,0,0,0.18)]" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/15" />
+
+              {/* Embossed Botanical Pattern along flap border matching video reference */}
+              <svg className="absolute inset-0 w-full h-full opacity-25" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M 10 50 Q 150 250 280 400"
+                  stroke="#8B7B6B"
+                  strokeWidth="1.5"
+                  strokeDasharray="4,6"
+                  fill="none"
+                />
+              </svg>
             </motion.div>
 
-            {/* ================= RIGHT FLAP (3D Felt-Pressed Cotton Paper) ================= */}
+            {/* ================= RIGHT FLAP ================= */}
             <motion.div
               initial={{ rotateY: 0 }}
               animate={
                 stage === 'opening'
-                  ? { rotateY: 115, opacity: 0, transition: { duration: 0.8, ease: [0.65, 0, 0.35, 1] } }
+                  ? { rotateY: 35, opacity: 0.5, transition: { duration: 0.85, delay: 0.2, ease: [0.65, 0, 0.35, 1] } }
                   : { rotateY: 0 }
               }
               style={{
@@ -173,17 +220,29 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
               }}
               className="absolute inset-0 z-20 pointer-events-none"
             >
-              <div className="absolute inset-0 shadow-[inset_10px_0_30px_rgba(0,0,0,0.18)]" />
-              <div className="absolute inset-0 bg-gradient-to-l from-black/5 via-transparent to-black/10" />
+              {/* Inner crease shading */}
+              <div className="absolute inset-0 shadow-[inset_12px_0_35px_rgba(0,0,0,0.18)]" />
+              <div className="absolute inset-0 bg-gradient-to-l from-black/5 via-transparent to-black/15" />
+
+              {/* Embossed Botanical Pattern along flap border matching video reference */}
+              <svg className="absolute inset-0 w-full h-full opacity-25" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M 990 50 Q 850 250 720 400"
+                  stroke="#8B7B6B"
+                  strokeWidth="1.5"
+                  strokeDasharray="4,6"
+                  fill="none"
+                />
+              </svg>
             </motion.div>
 
             {/* ================= BOTTOM FLAP ================= */}
             <motion.div
-              initial={{ rotateX: 0 }}
+              initial={{ rotateX: 0, y: 0 }}
               animate={
                 stage === 'opening'
-                  ? { rotateX: 110, opacity: 0, transition: { duration: 0.8, ease: [0.65, 0, 0.35, 1] } }
-                  : { rotateX: 0 }
+                  ? { rotateX: 35, y: 40, opacity: 0.5, transition: { duration: 0.85, delay: 0.2, ease: [0.65, 0, 0.35, 1] } }
+                  : { rotateX: 0, y: 0 }
               }
               style={{
                 ...paperTextureStyle,
@@ -193,18 +252,22 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
               }}
               className="absolute inset-0 z-25 pointer-events-none"
             >
-              {/* Realistic deep pocket shadow over lower fold */}
-              <div className="absolute inset-0 shadow-[0_-20px_36px_rgba(0,0,0,0.2)]" />
-              <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/15 to-transparent" />
+              {/* Bottom flap crease shadow */}
+              <div className="absolute inset-0 shadow-[0_-22px_40px_rgba(0,0,0,0.22)]" />
+              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/20 via-black/5 to-transparent" />
             </motion.div>
 
-            {/* ================= TOP FLAP (With EST. 2027 and Bold MIRACLE & MALVIN) ================= */}
+            {/* ================= TOP FLAP (3D Opening on Hinge) ================= */}
             <motion.div
               initial={{ rotateX: 0 }}
               animate={
                 stage === 'opening'
-                  ? { rotateX: -160, opacity: 0, transition: { duration: 0.85, ease: [0.65, 0, 0.35, 1] } }
-                  : { rotateX: 0 }
+                  ? {
+                      rotateX: 180,
+                      zIndex: 15,
+                      transition: { duration: 0.85, ease: [0.4, 0, 0.2, 1] },
+                    }
+                  : { rotateX: 0, zIndex: 30 }
               }
               style={{
                 ...paperTextureStyle,
@@ -212,17 +275,21 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
                 transformStyle: 'preserve-3d',
                 clipPath: 'polygon(0% 0%, 50% 50%, 100% 0%)',
               }}
-              className="absolute inset-0 z-30 cursor-pointer flex flex-col items-center pt-10 sm:pt-16"
+              className="absolute inset-0 cursor-pointer flex flex-col items-center pt-12 sm:pt-16"
               onClick={handleOpenEnvelope}
             >
-              {/* Heavy shadow cast by the thick cotton flap onto bottom layers */}
-              <div className="absolute inset-0 shadow-[0_24px_50px_rgba(0,0,0,0.28)]" />
+              {/* Heavy natural shadow cast by the thick cotton flap onto bottom layers */}
+              <div className="absolute inset-0 shadow-[0_28px_55px_rgba(0,0,0,0.32)]" />
 
-              {/* Physical cotton paper edge highlight */}
-              <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/35 via-transparent to-black/10 pointer-events-none" />
+              {/* Physical paper edge highlight */}
+              <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/35 via-transparent to-black/15 pointer-events-none" />
 
-              {/* Top Flap Typography: EST. 2027 & Bold, Pronounced Couple Name */}
-              <div className="relative z-35 flex flex-col items-center text-center px-4 pointer-events-none">
+              {/* Top Flap Typography: EST. 2027 & Bold, Pronounced MIRACLE & MALVIN */}
+              <motion.div
+                animate={stage === 'opening' ? { opacity: 0 } : { opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="relative z-35 flex flex-col items-center text-center px-4 pointer-events-none"
+              >
                 <p className="text-xs sm:text-sm font-sans tracking-[0.35em] uppercase text-[#7A6B5C] mb-2 font-semibold">
                   EST. 2027
                 </p>
@@ -230,25 +297,26 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
                 <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl font-semibold text-[#1C1510] tracking-[0.22em] uppercase drop-shadow-sm my-1">
                   MIRACLE & MALVIN
                 </h1>
-              </div>
+              </motion.div>
             </motion.div>
 
-            {/* ================= PHOTOREALISTIC WAX SEAL & BOLD CALLOUT ================= */}
+            {/* ================= WAX SEAL BUTTON & TAP PROMPT ================= */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center">
 
-              {/* The Photorealistic Wax Seal Button with Stamped M&M Monogram */}
+              {/* Photorealistic Wax Seal Button with Stamped M&M Monogram */}
               <motion.button
                 onClick={handleOpenEnvelope}
-                whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.94 }}
+                whileHover={stage === 'sealed' ? { scale: 1.05 } : {}}
+                whileTap={stage === 'sealed' ? { scale: 0.95 } : {}}
                 animate={
                   stage === 'opening'
                     ? {
-                        scale: [1, 1.35, 0],
-                        rotate: [0, 20, 50],
-                        opacity: [1, 0.9, 0],
-                        filter: 'brightness(2)',
-                        transition: { duration: 0.5, ease: 'easeIn' },
+                        scale: 1.25,
+                        y: -55,
+                        rotate: 15,
+                        opacity: 0,
+                        filter: 'drop-shadow(0 25px 40px rgba(185,28,28,0.9))',
+                        transition: { duration: 0.5, ease: 'easeOut' },
                       }
                     : {
                         scale: [1, 1.025, 1],
@@ -258,7 +326,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
                 className="relative z-50 cursor-pointer focus:outline-none rounded-full"
                 aria-label="Click to break wax seal and open invitation"
               >
-                {/* Genuine Photographic 3D Wax Seal Asset (with Organic Molten Edges & Debossed M&M) */}
+                {/* 3D Wax Seal Asset with Debossed M&M and Organic Edges */}
                 <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
                   <img
                     src="/assets/wax-seal-mm.png"
@@ -269,15 +337,19 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete }) => {
                 </div>
               </motion.button>
 
-              {/* Very Bold, Legible, Accessible "TAP TO UNSEAL" (Shifted down below seal) */}
+              {/* Bold, Accessible, High-Contrast "TAP TO UNSEAL" (Shifted down below seal) */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                animate={
+                  stage === 'opening'
+                    ? { opacity: 0, y: 20, transition: { duration: 0.25 } }
+                    : { opacity: 1, y: 0 }
+                }
+                transition={{ delay: 0.15 }}
                 onClick={handleOpenEnvelope}
                 className="mt-8 flex flex-col items-center cursor-pointer pointer-events-auto"
               >
-                <div className="flex items-center gap-2.5 px-8 py-3 rounded-full bg-[#1A1410] hover:bg-[#B91C1C] text-white shadow-2xl hover:shadow-[0_8px_30px_rgba(185,28,28,0.4)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/15">
+                <div className="flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#1A1410] hover:bg-[#B91C1C] text-white shadow-2xl hover:shadow-[0_8px_30px_rgba(185,28,28,0.5)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20">
                   <span className="font-sans font-extrabold text-xs sm:text-sm tracking-[0.28em] uppercase text-white">
                     Tap to Unseal
                   </span>

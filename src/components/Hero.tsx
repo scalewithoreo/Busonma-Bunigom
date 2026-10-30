@@ -33,7 +33,7 @@ export const Hero: FC<HeroProps> = () => {
             className="mb-3 sm:mb-4 drop-shadow-md"
           >
             <img  decoding="sync" 
-              src="/assets/logo.png" 
+              src="/assets/logo-mm.png?v=2027" 
               alt="Miracle & Malvin Logo" 
               className="h-32 sm:h-44 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
             />
