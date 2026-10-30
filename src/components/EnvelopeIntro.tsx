@@ -75,7 +75,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
       setStage('dismissed');
       document.body.style.overflow = '';
       if (onComplete) onComplete();
-    }, 3100);
+    }, 6200);
   };
 
   const handleSkip = (e: React.MouseEvent) => {
@@ -151,15 +151,15 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                     y: '-105%',
                     opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 2.7,
-                      delay: 0.1,
-                      times: [0, 0.55, 0.88, 1],
-                      ease: [0.18, 1, 0.32, 1],
+                      duration: 5.8,
+                      delay: 0.15,
+                      times: [0, 0.75, 0.95, 1],
+                      ease: [0.22, 1, 0.36, 1],
                     },
                   }
                 : { y: 0, opacity: 1 }
             }
-            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-8 xs:pt-10 sm:pt-16 md:pt-20"
+            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-16 xs:pt-20 sm:pt-28 md:pt-32"
             onClick={handleOpenEnvelope}
           >
             {/* The clipped paper flap background (ClipPath applied ONLY to background so typography is NEVER clipped) */}
@@ -175,17 +175,17 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/30 via-transparent to-black/10 pointer-events-none" />
             </div>
 
-            {/* Top Flap Typography: Positioned higher in the widest part of the flap, never clipped, strictly single-line */}
+            {/* Top Flap Typography: Brought down and increased font, strictly single-line */}
             <motion.div
               animate={stage === 'opening' ? { opacity: [1, 1, 0.7, 0] } : { opacity: 1 }}
-              transition={{ duration: 2.2 }}
+              transition={{ duration: 5.0, times: [0, 0.7, 0.92, 1] }}
               className="relative z-35 flex flex-col items-center text-center px-4 max-w-full pointer-events-none select-none"
             >
-              <p className="text-[10px] sm:text-xs md:text-sm font-sans tracking-[0.32em] uppercase text-[#7A6B5C] mb-2 sm:mb-3 font-semibold whitespace-nowrap">
-                JAN 2027
+              <p className="text-[11px] sm:text-xs md:text-sm lg:text-base font-sans tracking-[0.32em] uppercase text-[#7A6B5C] mb-3 sm:mb-4 font-semibold whitespace-nowrap">
+                JANUARY 2027
               </p>
 
-              <h1 className="font-serif text-[15px] xs:text-[17px] sm:text-2xl md:text-4xl lg:text-5xl font-semibold text-[#1C1510] tracking-[0.1em] sm:tracking-[0.18em] uppercase drop-shadow-sm leading-none whitespace-nowrap">
+              <h1 className="font-serif text-lg xs:text-xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-[#1C1510] tracking-[0.12em] sm:tracking-[0.2em] uppercase drop-shadow-sm leading-none whitespace-nowrap">
                 MIRACLE &amp; MALVIN
               </h1>
             </motion.div>
@@ -200,10 +200,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                     x: '105%',
                     opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 2.7,
-                      delay: 0.1,
-                      times: [0, 0.55, 0.88, 1],
-                      ease: [0.18, 1, 0.32, 1],
+                      duration: 5.8,
+                      delay: 0.15,
+                      times: [0, 0.75, 0.95, 1],
+                      ease: [0.22, 1, 0.36, 1],
                     },
                   }
                 : { x: 0, opacity: 1 }
@@ -228,10 +228,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                     x: '-105%',
                     opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 2.7,
-                      delay: 0.1,
-                      times: [0, 0.55, 0.88, 1],
-                      ease: [0.18, 1, 0.32, 1],
+                      duration: 5.8,
+                      delay: 0.15,
+                      times: [0, 0.75, 0.95, 1],
+                      ease: [0.22, 1, 0.36, 1],
                     },
                   }
                 : { x: 0, opacity: 1 }
@@ -256,10 +256,10 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                     y: '105%',
                     opacity: [1, 1, 0.9, 0],
                     transition: {
-                      duration: 2.7,
-                      delay: 0.1,
-                      times: [0, 0.55, 0.88, 1],
-                      ease: [0.18, 1, 0.32, 1],
+                      duration: 5.8,
+                      delay: 0.15,
+                      times: [0, 0.75, 0.95, 1],
+                      ease: [0.22, 1, 0.36, 1],
                     },
                   }
                 : { y: 0, opacity: 1 }
@@ -291,7 +291,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                       rotate: 12,
                       opacity: 0,
                       filter: 'drop-shadow(0 25px 40px rgba(185,28,28,0.95))',
-                      transition: { duration: 0.65, ease: 'easeOut' },
+                      transition: { duration: 1.2, ease: 'easeOut' },
                     }
                   : {
                       scale: [1, 1.025, 1],
