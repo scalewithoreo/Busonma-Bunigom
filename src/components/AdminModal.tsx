@@ -6,7 +6,7 @@ import {
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
   getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, InviteCode,
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
-  getStoredReminders, deleteReservation, clearMiracleMalvinDatabase
+  getStoredReminders, deleteReservation, markReservationFulfilled, clearMiracleMalvinDatabase
 } from '../utils/storage';
 import { sendReservationReminderEmail } from '../utils/email';
 import { RsvpSubmission, GiftPledge, WishlistItem, GiftReminder } from '../types';
@@ -68,6 +68,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [newItemDesc, setNewItemDesc] = useState('');
   const [isSubmittingItem, setIsSubmittingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [reservationStatusFilter, setReservationStatusFilter] = useState<'all' | 'active' | 'fulfilled' | 'expired'>('all');
   const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -382,6 +383,15 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
         }
       }
     });
+  };
+
+
+  // Helper to check if a reservation is fulfilled (either explicitly flagged, or matching pledge/wishlist funded status)
+  const isReservationFulfilled = (r: GiftReminder): boolean => {
+    if (r.isFulfilled) return true;
+    const hasPledge = pledges.some(p => p.itemId === r.itemId || (p.giverEmail && r.email && p.giverEmail.toLowerCase() === r.email.toLowerCase()));
+    const item = wishlistItems.find(w => w.id === r.itemId);
+    return Boolean(hasPledge || item?.isFunded);
   };
 
   const handleSendReminder = async (r: GiftReminder) => {
@@ -1602,117 +1612,200 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-8"
               >
-                {/* Reservations Header */}
-                <div className="bg-white p-8 rounded-3xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                  <div>
-                    <h3 className="font-serif text-2xl text-brand-espresso mb-1">Item Reservations</h3>
-                    <p className="text-sm font-sans text-brand-muted">
-                      Items currently saved/held by guests for up to 7 days before expiring.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="px-4 py-2 rounded-xl bg-brand-gold/15 text-brand-goldDark text-xs font-bold uppercase tracking-wider font-sans">
-                      {reservations.filter(r => r.expiresAt && new Date(r.expiresAt).getTime() > Date.now()).length} Active
-                    </span>
-                    <span className="px-4 py-2 rounded-xl bg-brand-sand/50 text-brand-muted text-xs font-bold uppercase tracking-wider font-sans">
-                      {reservations.filter(r => r.expiresAt && new Date(r.expiresAt).getTime() <= Date.now()).length} Expired
-                    </span>
-                  </div>
-                </div>
+{(() => {
+                  const fulfilledCount = reservations.filter(r => isReservationFulfilled(r)).length;
+                  const activeCount = reservations.filter(r => !isReservationFulfilled(r) && (!r.expiresAt || new Date(r.expiresAt).getTime() > Date.now())).length;
+                  const expiredCount = reservations.filter(r => !isReservationFulfilled(r) && r.expiresAt && new Date(r.expiresAt).getTime() <= Date.now()).length;
 
-                {/* Reservations Table */}
-                <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto min-h-[400px]" data-lenis-prevent="true">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-brand-cream/30 text-xs uppercase tracking-widest font-sans text-brand-muted border-b border-brand-sand/30">
-                          <th className="p-6 font-semibold">Item Held</th>
-                          <th className="p-6 font-semibold">Reserved By</th>
-                          <th className="p-6 font-semibold">Status</th>
-                          <th className="p-6 font-semibold">Key Dates</th>
-                          <th className="p-6 font-semibold text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-sm font-sans text-brand-espresso">
-                        {reservations.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="p-12 text-center text-brand-muted text-base">
-                              No active item reservations at this time.
-                            </td>
-                          </tr>
-                        ) : (
-                          reservations.map((r) => {
-                            const isExpired = r.expiresAt ? new Date(r.expiresAt).getTime() <= Date.now() : false;
-                            return (
-                              <tr key={r.id} className="border-b border-brand-sand/30 hover:bg-brand-cream/20 transition-colors">
-                                <td className="p-6">
-                                  <p className="font-semibold text-base text-brand-espresso">{r.itemName}</p>
-                                  <p className="text-xs text-brand-muted font-mono mt-0.5">ID: {r.itemId}</p>
-                                </td>
-                                <td className="p-6">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="font-semibold text-base text-brand-espresso">{r.reservedByName || 'Guest'}</p>
-                                    {r.relation && (
-                                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-gold/15 text-brand-goldDark">
-                                        {r.relation}
-                                      </span>
-                                    )}
-                                    {r.isAnonymous && (
-                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-sand text-brand-muted">
-                                        Anonymous on Site
-                                      </span>
-                                    )}
-                                  </div>
-                                  {r.email && (
-                                    <div className="flex items-center gap-1.5 text-xs text-brand-muted mt-1 font-sans">
-                                      <Mail className="w-3.5 h-3.5" />
-                                      <span>{r.email}</span>
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="p-6">
-                                  {isExpired ? (
-                                    <span className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700">
-                                      Expired
-                                    </span>
-                                  ) : (
-                                    <span className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 flex items-center gap-1.5 w-max">
-                                      <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                                      Active Hold
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="p-6 text-xs text-brand-muted font-sans space-y-1">
-                                  <p><strong className="text-brand-espresso">Reserved:</strong> {new Date(r.createdAt).toLocaleDateString()}</p>
-                                  <p><strong className="text-brand-goldDark">Reminder Due:</strong> {new Date(r.remindDate).toLocaleDateString()}</p>
-                                  {r.expiresAt && <p><strong className="text-brand-espresso">Expires:</strong> {new Date(r.expiresAt).toLocaleDateString()}</p>}
-                                </td>
-                                <td className="p-6 text-right">
-                                  <div className="flex justify-end gap-2">
-                                    <button
-                                      onClick={() => handleSendReminder(r)}
-                                      className="p-2.5 text-brand-gold hover:text-brand-goldDark hover:bg-brand-gold/10 rounded-xl transition-colors"
-                                      title="Send Reminder Email"
-                                    >
-                                      <Mail className="w-5 h-5" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteReservation(r.id, r.itemId, r.reservedByName)}
-                                      className="p-2.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
-                                      title="Release reservation (Make item available again)"
-                                    >
-                                      <Trash2 className="w-5 h-5" />
-                                    </button>
-                                  </div>
-                                </td>
+                  const displayedReservations = reservations.filter((r) => {
+                    const fulfilled = isReservationFulfilled(r);
+                    const expired = !fulfilled && r.expiresAt ? new Date(r.expiresAt).getTime() <= Date.now() : false;
+                    if (reservationStatusFilter === 'fulfilled') return fulfilled;
+                    if (reservationStatusFilter === 'active') return !fulfilled && !expired;
+                    if (reservationStatusFilter === 'expired') return expired;
+                    return true;
+                  });
+
+                  return (
+                    <>
+                      {/* Reservations Header */}
+                      <div className="bg-white p-8 rounded-3xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                        <div>
+                          <h3 className="font-serif text-2xl text-brand-espresso mb-1">Item Reservations</h3>
+                          <p className="text-sm font-sans text-brand-muted">
+                            When a guest pays for a reserved item, it becomes Fulfilled and never expires.
+                          </p>
+                        </div>
+                        {/* Status Badges & Interactive Filter Tabs */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => setReservationStatusFilter('all')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider font-sans transition-all border cursor-pointer ${
+                              reservationStatusFilter === 'all'
+                                ? 'bg-brand-espresso text-brand-goldLight border-brand-espresso shadow-xs'
+                                : 'bg-white text-brand-muted border-brand-sand/50 hover:bg-brand-sand/30'
+                            }`}
+                          >
+                            All ({reservations.length})
+                          </button>
+                          <button
+                            onClick={() => setReservationStatusFilter('active')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider font-sans transition-all border cursor-pointer ${
+                              reservationStatusFilter === 'active'
+                                ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                            }`}
+                          >
+                            Active Hold ({activeCount})
+                          </button>
+                          <button
+                            onClick={() => setReservationStatusFilter('fulfilled')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider font-sans transition-all border cursor-pointer flex items-center gap-1.5 ${
+                              reservationStatusFilter === 'fulfilled'
+                                ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                                : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5" /> Fulfilled ({fulfilledCount})
+                          </button>
+                          <button
+                            onClick={() => setReservationStatusFilter('expired')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider font-sans transition-all border cursor-pointer ${
+                              reservationStatusFilter === 'expired'
+                                ? 'bg-rose-700 text-white border-rose-700 shadow-xs'
+                                : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                            }`}
+                          >
+                            Expired ({expiredCount})
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Reservations Table */}
+                      <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto min-h-[400px]" data-lenis-prevent="true">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-brand-cream/30 text-xs uppercase tracking-widest font-sans text-brand-muted border-b border-brand-sand/30">
+                                <th className="p-6 font-semibold">Item Held</th>
+                                <th className="p-6 font-semibold">Reserved By</th>
+                                <th className="p-6 font-semibold">Status</th>
+                                <th className="p-6 font-semibold">Key Dates</th>
+                                <th className="p-6 font-semibold text-right">Action</th>
                               </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                            </thead>
+                            <tbody className="text-sm font-sans text-brand-espresso">
+                              {displayedReservations.length === 0 ? (
+                                <tr>
+                                  <td colSpan={5} className="p-12 text-center text-brand-muted text-base">
+                                    No item reservations match the selected filter.
+                                  </td>
+                                </tr>
+                              ) : (
+                                displayedReservations.map((r) => {
+                                  const fulfilled = isReservationFulfilled(r);
+                                  const isExpired = !fulfilled && r.expiresAt ? new Date(r.expiresAt).getTime() <= Date.now() : false;
+                                  return (
+                                    <tr key={r.id} className="border-b border-brand-sand/30 hover:bg-brand-cream/20 transition-colors">
+                                      <td className="p-6">
+                                        <p className="font-semibold text-base text-brand-espresso">{r.itemName}</p>
+                                        <p className="text-xs text-brand-muted font-mono mt-0.5">ID: {r.itemId}</p>
+                                      </td>
+                                      <td className="p-6">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <p className="font-semibold text-base text-brand-espresso">{r.reservedByName || 'Guest'}</p>
+                                          {r.relation && (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-gold/15 text-brand-goldDark">
+                                              {r.relation}
+                                            </span>
+                                          )}
+                                          {r.isAnonymous && (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-sand text-brand-muted">
+                                              Anonymous on Site
+                                            </span>
+                                          )}
+                                        </div>
+                                        {r.email && (
+                                          <div className="flex items-center gap-1.5 text-xs text-brand-muted mt-1 font-sans">
+                                            <Mail className="w-3.5 h-3.5" />
+                                            <span>{r.email}</span>
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="p-6">
+                                        {fulfilled ? (
+                                          <span className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5 w-max">
+                                            <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[3]" />
+                                            Fulfilled
+                                          </span>
+                                        ) : isExpired ? (
+                                          <span className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+                                            Expired
+                                          </span>
+                                        ) : (
+                                          <span className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1.5 w-max">
+                                            <Clock className="w-3.5 h-3.5 text-amber-600" />
+                                            Active Hold
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="p-6 text-xs text-brand-muted font-sans space-y-1">
+                                        <p><strong className="text-brand-espresso">Reserved:</strong> {new Date(r.createdAt).toLocaleDateString()}</p>
+                                        {fulfilled ? (
+                                          <p className="text-emerald-700 font-semibold flex items-center gap-1">
+                                            <Check className="w-3 h-3 text-emerald-600" /> Payment Confirmed (Never Expires)
+                                          </p>
+                                        ) : (
+                                          <>
+                                            <p><strong className="text-brand-goldDark">Reminder Due:</strong> {new Date(r.remindDate).toLocaleDateString()}</p>
+                                            {r.expiresAt && <p><strong className="text-brand-espresso">Expires:</strong> {new Date(r.expiresAt).toLocaleDateString()}</p>}
+                                          </>
+                                        )}
+                                      </td>
+                                      <td className="p-6 text-right">
+                                        <div className="flex justify-end items-center gap-2">
+                                          {!fulfilled && (
+                                            <>
+                                              <button
+                                                onClick={async () => {
+                                                  await markReservationFulfilled(r.id);
+                                                  setReservations(prev => prev.map(item => item.id === r.id ? { ...item, isFulfilled: true, fulfilledAt: new Date().toISOString() } : item));
+                                                  onNotify('Marked Fulfilled', `${r.itemName} marked as fulfilled!`);
+                                                }}
+                                                className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer"
+                                                title="Mark payment received / fulfilled"
+                                              >
+                                                <Check className="w-3.5 h-3.5" /> Mark Paid
+                                              </button>
+                                              <button
+                                                onClick={() => handleSendReminder(r)}
+                                                className="p-2 text-brand-gold hover:text-brand-goldDark hover:bg-brand-gold/10 rounded-xl transition-colors cursor-pointer"
+                                                title="Send Reminder Email"
+                                              >
+                                                <Mail className="w-5 h-5" />
+                                              </button>
+                                            </>
+                                          )}
+                                          <button
+                                            onClick={() => handleDeleteReservation(r.id, r.itemId, r.reservedByName)}
+                                            className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                                            title={fulfilled ? "Remove completed reservation log" : "Release reservation"}
+                                          >
+                                            <Trash2 className="w-5 h-5" />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </motion.div>
             )}
           </AnimatePresence>

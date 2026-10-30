@@ -168,7 +168,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
         guestEmail: reminderEmail.trim(),
         itemName: reminderItem.name,
         itemPrice: reminderItem.formattedPrice,
-        expiresAt: saved.expiresAt,
+        expiresAt: saved.expiresAt || '',
       }).catch((err) => console.error('Error sending confirmation email:', err));
 
       onNotify('Gift Saved With Love 💛', `We have set this aside for you! A confirmation with bank details has been sent to ${reminderEmail.trim()}.`);
@@ -225,7 +225,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
       setItems((prev) =>
         prev.map((it) =>
           it.id === activeItem.id
-            ? { ...it, isFunded: it.price === 0 ? false : true, fundedBy: it.price === 0 ? undefined : giverName.trim() }
+            ? { ...it, isFunded: it.price === 0 ? false : true, fundedBy: it.price === 0 ? undefined : giverName.trim(), isReserved: false, reservedUntil: undefined }
             : it
         )
       );
@@ -1036,3 +1036,5 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
     </section>
   );
 };
+
+

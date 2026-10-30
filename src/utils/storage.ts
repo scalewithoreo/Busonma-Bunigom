@@ -305,6 +305,22 @@ export async function saveGiftPledge(pledge: Omit<GiftPledge, 'id' | 'pledgedAt'
   const currentPledges = getLocalDb<GiftPledge[]>(MM_DB_PLEDGES, []);
   setLocalDb(MM_DB_PLEDGES, [newPledge, ...currentPledges]);
 
+  // When a pledge / payment is saved for a reserved item, mark reservation as fulfilled so it never expires!
+  if (pledge.itemId && pledge.itemId !== 'cash_gift') {
+    const reservations = getLocalDb<GiftReminder[]>(MM_DB_RESERVATIONS, []);
+    const updated = reservations.map(r => {
+      if (r.itemId === pledge.itemId) {
+        return {
+          ...r,
+          isFulfilled: true,
+          fulfilledAt: new Date().toISOString()
+        };
+      }
+      return r;
+    });
+    setLocalDb(MM_DB_RESERVATIONS, updated);
+  }
+
   if (isDedicatedSupabaseConfigured()) {
     try {
       await supabase.from('gift_pledges').insert([{
@@ -375,8 +391,10 @@ export interface GiftReminder {
   relation?: string;
   isAnonymous?: boolean;
   remindDate: string;
-  expiresAt: string;
+  expiresAt?: string;
   createdAt: string;
+  isFulfilled?: boolean;
+  fulfilledAt?: string;
 }
 
 export async function getStoredReminders(): Promise<GiftReminder[]> {
@@ -387,7 +405,23 @@ export async function getActiveReservations(): Promise<GiftReminder[]> {
   const reservations = getLocalDb<GiftReminder[]>(MM_DB_RESERVATIONS, []);
   const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   const now = Date.now();
-  return reservations.filter(r => (new Date(r.createdAt).getTime() + ONE_WEEK_MS) > now);
+  // Fulfilled items are already completed gifts, not unfulfilled holds
+  return reservations.filter(r => !r.isFulfilled && (new Date(r.createdAt).getTime() + ONE_WEEK_MS) > now);
+}
+
+export async function markReservationFulfilled(id: string): Promise<void> {
+  const reservations = getLocalDb<GiftReminder[]>(MM_DB_RESERVATIONS, []);
+  const updated = reservations.map(r => {
+    if (r.id === id) {
+      return {
+        ...r,
+        isFulfilled: true,
+        fulfilledAt: new Date().toISOString()
+      };
+    }
+    return r;
+  });
+  setLocalDb(MM_DB_RESERVATIONS, updated);
 }
 
 export async function saveReminder(reminder: {
