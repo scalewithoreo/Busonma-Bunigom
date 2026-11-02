@@ -1,5 +1,6 @@
-import { RsvpSubmission, GiftPledge, WishlistItem } from '../types';
+import { RsvpSubmission, GiftPledge, WishlistItem, GiftReminder } from '../types';
 import { supabase } from './supabase';
+import { isTursoConfigured, getTursoClient } from './turso';
 import { INITIAL_WISHLIST_ITEMS } from '../data/wishlistData';
 
 const USER_RSVP_KEY = 'mm_user_active_rsvp';
@@ -28,7 +29,7 @@ try {
 }
 
 // Function to reset the entire database to a clean, fresh state (0 guests, 0 RSVPs, fresh wishlist)
-export function clearMiracleMalvinDatabase(): void {
+export async function clearMiracleMalvinDatabase(): Promise<void> {
   try {
     localStorage.removeItem(MM_DB_RSVPS);
     localStorage.removeItem(MM_DB_CODES);
@@ -40,13 +41,29 @@ export function clearMiracleMalvinDatabase(): void {
   } catch (e) {
     console.error('Failed to clear local database:', e);
   }
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.batch([
+          'DELETE FROM rsvps;',
+          'DELETE FROM reservations;',
+          'DELETE FROM gift_pledges;',
+          'DELETE FROM wishlist;',
+          'DELETE FROM invite_codes;'
+        ]);
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to clear cloud tables:', err);
+    }
+  }
 }
 
 // Helper to determine if a dedicated, non-legacy Supabase is configured
 function isDedicatedSupabaseConfigured(): boolean {
   const url = import.meta.env.VITE_SUPABASE_URL || '';
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  // Isolated dedicated database only
   if (!url || !key || url.includes('rmgrhxvbxwdpctvegppb')) {
     return false;
   }
@@ -80,7 +97,6 @@ function sanitizeCsvCell(val: string): string {
 
 // --- Helper for Backend Admin Proxy ---
 async function adminDb(action: string, payload: any = {}) {
-  // If no dedicated external database is configured, route immediately to local DB
   if (!isDedicatedSupabaseConfigured()) {
     throw new Error('Using isolated local database');
   }
@@ -99,29 +115,39 @@ async function adminDb(action: string, payload: any = {}) {
   return json.data;
 }
 
-// --- RSVPs ---
+// ============================================================
+// --- RSVPS ---
+// ============================================================
 
 export async function getStoredRsvps(): Promise<RsvpSubmission[]> {
-  if (!isDedicatedSupabaseConfigured()) {
-    return getLocalDb<RsvpSubmission[]>(MM_DB_RSVPS, []);
+  // 1. Try Turso SQLite if configured
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const res = await client.execute('SELECT * FROM rsvps ORDER BY created_at DESC');
+        const rsvps: RsvpSubmission[] = res.rows.map((row: any) => ({
+          id: String(row.id),
+          firstName: String(row.first_name || ''),
+          lastName: String(row.last_name || ''),
+          email: row.email ? String(row.email) : undefined,
+          attendance: row.attendance === 'no' ? 'no' : 'yes',
+          relation: row.relation ? String(row.relation) : undefined,
+          message: row.message ? String(row.message) : undefined,
+          submittedAt: String(row.created_at || new Date().toISOString())
+        }));
+        setLocalDb(MM_DB_RSVPS, rsvps);
+        return rsvps;
+      }
+    } catch (err) {
+      console.warn('[turso] Error fetching RSVPs, falling back to local DB:', err);
+    }
   }
 
-  try {
-    const data = await adminDb('getStoredRsvps');
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      firstName: row.first_name || (row.full_name ? row.full_name.split(' ')[0] : ''),
-      lastName: row.last_name || (row.full_name ? row.full_name.substring(row.full_name.indexOf(' ') + 1) : ''),
-      email: row.email,
-      attendance: row.attendance as 'yes' | 'no',
-      relation: row.relation,
-      message: row.message,
-      submittedAt: row.created_at
-    }));
-  } catch {
+  // 2. Try Supabase if configured
+  if (isDedicatedSupabaseConfigured()) {
     try {
-      const { data, error: sbError } = await supabase.from('rsvps').select('*').order('created_at', { ascending: false });
-      if (sbError) throw sbError;
+      const data = await adminDb('getStoredRsvps');
       return (data || []).map((row: any) => ({
         id: row.id,
         firstName: row.first_name || (row.full_name ? row.full_name.split(' ')[0] : ''),
@@ -133,9 +159,25 @@ export async function getStoredRsvps(): Promise<RsvpSubmission[]> {
         submittedAt: row.created_at
       }));
     } catch {
-      return getLocalDb<RsvpSubmission[]>(MM_DB_RSVPS, []);
+      try {
+        const { data, error: sbError } = await supabase.from('rsvps').select('*').order('created_at', { ascending: false });
+        if (sbError) throw sbError;
+        return (data || []).map((row: any) => ({
+          id: row.id,
+          firstName: row.first_name || (row.full_name ? row.full_name.split(' ')[0] : ''),
+          lastName: row.last_name || (row.full_name ? row.full_name.substring(row.full_name.indexOf(' ') + 1) : ''),
+          email: row.email,
+          attendance: row.attendance as 'yes' | 'no',
+          relation: row.relation,
+          message: row.message,
+          submittedAt: row.created_at
+        }));
+      } catch {}
     }
   }
+
+  // 3. Fallback to Local Storage DB
+  return getLocalDb<RsvpSubmission[]>(MM_DB_RSVPS, []);
 }
 
 export async function saveRsvp(submission: Omit<RsvpSubmission, 'id' | 'submittedAt'>): Promise<RsvpSubmission> {
@@ -150,7 +192,7 @@ export async function saveRsvp(submission: Omit<RsvpSubmission, 'id' | 'submitte
     submittedAt: new Date().toISOString()
   };
 
-  // Save to isolated local DB
+  // Always save locally first for instant UI response
   const currentRsvps = getLocalDb<RsvpSubmission[]>(MM_DB_RSVPS, []);
   setLocalDb(MM_DB_RSVPS, [newRsvp, ...currentRsvps]);
 
@@ -158,7 +200,32 @@ export async function saveRsvp(submission: Omit<RsvpSubmission, 'id' | 'submitte
     localStorage.setItem(USER_RSVP_KEY, JSON.stringify(newRsvp));
   } catch {}
 
-  // If dedicated Supabase configured, sync with it
+  // Save to Turso if configured
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: `INSERT INTO rsvps (id, first_name, last_name, email, attendance, relation, message, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            newRsvp.id,
+            newRsvp.firstName,
+            newRsvp.lastName,
+            newRsvp.email || null,
+            newRsvp.attendance,
+            newRsvp.relation || null,
+            newRsvp.message || null,
+            newRsvp.submittedAt
+          ]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to sync RSVP to Turso, preserved in local DB:', err);
+    }
+  }
+
+  // Sync to Supabase if configured
   if (isDedicatedSupabaseConfigured()) {
     try {
       const payload: any = {
@@ -172,7 +239,7 @@ export async function saveRsvp(submission: Omit<RsvpSubmission, 'id' | 'submitte
       };
       await supabase.from('rsvps').insert([payload]);
     } catch (err) {
-      console.warn('Supabase sync skipped, stored locally:', err);
+      console.warn('Supabase sync skipped:', err);
     }
   }
 
@@ -182,6 +249,20 @@ export async function saveRsvp(submission: Omit<RsvpSubmission, 'id' | 'submitte
 export async function deleteRsvp(id: string): Promise<void> {
   const currentRsvps = getLocalDb<RsvpSubmission[]>(MM_DB_RSVPS, []);
   setLocalDb(MM_DB_RSVPS, currentRsvps.filter(r => r.id !== id));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: 'DELETE FROM rsvps WHERE id = ?',
+          args: [id]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to delete RSVP from cloud:', err);
+    }
+  }
 
   if (isDedicatedSupabaseConfigured()) {
     try {
@@ -233,60 +314,62 @@ export async function exportRsvpsCsv(): Promise<void> {
   document.body.removeChild(link);
 }
 
-// --- Gift Pledges ---
+// ============================================================
+// --- GIFT PLEDGES ---
+// ============================================================
 
 export async function getStoredGiftPledges(): Promise<GiftPledge[]> {
-  if (!isDedicatedSupabaseConfigured()) {
-    const pledges = getLocalDb<GiftPledge[]>(MM_DB_PLEDGES, []);
-    return pledges.map(p => ({
-      ...p,
-      giverEmail: '',
-      giverNote: ''
-    }));
-  }
-
-  try {
-    const { data } = await supabase
-      .from('gift_pledges')
-      .select('id, item_id, item_name, amount, giver_name, created_at')
-      .order('created_at', { ascending: false });
-
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      itemId: row.item_id,
-      itemName: row.item_name,
-      amount: row.amount,
-      giverName: row.giver_name,
-      giverEmail: '',
-      giverNote: '',
-      pledgedAt: row.created_at
-    }));
-  } catch {
-    return getLocalDb<GiftPledge[]>(MM_DB_PLEDGES, []);
-  }
+  const adminPledges = await getStoredGiftPledgesAdmin();
+  return adminPledges.map(p => ({
+    ...p,
+    giverEmail: '',
+    giverNote: ''
+  }));
 }
 
 export async function getStoredGiftPledgesAdmin(): Promise<GiftPledge[]> {
-  if (!isDedicatedSupabaseConfigured()) {
-    return getLocalDb<GiftPledge[]>(MM_DB_PLEDGES, []);
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const res = await client.execute('SELECT * FROM gift_pledges ORDER BY created_at DESC');
+        const pledges: GiftPledge[] = res.rows.map((row: any) => ({
+          id: String(row.id),
+          itemId: String(row.item_id),
+          itemName: String(row.item_name),
+          amount: Number(row.amount || 0),
+          giverName: String(row.giver_name),
+          giverEmail: row.giver_email ? String(row.giver_email) : undefined,
+          giverNote: row.giver_note ? String(row.giver_note) : '',
+          giverRelation: row.giver_relation ? String(row.giver_relation) : undefined,
+          pledgedAt: String(row.created_at || new Date().toISOString())
+        }));
+        setLocalDb(MM_DB_PLEDGES, pledges);
+        return pledges;
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to fetch gift pledges, using local DB:', err);
+    }
   }
 
-  try {
-    const data = await adminDb('getStoredGiftPledgesAdmin');
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      itemId: row.item_id,
-      itemName: row.item_name,
-      amount: row.amount,
-      giverName: row.giver_name,
-      giverEmail: row.giver_email,
-      giverNote: row.giver_note || '',
-      giverRelation: row.relation,
-      pledgedAt: row.created_at
-    }));
-  } catch {
-    return getLocalDb<GiftPledge[]>(MM_DB_PLEDGES, []);
+  if (isDedicatedSupabaseConfigured()) {
+    try {
+      const data = await adminDb('getStoredGiftPledgesAdmin');
+      return (data || []).map((row: any) => ({
+        id: row.id,
+        itemId: row.item_id,
+        itemName: row.item_name,
+        amount: row.amount,
+        giverName: row.giver_name,
+        giverEmail: row.giver_email,
+        giverNote: row.giver_note || '',
+        giverRelation: row.relation,
+        pledgedAt: row.created_at
+      }));
+    } catch {}
   }
+
+  return getLocalDb<GiftPledge[]>(MM_DB_PLEDGES, []);
 }
 
 export async function saveGiftPledge(pledge: Omit<GiftPledge, 'id' | 'pledgedAt'>): Promise<GiftPledge> {
@@ -321,6 +404,37 @@ export async function saveGiftPledge(pledge: Omit<GiftPledge, 'id' | 'pledgedAt'
     setLocalDb(MM_DB_RESERVATIONS, updated);
   }
 
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: `INSERT INTO gift_pledges (id, item_id, item_name, amount, giver_name, giver_email, giver_note, giver_relation, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            newPledge.id,
+            newPledge.itemId,
+            newPledge.itemName,
+            newPledge.amount,
+            newPledge.giverName,
+            newPledge.giverEmail || null,
+            newPledge.giverNote || null,
+            newPledge.giverRelation || null,
+            newPledge.pledgedAt
+          ]
+        });
+        if (pledge.itemId && pledge.itemId !== 'cash_gift') {
+          await client.execute({
+            sql: 'UPDATE reservations SET is_fulfilled = 1, fulfilled_at = ? WHERE item_id = ?',
+            args: [new Date().toISOString(), pledge.itemId]
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to sync gift pledge to cloud:', err);
+    }
+  }
+
   if (isDedicatedSupabaseConfigured()) {
     try {
       await supabase.from('gift_pledges').insert([{
@@ -341,6 +455,20 @@ export async function saveGiftPledge(pledge: Omit<GiftPledge, 'id' | 'pledgedAt'
 export async function deleteGiftPledge(id: string): Promise<void> {
   const currentPledges = getLocalDb<GiftPledge[]>(MM_DB_PLEDGES, []);
   setLocalDb(MM_DB_PLEDGES, currentPledges.filter(p => p.id !== id));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: 'DELETE FROM gift_pledges WHERE id = ?',
+          args: [id]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to delete pledge from cloud:', err);
+    }
+  }
 
   if (isDedicatedSupabaseConfigured()) {
     try {
@@ -379,33 +507,46 @@ export async function exportGiftPledgesCsv(): Promise<void> {
   document.body.removeChild(link);
 }
 
-// --- Gift Reminders / Reservations ---
-
-export interface GiftReminder {
-  id: string;
-  itemId: string;
-  itemName: string;
-  itemPrice: string;
-  email: string;
-  reservedByName?: string;
-  relation?: string;
-  isAnonymous?: boolean;
-  remindDate: string;
-  expiresAt?: string;
-  createdAt: string;
-  isFulfilled?: boolean;
-  fulfilledAt?: string;
-}
+// ============================================================
+// --- RESERVATIONS / HOLDS ---
+// ============================================================
 
 export async function getStoredReminders(): Promise<GiftReminder[]> {
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const res = await client.execute('SELECT * FROM reservations ORDER BY created_at DESC');
+        const reservations: GiftReminder[] = res.rows.map((row: any) => ({
+          id: String(row.id),
+          itemId: String(row.item_id),
+          itemName: String(row.item_name),
+          itemPrice: String(row.item_price || ''),
+          email: String(row.email),
+          reservedByName: row.reserved_by_name ? String(row.reserved_by_name) : undefined,
+          relation: row.relation ? String(row.relation) : undefined,
+          isAnonymous: Boolean(row.is_anonymous),
+          remindDate: String(row.remind_date || ''),
+          expiresAt: row.expires_at ? String(row.expires_at) : undefined,
+          createdAt: String(row.created_at || new Date().toISOString()),
+          isFulfilled: Boolean(row.is_fulfilled),
+          fulfilledAt: row.fulfilled_at ? String(row.fulfilled_at) : undefined
+        }));
+        setLocalDb(MM_DB_RESERVATIONS, reservations);
+        return reservations;
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to fetch reservations from cloud:', err);
+    }
+  }
+
   return getLocalDb<GiftReminder[]>(MM_DB_RESERVATIONS, []);
 }
 
 export async function getActiveReservations(): Promise<GiftReminder[]> {
-  const reservations = getLocalDb<GiftReminder[]>(MM_DB_RESERVATIONS, []);
+  const reservations = await getStoredReminders();
   const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   const now = Date.now();
-  // Fulfilled items are already completed gifts, not unfulfilled holds
   return reservations.filter(r => !r.isFulfilled && (new Date(r.createdAt).getTime() + ONE_WEEK_MS) > now);
 }
 
@@ -422,6 +563,20 @@ export async function markReservationFulfilled(id: string): Promise<void> {
     return r;
   });
   setLocalDb(MM_DB_RESERVATIONS, updated);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: 'UPDATE reservations SET is_fulfilled = 1, fulfilled_at = ? WHERE id = ?',
+          args: [new Date().toISOString(), id]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to mark reservation fulfilled in cloud:', err);
+    }
+  }
 }
 
 export async function saveReminder(reminder: {
@@ -454,6 +609,34 @@ export async function saveReminder(reminder: {
 
   const current = getLocalDb<GiftReminder[]>(MM_DB_RESERVATIONS, []);
   setLocalDb(MM_DB_RESERVATIONS, [newReminder, ...current]);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: `INSERT INTO reservations (id, item_id, item_name, item_price, email, reserved_by_name, relation, is_anonymous, remind_date, expires_at, is_fulfilled, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+          args: [
+            newReminder.id,
+            newReminder.itemId,
+            newReminder.itemName,
+            newReminder.itemPrice || null,
+            newReminder.email,
+            newReminder.reservedByName || null,
+            newReminder.relation || null,
+            newReminder.isAnonymous ? 1 : 0,
+            newReminder.remindDate,
+            newReminder.expiresAt || null,
+            newReminder.createdAt
+          ]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to sync reservation to cloud:', err);
+    }
+  }
+
   return newReminder;
 }
 
@@ -470,11 +653,59 @@ export async function deleteReservation(id: string, itemId?: string): Promise<vo
   const current = getLocalDb<GiftReminder[]>(MM_DB_RESERVATIONS, []);
   const filtered = current.filter(r => r.id !== id && (itemId ? r.itemId !== itemId : true));
   setLocalDb(MM_DB_RESERVATIONS, filtered);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: 'DELETE FROM reservations WHERE id = ? OR item_id = ?',
+          args: [id, itemId || '']
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to delete reservation from cloud:', err);
+    }
+  }
 }
 
-// --- Wishlist Items ---
+// ============================================================
+// --- WISHLIST ITEMS ---
+// ============================================================
 
 export async function getStoredWishlistItems(): Promise<WishlistItem[]> {
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const res = await client.execute('SELECT * FROM wishlist ORDER BY created_at DESC');
+        if (res.rows.length > 0) {
+          const items: WishlistItem[] = res.rows.map((row: any) => ({
+            id: String(row.id),
+            name: String(row.name),
+            quantity: Number(row.quantity || 1),
+            price: Number(row.price || 0),
+            formattedPrice: String(row.formatted_price || `₦${Number(row.price || 0).toLocaleString()}`),
+            category: row.category as any,
+            image: String(row.image || ''),
+            description: String(row.description || ''),
+            isFunded: Boolean(row.is_funded),
+            fundedBy: row.funded_by ? String(row.funded_by) : undefined,
+            isReserved: Boolean(row.is_reserved),
+            reservedUntil: row.reserved_until ? String(row.reserved_until) : undefined,
+            reservedByEmail: row.reserved_by_email ? String(row.reserved_by_email) : undefined,
+            reservedByName: row.reserved_by_name ? String(row.reserved_by_name) : undefined,
+            isAnonymousReservation: Boolean(row.is_anonymous_reservation)
+          }));
+          setLocalDb(MM_DB_WISHLIST, items);
+          return items;
+        }
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to fetch wishlist from cloud:', err);
+    }
+  }
+
   const customItems = getLocalDb<WishlistItem[] | null>(MM_DB_WISHLIST, null);
   if (customItems && customItems.length > 0) {
     return customItems;
@@ -491,22 +722,89 @@ export async function saveWishlistItem(item: Omit<WishlistItem, 'id' | 'isFunded
     isReserved: false
   };
   setLocalDb(MM_DB_WISHLIST, [newItem, ...current]);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: `INSERT INTO wishlist (id, name, quantity, price, formatted_price, category, image, description, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            newItem.id,
+            newItem.name,
+            newItem.quantity,
+            newItem.price,
+            newItem.formattedPrice,
+            newItem.category,
+            newItem.image,
+            newItem.description,
+            new Date().toISOString()
+          ]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to save wishlist item to cloud:', err);
+    }
+  }
+
   return newItem;
 }
 
 export async function deleteWishlistItem(id: string): Promise<void> {
   const current = await getStoredWishlistItems();
   setLocalDb(MM_DB_WISHLIST, current.filter(item => item.id !== id));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: 'DELETE FROM wishlist WHERE id = ?',
+          args: [id]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to delete wishlist item from cloud:', err);
+    }
+  }
 }
 
 export async function updateWishlistItem(item: Omit<WishlistItem, 'isFunded' | 'fundedBy' | 'isReserved' | 'reservedUntil' | 'reservedByEmail' | 'reservedByName'>): Promise<WishlistItem> {
   const current = await getStoredWishlistItems();
   const updated = current.map(i => i.id === item.id ? { ...i, ...item } : i);
   setLocalDb(MM_DB_WISHLIST, updated);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: `UPDATE wishlist SET name = ?, price = ?, formatted_price = ?, category = ?, image = ?, description = ?, quantity = ?
+                WHERE id = ?`,
+          args: [
+            item.name,
+            item.price,
+            item.formattedPrice,
+            item.category,
+            item.image,
+            item.description,
+            item.quantity,
+            item.id
+          ]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to update wishlist item in cloud:', err);
+    }
+  }
+
   return { ...item, isFunded: false, isReserved: false };
 }
 
-// --- Invite Codes ---
+// ============================================================
+// --- INVITE CODES ---
+// ============================================================
 
 export interface InviteCode {
   id: string;
@@ -519,7 +817,7 @@ export interface InviteCode {
 }
 
 export async function generateInviteCode(createdBy: string = 'malvin'): Promise<string> {
-  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+  const currentCodes = await getInviteCodes();
   const existingSet = new Set(currentCodes.map(c => c.code));
 
   let code = '';
@@ -538,11 +836,27 @@ export async function generateInviteCode(createdBy: string = 'malvin'): Promise<
   };
 
   setLocalDb(MM_DB_CODES, [newCode, ...currentCodes]);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at)
+                VALUES (?, ?, '', ?, 1, 0, ?)`,
+          args: [newCode.id, newCode.code, newCode.created_by || 'malvin', newCode.created_at]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to save invite code to cloud:', err);
+    }
+  }
+
   return code;
 }
 
 export async function bulkGenerateInviteCodes(count: number, createdBy: string = 'malvin'): Promise<string[]> {
-  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+  const currentCodes = await getInviteCodes();
   const existingSet = new Set(currentCodes.map(c => c.code));
 
   const newCodes: InviteCode[] = [];
@@ -569,6 +883,23 @@ export async function bulkGenerateInviteCodes(count: number, createdBy: string =
   }
 
   setLocalDb(MM_DB_CODES, [...newCodes, ...currentCodes]);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const statements = newCodes.map(c => ({
+          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at)
+                VALUES (?, ?, '', ?, 1, 0, ?)`,
+          args: [c.id, c.code, c.created_by || 'malvin', c.created_at]
+        }));
+        await client.batch(statements);
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to bulk save invite codes to cloud:', err);
+    }
+  }
+
   return generatedStrings;
 }
 
@@ -577,6 +908,21 @@ export async function deleteInviteCodes(ids: string[]): Promise<void> {
   const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
   const idSet = new Set(ids);
   setLocalDb(MM_DB_CODES, currentCodes.filter(c => !idSet.has(c.id)));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const placeholders = ids.map(() => '?').join(',');
+        await client.execute({
+          sql: `DELETE FROM invite_codes WHERE id IN (${placeholders})`,
+          args: ids
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to delete invite codes from cloud:', err);
+    }
+  }
 }
 
 export async function markInviteCodeAsShared(id: string): Promise<void> {
@@ -590,6 +936,30 @@ export async function unmarkInviteCodeAsShared(id: string): Promise<void> {
 }
 
 export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[]> {
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const res = await client.execute('SELECT * FROM invite_codes ORDER BY created_at DESC');
+        const codes: InviteCode[] = res.rows.map((row: any) => ({
+          id: String(row.id),
+          code: String(row.code),
+          is_used: Boolean(row.is_used),
+          created_by: row.category ? String(row.category) : 'malvin',
+          used_by: row.guest_name ? String(row.guest_name) : undefined,
+          created_at: String(row.created_at || new Date().toISOString())
+        }));
+        setLocalDb(MM_DB_CODES, codes);
+        if (filterByRole && !['miracle', 'malvin'].includes(filterByRole)) {
+          return codes.filter(c => c.created_by === filterByRole);
+        }
+        return codes;
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to fetch invite codes from cloud:', err);
+    }
+  }
+
   const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
   if (filterByRole && !['miracle', 'malvin'].includes(filterByRole)) {
     return currentCodes.filter(c => c.created_by === filterByRole);
@@ -598,7 +968,7 @@ export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[
 }
 
 export async function verifyInviteCode(code: string): Promise<InviteCode | null> {
-  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+  const currentCodes = await getInviteCodes();
   const found = currentCodes.find(c => c.code.trim() === code.trim());
   return found || null;
 }
@@ -608,6 +978,20 @@ export async function markCodeAsUsed(code: string, usedBy: string): Promise<void
   setLocalDb(MM_DB_CODES, currentCodes.map(c => 
     c.code.trim() === code.trim() ? { ...c, is_used: true, used_by: usedBy } : c
   ));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: 'UPDATE invite_codes SET is_used = 1, guest_name = ? WHERE code = ?',
+          args: [usedBy, code.trim()]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to mark code as used in cloud:', err);
+    }
+  }
 }
 
 export async function exportInviteCodesCsv(filterByRole?: string): Promise<void> {

@@ -9,6 +9,7 @@
     "preview": "node ./node_modules/vite/bin/vite.js preview"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "@supabase/supabase-js": "^2.115.0",
     "@vercel/kv": "^3.0.0",
     "canvas-confetti": "^1.9.4",
