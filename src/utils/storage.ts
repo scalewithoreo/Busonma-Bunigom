@@ -428,6 +428,10 @@ export async function saveGiftPledge(pledge: Omit<GiftPledge, 'id' | 'pledgedAt'
             sql: 'UPDATE reservations SET is_fulfilled = 1, fulfilled_at = ? WHERE item_id = ?',
             args: [new Date().toISOString(), pledge.itemId]
           });
+          await client.execute({
+            sql: 'UPDATE wishlist SET is_funded = 1, funded_by = ?, is_reserved = 0, reserved_until = NULL WHERE id = ?',
+            args: [pledge.giverName, pledge.itemId]
+          });
         }
       }
     } catch (err) {
@@ -631,6 +635,18 @@ export async function saveReminder(reminder: {
             newReminder.createdAt
           ]
         });
+
+        // Mirror reservation status on the wishlist item
+        await client.execute({
+          sql: `UPDATE wishlist SET is_reserved = 1, reserved_until = ?, reserved_by_name = ?, reserved_by_email = ?, is_anonymous_reservation = ? WHERE id = ?`,
+          args: [
+            newReminder.expiresAt || null,
+            newReminder.reservedByName || null,
+            newReminder.email,
+            newReminder.isAnonymous ? 1 : 0,
+            newReminder.itemId
+          ]
+        });
       }
     } catch (err) {
       console.warn('[turso] Failed to sync reservation to cloud:', err);
@@ -659,9 +675,15 @@ export async function deleteReservation(id: string, itemId?: string): Promise<vo
       const client = getTursoClient();
       if (client) {
         await client.execute({
-          sql: 'DELETE FROM reservations WHERE id = ? OR item_id = ?',
-          args: [id, itemId || '']
+          sql: 'DELETE FROM reservations WHERE id = ? OR (item_id = ? AND ? != "")',
+          args: [id, itemId || '', itemId || '']
         });
+        if (itemId) {
+          await client.execute({
+            sql: 'UPDATE wishlist SET is_reserved = 0, reserved_until = NULL, reserved_by_name = NULL, reserved_by_email = NULL WHERE id = ?',
+            args: [itemId]
+          });
+        }
       }
     } catch (err) {
       console.warn('[turso] Failed to delete reservation from cloud:', err);
