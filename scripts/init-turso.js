@@ -25,9 +25,6 @@ console.log('--------------------------------------------------');
 
 if (!url || !token) {
   console.error('\n❌ ERROR: Turso credentials missing in .env!');
-  console.error('Please add the following to your .env file:');
-  console.error('VITE_TURSO_DATABASE_URL="libsql://your-database-name.turso.io"');
-  console.error('VITE_TURSO_AUTH_TOKEN="your-auth-token"\n');
   process.exit(1);
 }
 
@@ -52,13 +49,19 @@ async function run() {
       throw new Error(`Schema file not found at ${schemaPath}`);
     }
 
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    let schemaSql = fs.readFileSync(schemaPath, 'utf8');
     
+    // Strip comments line by line
+    const cleanSql = schemaSql
+      .split('\n')
+      .map(line => line.replace(/--.*$/, '').trim())
+      .join('\n');
+
     // Split into individual SQL statements by semicolon
-    const statements = schemaSql
+    const statements = cleanSql
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .filter(s => s.length > 0);
 
     console.log(`\n📦 Applying ${statements.length} table definitions & indexes...`);
 
@@ -73,10 +76,10 @@ async function run() {
       "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
     );
     const existingTables = tablesRes.rows.map(r => r.name);
-    console.log('\nVerified Active Tables in Turso:');
-    existingTables.forEach(t => console.log(`  • ${t}`));
+    console.log('\nVerified Active Tables in Turso Cloud:');
+    existingTables.forEach(t => console.log(`  ✓ ${t}`));
 
-    console.log('\n🎉 SUCCESS! Your Turso database is fully set up and ready for Miracle & Malvin.');
+    console.log('\n🎉 SUCCESS! Your Turso database is live, connected, and fully set up for Miracle & Malvin.');
     console.log('--------------------------------------------------\n');
   } catch (error) {
     console.error('\n❌ Error configuring Turso database:', error);
