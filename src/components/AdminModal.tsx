@@ -1,12 +1,13 @@
 import { useState, useEffect, FC, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Copy, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload } from 'lucide-react';
+import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload, RotateCcw, XCircle, Image as ImageIcon, UploadCloud, Eye, Share2, Sparkles } from 'lucide-react';
 import { 
   getStoredRsvps, deleteRsvp,
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
-  getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, InviteCode,
+  getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, InviteCode,
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
-  getStoredReminders, deleteReservation, markReservationFulfilled, clearMiracleMalvinDatabase
+  getStoredReminders, deleteReservation, markReservationFulfilled, clearMiracleMalvinDatabase,
+  getStoredInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, DEFAULT_POSTERS
 } from '../utils/storage';
 import { sendReservationReminderEmail } from '../utils/email';
 import { RsvpSubmission, GiftPledge, WishlistItem, GiftReminder } from '../types';
@@ -21,7 +22,11 @@ interface AdminDashboardProps {
 }
 
 export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify, role = 'miracle' }) => {
-  const [activeTab, setActiveTab] = useState<'rsvps' | 'codes' | 'gifts' | 'wishlist' | 'reservations'>('rsvps');
+  const [activeTab, setActiveTab] = useState<'rsvps' | 'codes' | 'gifts' | 'wishlist' | 'reservations' | 'invitations'>('rsvps');
+  const [invitationPosters, setInvitationPosters] = useState<InvitationPostersConfig>(getStoredInvitationPosters);
+  const [isUploadingPoster, setIsUploadingPoster] = useState<'general' | 'familyVip' | null>(null);
+  const [previewPosterUrl, setPreviewPosterUrl] = useState<string | null>(null);
+  const [sharingCode, setSharingCode] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Completely pause Lenis smooth scroll while Admin Dashboard is open
@@ -121,14 +126,23 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
   if (!isOpen) return null;
 
-  const totalAttendingGuests = rsvps.filter((r) => r.attendance === 'yes').length;
-  const attendingCount = totalAttendingGuests;
-  const declinedCount = rsvps.filter((r) => r.attendance === 'no').length;
-  const totalResponses = rsvps.length;
-
   const totalGiftValue = pledges.reduce((acc, p) => acc + p.amount, 0);
 
   const [creatorFilter, setCreatorFilter] = useState<string>('all');
+  const [rsvpAttendanceFilter, setRsvpAttendanceFilter] = useState<'all' | 'attending' | 'declined'>('all');
+
+  const rsvpCounts = useMemo(() => {
+    let base = rsvps;
+    if (['miracle', 'malvin'].includes(role || '') && creatorFilter !== 'all') {
+      const creatorCodes = codes.filter(c => c.created_by === creatorFilter && c.is_used && c.used_by);
+      const usedNames = creatorCodes.map(c => c.used_by!.trim().toLowerCase());
+      base = base.filter(r => usedNames.includes(`${r.firstName.trim()} ${r.lastName.trim()}`.toLowerCase()));
+    }
+    const attending = base.filter(r => r.attendance === 'yes').length;
+    const declined = base.filter(r => r.attendance === 'no').length;
+    const total = base.length;
+    return { attending, declined, total };
+  }, [rsvps, creatorFilter, role, codes]);
 
   const filteredRsvps = useMemo(() => {
     let result = rsvps;
@@ -137,15 +151,44 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       const usedNames = creatorCodes.map(c => c.used_by!.trim().toLowerCase());
       result = result.filter(r => usedNames.includes(`${r.firstName.trim()} ${r.lastName.trim()}`.toLowerCase()));
     }
+    if (rsvpAttendanceFilter === 'attending') {
+      result = result.filter(r => r.attendance === 'yes');
+    } else if (rsvpAttendanceFilter === 'declined') {
+      result = result.filter(r => r.attendance === 'no');
+    }
     return result;
-  }, [rsvps, creatorFilter, role, codes]);
+  }, [rsvps, creatorFilter, role, codes, rsvpAttendanceFilter]);
+
+  const [codeStatusFilter, setCodeStatusFilter] = useState<'all' | 'available' | 'shared' | 'used'>('all');
+
+  const codeStats = useMemo(() => {
+    const base = ['miracle', 'malvin'].includes(role || '') && creatorFilter !== 'all'
+      ? codes.filter(c => c.created_by === creatorFilter)
+      : codes;
+
+    const total = base.length;
+    const used = base.filter(c => c.is_used).length;
+    const unused = base.filter(c => !c.is_used).length;
+    const shared = base.filter(c => !c.is_used && c.is_shared).length;
+    const available = base.filter(c => !c.is_used && !c.is_shared).length;
+
+    return { total, used, unused, shared, available };
+  }, [codes, creatorFilter, role]);
 
   const filteredCodes = useMemo(() => {
+    let result = codes;
     if (['miracle', 'malvin'].includes(role || '') && creatorFilter !== 'all') {
-      return codes.filter(c => c.created_by === creatorFilter);
+      result = result.filter(c => c.created_by === creatorFilter);
     }
-    return codes;
-  }, [codes, creatorFilter, role]);
+    if (codeStatusFilter === 'available') {
+      result = result.filter(c => !c.is_used && !c.is_shared);
+    } else if (codeStatusFilter === 'shared') {
+      result = result.filter(c => !c.is_used && c.is_shared);
+    } else if (codeStatusFilter === 'used') {
+      result = result.filter(c => c.is_used);
+    }
+    return result;
+  }, [codes, creatorFilter, role, codeStatusFilter]);
 
   const handleGenerateCode = async () => {
     let amount = parseInt(bulkGenAmount, 10);
@@ -241,62 +284,73 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
     };
 
 
-  const handleCopyCode = async (code: string) => {
-    const target = codes.find(c => c.code === code);
-    const text = getInviteMessage(code, target?.created_by || role || '');
+  const handleShareCode = (code: string) => {
+    setSharingCode(code);
+  };
+
+  const executeShare = async (code: string, tier: 'general' | 'familyVip') => {
+    const targetCode = codes.find(c => c.code === code);
+    const creatorRole = targetCode?.created_by || role || 'miracle';
+    const text = getInviteMessage(code, creatorRole);
+    const posterUrl = tier === 'familyVip' ? invitationPosters.familyVipUrl : invitationPosters.generalUrl;
 
     const markShared = async () => {
       setCopiedCode(code);
-      const target = codes.find(c => c.code === code);
-      if (target && !target.is_shared) {
+      if (targetCode && !targetCode.is_shared) {
         try {
-          await markInviteCodeAsShared(target.id);
-          setCodes(prev => prev.map(c => c.id === target.id ? { ...c, is_shared: true } : c));
+          await markInviteCodeAsShared(targetCode.id);
+          setCodes(prev => prev.map(c => c.id === targetCode.id ? { ...c, is_shared: true } : c));
         } catch (e) {
           console.error('Failed to save shared status to DB', e);
         }
       }
-      setTimeout(() => setCopiedCode(null), 2000);
+      setTimeout(() => setCopiedCode(null), 2500);
+      setSharingCode(null);
     };
+
+    let filesArray: File[] = [];
+    try {
+      const response = await fetch(posterUrl);
+      const blob = await response.blob();
+      const filename = tier === 'familyVip' ? 'Miracle_and_Malvin_VIP_Invitation.png' : 'Miracle_and_Malvin_Invitation.png';
+      const file = new File([blob], filename, { type: blob.type || 'image/png' });
+      filesArray = [file];
+    } catch (fetchErr) {
+      console.warn('Could not load IV poster image for sharing', fetchErr);
+    }
 
     if (navigator.share) {
       try {
-        let filesArray: File[] = [];
-        try {
-          const response = await fetch('/invitation.png?v=2');
-          const blob = await response.blob();
-          const file = new File([blob], 'Miracle_and_Malvin_Invitation.png', { type: blob.type || 'image/png' });
-          filesArray = [file];
-        } catch (fetchErr) {
-          console.warn('Could not load IV image for sharing', fetchErr);
+        const shareData: ShareData = {
+          title: tier === 'familyVip' ? 'Miracle & Malvin VIP Wedding Invitation' : 'Miracle & Malvin Wedding Invitation',
+          text: text,
+        };
+        if (filesArray.length > 0 && navigator.canShare && navigator.canShare({ files: filesArray })) {
+          shareData.files = filesArray;
         }
-
-        if (navigator.canShare && navigator.canShare({ files: filesArray })) {
-          await navigator.share({
-            title: 'Miracle & Malvin Wedding Invitation',
-            text: text,
-            files: filesArray
-          });
-        } else {
-          await navigator.share({
-            title: 'Miracle & Malvin Wedding Invitation',
-            text: text
-          });
-        }
+        await navigator.share(shareData);
         await markShared();
+        onNotify('Invitation Shared', `${tier === 'familyVip' ? 'VIP' : 'General'} invite with code ${code} shared.`);
         return;
-      } catch (e) {
-        console.log('Share API failed/cancelled');
+      } catch (e: any) {
+        if (e.name !== 'AbortError') {
+          console.log('Share API error or cancelled', e);
+        } else {
+          setSharingCode(null);
+          return;
+        }
       }
     }
 
     try {
-      let imageBlob: Blob | null = null;
-      try {
-        const response = await fetch('/invitation.png?v=2');
-        imageBlob = await response.blob();
-      } catch (e) {
-        console.warn('Could not fetch image for clipboard', e);
+      let imageBlob: Blob | null = filesArray[0] || null;
+      if (!imageBlob) {
+        try {
+          const response = await fetch(posterUrl);
+          imageBlob = await response.blob();
+        } catch (e) {
+          console.warn('Could not fetch poster image for clipboard', e);
+        }
       }
 
       if (imageBlob && navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
@@ -307,18 +361,130 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
           });
           await navigator.clipboard.write([clipboardItem]);
           await markShared();
-          onNotify('Copied', 'Image and text copied to clipboard!');
+          onNotify('Copied to Clipboard', `${tier === 'familyVip' ? 'VIP' : 'General'} card image & invite text copied!`);
           return;
         } catch (writeError) {
-          console.warn('Failed to write ClipboardItem, falling back to text only', writeError);
+          console.warn('ClipboardItem failed, copying text only', writeError);
         }
       }
 
       await navigator.clipboard.writeText(text);
       await markShared();
-      onNotify('Copied', 'Text copied to clipboard!');
+      onNotify('Copied to Clipboard', `Invitation text with code ${code} copied!`);
     } catch (e) {
       onNotify('Error', 'Failed to copy to clipboard.');
+      setSharingCode(null);
+    }
+  };
+
+  const handleUploadPoster = async (e: React.ChangeEvent<HTMLInputElement>, tier: 'general' | 'familyVip') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPoster(tier);
+    try {
+      const url = await uploadInvitationPoster(file, tier);
+      const updated: InvitationPostersConfig = {
+        ...invitationPosters,
+        [tier === 'general' ? 'generalUrl' : 'familyVipUrl']: url,
+        [tier === 'general' ? 'generalUpdatedAt' : 'familyVipUpdatedAt']: new Date().toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      };
+      setInvitationPosters(updated);
+      saveStoredInvitationPosters(updated);
+      onNotify('Poster Updated', `${tier === 'familyVip' ? 'Family & VIP' : 'General'} invitation poster updated.`);
+    } catch (err) {
+      console.error(err);
+      onNotify('Upload Failed', 'Failed to upload new poster.');
+    } finally {
+      setIsUploadingPoster(null);
+      e.target.value = '';
+    }
+  };
+
+  const handleResetPoster = (tier: 'general' | 'familyVip') => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Reset Poster',
+      message: `Are you sure you want to restore the default ${tier === 'familyVip' ? 'Family & VIP' : 'General'} invitation poster?`,
+      onConfirm: () => {
+        const updated: InvitationPostersConfig = {
+          ...invitationPosters,
+          [tier === 'general' ? 'generalUrl' : 'familyVipUrl']: tier === 'general' ? DEFAULT_POSTERS.generalUrl : DEFAULT_POSTERS.familyVipUrl,
+          [tier === 'general' ? 'generalUpdatedAt' : 'familyVipUpdatedAt']: 'Default Asset'
+        };
+        setInvitationPosters(updated);
+        saveStoredInvitationPosters(updated);
+        onNotify('Poster Reset', `${tier === 'familyVip' ? 'Family & VIP' : 'General'} poster restored to default.`);
+      }
+    });
+  };
+
+  const handleReallocateRsvpCode = (rsvp: RsvpSubmission, matchingCode?: InviteCode) => {
+    const guestName = `${rsvp.firstName} ${rsvp.lastName}`.trim();
+    const creator = matchingCode?.created_by || (creatorFilter !== 'all' ? creatorFilter : (role || 'malvin'));
+    const oldCodeStr = matchingCode ? `code ${matchingCode.code}` : `the invite code for ${guestName}`;
+
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Re-allocate Invite Code',
+      message: `Are you sure you want to re-allocate ${oldCodeStr} (guest: ${guestName})? This will permanently delete ${oldCodeStr} so they cannot reuse it, and generate a brand new code in your Available pool for a new guest.`,
+      onConfirm: async () => {
+        try {
+          let newCodeStr = '';
+          if (matchingCode) {
+            const res = await reallocateInviteCode(matchingCode.id, creator);
+            newCodeStr = typeof res === 'object' && res.code ? res.code : String(res);
+          } else {
+            newCodeStr = await generateInviteCode(creator);
+          }
+          const updatedCodes = await getInviteCodes(role);
+          setCodes(updatedCodes);
+          onNotify(
+            'Code Re-allocated',
+            `Fresh code ${newCodeStr} generated and added to Available codes for a new guest.`
+          );
+        } catch (err) {
+          console.error(err);
+          onNotify('Error', 'Failed to re-allocate invite code.');
+        }
+      }
+    });
+  };
+
+  const handleReallocateCode = (id: string, oldCode: string, creator: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Re-allocate Invite Code',
+      message: `Are you sure you want to replace code ${oldCode} with a freshly generated code? The old code ${oldCode} will be permanently removed so previous recipients cannot use it.`,
+      onConfirm: async () => {
+        try {
+          const newCode = await reallocateInviteCode(id, creator);
+          const updatedCodes = await getInviteCodes(role);
+          setCodes(updatedCodes);
+          const newCodeStr = typeof newCode === 'object' && (newCode as any).code ? (newCode as any).code : String(newCode);
+          onNotify('Code Re-allocated', `Old code ${oldCode} deleted. Fresh code generated: ${newCodeStr}`);
+        } catch (err) {
+          console.error(err);
+          onNotify('Error', 'Failed to re-allocate invite code.');
+        }
+      }
+    });
+  };
+
+  const handleResetCode = async (id: string) => {
+    try {
+      await resetInviteCode(id);
+      const updatedCodes = await getInviteCodes(role);
+      setCodes(updatedCodes);
+      onNotify('Code Reset', 'Invite code restored to available and unshared.');
+    } catch (e) {
+      onNotify('Error', 'Failed to reset code.');
     }
   };
 
@@ -689,6 +855,16 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                 </span>
               )}
             </button>
+            <button
+              onClick={() => setActiveTab('invitations')}
+              className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
+                activeTab === 'invitations'
+                  ? 'bg-brand-espresso text-brand-goldLight'
+                  : 'bg-white text-brand-muted hover:bg-brand-sand/50'
+              }`}
+            >
+              <ImageIcon className="w-4 h-4" /> Invitations
+            </button>
           </>
         )}
       </div>
@@ -713,18 +889,56 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
               >
                 {/* RSVP Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
-                  <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm">
-                    <p className="text-[10px] sm:text-xs uppercase tracking-widest text-brand-muted font-bold mb-1 sm:mb-2">Attending</p>
-                    <p className="text-3xl sm:text-4xl font-sans font-semibold text-emerald-700">{attendingCount}</p>
-                  </div>
-                  <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm">
-                    <p className="text-[10px] sm:text-xs uppercase tracking-widest text-brand-muted font-bold mb-1 sm:mb-2">Declined</p>
-                    <p className="text-3xl sm:text-4xl font-sans font-semibold text-rose-700">{declinedCount}</p>
-                  </div>
-                  <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm col-span-2 sm:col-span-1">
-                    <p className="text-[10px] sm:text-xs uppercase tracking-widest text-brand-muted font-bold mb-1 sm:mb-2">Total Responses</p>
-                    <p className="text-3xl sm:text-4xl font-sans font-semibold text-brand-espresso">{totalResponses}</p>
-                  </div>
+                  <button
+                    onClick={() => setRsvpAttendanceFilter(rsvpAttendanceFilter === 'attending' ? 'all' : 'attending')}
+                    className={`text-left p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm transition-all border-2 ${
+                      rsvpAttendanceFilter === 'attending'
+                        ? 'bg-emerald-50/70 border-emerald-600 ring-2 ring-emerald-500/30'
+                        : 'bg-white border-transparent hover:border-emerald-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                      <p className="text-[10px] sm:text-xs uppercase tracking-widest text-brand-muted font-bold">Attending</p>
+                      {rsvpAttendanceFilter === 'attending' && (
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800">Filtered</span>
+                      )}
+                    </div>
+                    <p className="text-3xl sm:text-4xl font-sans font-semibold text-emerald-700">{rsvpCounts.attending}</p>
+                  </button>
+
+                  <button
+                    onClick={() => setRsvpAttendanceFilter(rsvpAttendanceFilter === 'declined' ? 'all' : 'declined')}
+                    className={`text-left p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm transition-all border-2 ${
+                      rsvpAttendanceFilter === 'declined'
+                        ? 'bg-rose-50/70 border-rose-600 ring-2 ring-rose-500/30'
+                        : 'bg-white border-transparent hover:border-rose-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                      <p className="text-[10px] sm:text-xs uppercase tracking-widest text-brand-muted font-bold">Declined</p>
+                      {rsvpAttendanceFilter === 'declined' && (
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-rose-200 text-rose-800">Filtered</span>
+                      )}
+                    </div>
+                    <p className="text-3xl sm:text-4xl font-sans font-semibold text-rose-700">{rsvpCounts.declined}</p>
+                  </button>
+
+                  <button
+                    onClick={() => setRsvpAttendanceFilter('all')}
+                    className={`text-left p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm col-span-2 sm:col-span-1 transition-all border-2 ${
+                      rsvpAttendanceFilter === 'all'
+                        ? 'bg-brand-cream/40 border-brand-espresso ring-2 ring-brand-gold/30'
+                        : 'bg-white border-transparent hover:border-brand-sand'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                      <p className="text-[10px] sm:text-xs uppercase tracking-widest text-brand-muted font-bold">Total Responses</p>
+                      {rsvpAttendanceFilter === 'all' && (
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-brand-gold/20 text-brand-goldDark">All</span>
+                      )}
+                    </div>
+                    <p className="text-3xl sm:text-4xl font-sans font-semibold text-brand-espresso">{rsvpCounts.total}</p>
+                  </button>
                 </div>
 
                 {/* RSVP Actions & Table */}
@@ -894,14 +1108,30 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                               <td className="p-6 text-sm text-brand-muted whitespace-nowrap font-medium">
                                 {new Date(rsvp.submittedAt).toLocaleDateString()}
                               </td>
-                              <td className="p-6 text-right">
-                                <button
-                                  onClick={() => handleDeleteRsvp(rsvp.id)}
-                                  className="p-2.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-5 h-5" />
-                                </button>
+                              <td className="p-4 sm:p-6 text-right whitespace-nowrap">
+                                {(() => {
+                                  const guestFullName = `${rsvp.firstName.trim()} ${rsvp.lastName.trim()}`.toLowerCase();
+                                  const matchingCode = codes.find(c => c.is_used && c.used_by && c.used_by.trim().toLowerCase() === guestFullName);
+                                  return (
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() => handleReallocateRsvpCode(rsvp, matchingCode)}
+                                        className="px-2.5 py-1.5 rounded-xl bg-brand-sand/40 hover:bg-amber-100 text-brand-espresso hover:text-amber-900 border border-brand-sand/60 text-xs font-sans font-bold flex items-center gap-1.5 transition-all shadow-sm shrink-0"
+                                        title={matchingCode ? `Re-allocate code ${matchingCode.code} (Guest: ${rsvp.firstName})` : `Generate replacement code for ${rsvp.firstName}`}
+                                      >
+                                        <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+                                        <span>Re-allocate Code</span>
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteRsvp(rsvp.id)}
+                                        className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors shrink-0"
+                                        title="Delete RSVP record"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  );
+                                })()}
                               </td>
                             </tr>
                           ))
@@ -1062,11 +1292,11 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
 
                 {/* Codes Table */}
                 <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-                  <div className="p-4 sm:p-6 border-b border-brand-sand/30 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 w-full">
+                  <div className="p-4 sm:p-6 border-b border-brand-sand/30 flex flex-col gap-5 bg-white">
+                    <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
                       <div>
                         <div className="flex items-center gap-3">
-                          <h3 className="font-serif text-2xl text-brand-espresso shrink-0">All Invite Codes</h3>
+                          <h3 className="font-serif text-2xl text-brand-espresso shrink-0">Invite Codes</h3>
                           {!['miracle', 'malvin'].includes(role || '') && (
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold font-mono tracking-widest uppercase ${codes.length >= roleCodeLimit ? 'bg-rose-100 text-rose-700' : 'bg-brand-gold/20 text-brand-goldDark'}`}>
                               {codes.length} / {roleCodeLimit} Cap
@@ -1074,103 +1304,136 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                           )}
                         </div>
                         <p className="text-xs text-brand-muted font-sans mt-1">
-                          {filteredCodes.filter(c => !c.is_used).length} Available â€¢ {filteredCodes.filter(c => c.is_used).length} Used
+                          {codeStats.available} Available â€¢ {codeStats.shared} Shared (Awaiting RSVP) â€¢ {codeStats.used} Used ({codeStats.total} Total)
                         </p>
                       </div>
 
-                      {['miracle', 'malvin'].includes(role || '') && (
-                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                          <div className="flex items-center gap-1.5 px-3 py-2 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-2">
-                            <Filter className="w-3.5 h-3.5" /> Creator
-                          </div>
-                            {[
-                              { id: 'all', label: 'All' },
-                              { id: 'miracle', label: 'Miracle (1111)' },
-                              { id: 'malvin', label: 'Malvin (2222)' },
-                              { id: 'groomsfamily', label: "Malvin's Family (3333)" },
-                              { id: 'bridesfamily', label: "Miracle's Family (4444)" },
-                              { id: 'custom1964', label: 'Coordinator (1964)' }
-                          ].map((f) => (
-                            <button
-                              key={f.id}
-                              onClick={() => setCreatorFilter(f.id)}
-                              className={`px-4 py-2 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all border ${
-                                creatorFilter === f.id 
-                                  ? 'bg-brand-espresso text-brand-goldLight border-brand-espresso shadow-md' 
-                                  : 'bg-white text-brand-muted border-brand-sand/50 hover:bg-brand-sand/30 hover:border-brand-sand'
-                              }`}
-                            >
-                              {f.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 shrink-0">
-                      {selectedCodes.size > 0 && (
+                      <div className="flex flex-wrap items-center gap-3 shrink-0">
+                        {selectedCodes.size > 0 && (
+                          <button
+                            onClick={handleDeleteSelectedCodes}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-sans uppercase tracking-wider rounded-xl transition-colors font-bold"
+                          >
+                            <Trash2 className="w-4 h-4" /> Delete ({selectedCodes.size})
+                          </button>
+                        )}
                         <button
-                          onClick={handleDeleteSelectedCodes}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-sans uppercase tracking-wider rounded-xl transition-colors font-bold"
-                        >
-                          <Trash2 className="w-4 h-4" /> Delete ({selectedCodes.size})
-                        </button>
-                      )}
-                      <button
-                        onClick={async () => {
-                          if (codes.length === 0) {
-                            onNotify('Export Failed', 'No invite codes to export');
-                            return;
-                          }
-                          
-                          try {
-                            const XLSX = await import('xlsx');
-                            const wb = XLSX.utils.book_new();
-                            
-                            const formatData = (data: typeof codes) => data.map(c => ({
-                              'Code': c.code,
-                              'Status': c.is_used ? 'Used' : c.is_shared ? 'Shared' : 'Available',
-                              'Used By': c.used_by || '',
-                              'Created At': new Date(c.created_at).toLocaleString()
-                            }));
-
-                            if (['miracle', 'malvin'].includes(role || '')) {
-                              const roles = ['miracle', 'malvin', 'groomsfamily', 'bridesfamily', 'custom1964'];
-                              const roleLabels: Record<string, string> = {
-                                'miracle': 'Miracle',
-                                'malvin': 'Malvin',
-                                'groomsfamily': "Malvin's Family",
-                                'bridesfamily': "Miracle's Family",
-                                'custom1964': "Coordinator"
-                              };
-                              
-                              roles.forEach(creatorRole => {
-                                const creatorCodes = codes.filter(c => c.created_by === creatorRole);
-                                if (creatorCodes.length > 0) {
-                                  const ws = XLSX.utils.json_to_sheet(formatData(creatorCodes));
-                                  XLSX.utils.book_append_sheet(wb, ws, roleLabels[creatorRole]);
-                                }
-                              });
-                              
-                              const wsAll = XLSX.utils.json_to_sheet(formatData(codes));
-                              XLSX.utils.book_append_sheet(wb, wsAll, 'All Codes');
-                            } else {
-                              const ws = XLSX.utils.json_to_sheet(formatData(filteredCodes));
-                              XLSX.utils.book_append_sheet(wb, ws, 'My Invite Codes');
+                          onClick={async () => {
+                            if (codes.length === 0) {
+                              onNotify('Export Failed', 'No invite codes to export');
+                              return;
                             }
                             
-                            XLSX.writeFile(wb, `Miracle_Malvin_Wedding_Codes_${new Date().toISOString().split('T')[0]}.xlsx`);
-                          } catch (e) {
-                            console.error('Export error:', e);
-                            onNotify('Export Failed', 'There was an error generating the Excel file.');
-                          }
-                        }}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight text-xs font-sans uppercase tracking-wider rounded-xl hover:bg-brand-charcoal transition-colors font-bold"
-                      >
-                        <Download className="w-4 h-4" /> Export Excel
-                      </button>
+                            try {
+                              const XLSX = await import('xlsx');
+                              const wb = XLSX.utils.book_new();
+                              
+                              const formatData = (data: typeof codes) => data.map(c => ({
+                                'Code': c.code,
+                                'Status': c.is_used ? 'Used' : c.is_shared ? 'Shared' : 'Available',
+                                'Used By': c.used_by || '',
+                                'Created At': new Date(c.created_at).toLocaleString()
+                              }));
+
+                              if (['miracle', 'malvin'].includes(role || '')) {
+                                const roles = ['miracle', 'malvin', 'groomsfamily', 'bridesfamily', 'custom1964'];
+                                const roleLabels: Record<string, string> = {
+                                  'miracle': 'Miracle',
+                                  'malvin': 'Malvin',
+                                  'groomsfamily': "Malvin's Family",
+                                  'bridesfamily': "Miracle's Family",
+                                  'custom1964': "Coordinator"
+                                };
+                                
+                                roles.forEach(creatorRole => {
+                                  const creatorCodes = codes.filter(c => c.created_by === creatorRole);
+                                  if (creatorCodes.length > 0) {
+                                    const ws = XLSX.utils.json_to_sheet(formatData(creatorCodes));
+                                    XLSX.utils.book_append_sheet(wb, ws, roleLabels[creatorRole]);
+                                  }
+                                });
+                                
+                                const wsAll = XLSX.utils.json_to_sheet(formatData(codes));
+                                XLSX.utils.book_append_sheet(wb, wsAll, 'All Codes');
+                              } else {
+                                const ws = XLSX.utils.json_to_sheet(formatData(filteredCodes));
+                                XLSX.utils.book_append_sheet(wb, ws, 'My Invite Codes');
+                              }
+                              
+                              XLSX.writeFile(wb, `Miracle_Malvin_Wedding_Codes_${new Date().toISOString().split('T')[0]}.xlsx`);
+                            } catch (e) {
+                              console.error('Export error:', e);
+                              onNotify('Export Failed', 'There was an error generating the Excel file.');
+                            }
+                          }}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight text-xs font-sans uppercase tracking-wider rounded-xl hover:bg-brand-charcoal transition-colors font-bold"
+                        >
+                          <Download className="w-4 h-4" /> Export Excel
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Status Filter Tabs */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0 -mx-1 px-1 pt-2 border-t border-brand-sand/20">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-1">
+                        <Filter className="w-3.5 h-3.5" /> Status
+                      </div>
+                      {[
+                        { id: 'all', label: `All (${codeStats.total})` },
+                        { id: 'available', label: `Available (${codeStats.available})` },
+                        { id: 'shared', label: `Shared / Awaiting RSVP (${codeStats.shared})` },
+                        { id: 'used', label: `Used (${codeStats.used})` }
+                      ].map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => {
+                            setCodeStatusFilter(s.id as any);
+                            setSelectedCodes(new Set());
+                          }}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all border ${
+                            codeStatusFilter === s.id
+                              ? 'bg-brand-espresso text-brand-goldLight border-brand-espresso shadow-sm'
+                              : 'bg-white text-brand-muted border-brand-sand/50 hover:bg-brand-sand/30'
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Creator Filters for Miracle / Malvin */}
+                    {['miracle', 'malvin'].includes(role || '') && (
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0 -mx-1 px-1 border-t border-brand-sand/20 pt-2">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-1">
+                          <Users className="w-3.5 h-3.5" /> Creator
+                        </div>
+                        {[
+                          { id: 'all', label: 'All Creators' },
+                          { id: 'miracle', label: 'Miracle (1111)' },
+                          { id: 'malvin', label: 'Malvin (2222)' },
+                          { id: 'groomsfamily', label: "Malvin's Family (3333)" },
+                          { id: 'bridesfamily', label: "Miracle's Family (4444)" },
+                          { id: 'custom1964', label: 'Coordinator (1964)' }
+                        ].map((f) => (
+                          <button
+                            key={f.id}
+                            onClick={() => {
+                              setCreatorFilter(f.id);
+                              setSelectedCodes(new Set());
+                            }}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all border shrink-0 whitespace-nowrap ${
+                              creatorFilter === f.id 
+                                ? 'bg-brand-goldDark text-white border-brand-goldDark shadow-sm' 
+                                : 'bg-white text-brand-muted border-brand-sand/50 hover:bg-brand-sand/30 hover:border-brand-sand'
+                            }`}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
                   <div className="overflow-x-auto min-h-[400px]" data-lenis-prevent="true">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -1188,13 +1451,14 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                           <th className="p-6 font-semibold">Status</th>
                           <th className="p-6 font-semibold">Used By</th>
                           <th className="p-6 font-semibold">Created</th>
+                          <th className="p-6 font-semibold text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody className="text-sm font-sans text-brand-espresso">
                         {filteredCodes.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="p-12 text-center text-brand-muted text-base">
-                              No invite codes generated yet.
+                            <td colSpan={7} className="p-12 text-center text-brand-muted text-base">
+                              No invite codes found for this filter.
                             </td>
                           </tr>
                         ) : (
@@ -1218,13 +1482,13 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                                   <span className={`font-mono font-bold text-2xl tracking-[0.2em] ${c.is_used ? 'text-brand-muted/50' : 'text-brand-espresso'}`}>
                                     {c.code}
                                   </span>
-                                  <div className="flex items-center gap-4 justify-end">
+                                  <div className="flex items-center gap-2 justify-end">
                                     <button
-                                      onClick={() => handleCopyCode(c.code)}
-                                      className="p-2 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/50 rounded-xl transition-colors"
-                                      title="Copy Code"
+                                      onClick={() => handleShareCode(c.code)}
+                                      className="p-2 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/50 rounded-xl transition-colors flex items-center gap-1.5"
+                                      title="Share / Copy with Poster Card"
                                     >
-                                      {copiedCode === c.code ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5" />}
+                                      {copiedCode === c.code ? <Check className="w-5 h-5 text-emerald-600" /> : <Share2 className="w-5 h-5 text-brand-goldDark" />}
                                     </button>
                                   </div>
                                 </div>
@@ -1235,20 +1499,13 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                                     Used
                                   </span>
                                 ) : c.is_shared ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 whitespace-nowrap">
-                                      Copied / Shared
-                                    </span>
-                                    <button 
-                                      onClick={() => handleUnmarkShared(c.id)}
-                                      className="p-1 rounded-full text-amber-600 hover:text-amber-800 hover:bg-amber-100 transition-colors"
-                                      title="Undo 'Shared' status"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
+                                  <span className="px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 whitespace-nowrap flex items-center gap-1.5 w-max">
+                                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                                    Shared â€¢ Awaiting RSVP
+                                  </span>
                                 ) : (
-                                  <span className="px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 whitespace-nowrap">
+                                  <span className="px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 whitespace-nowrap flex items-center gap-1.5 w-max">
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
                                     Available
                                   </span>
                                 )}
@@ -1258,6 +1515,42 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                               </td>
                               <td className="p-6 text-sm text-brand-muted font-medium">
                                 {new Date(c.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="p-4 sm:p-6 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-2">
+                                  {(c.is_shared || c.is_used) ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleReallocateCode(c.id, c.code, c.created_by || role || 'malvin')}
+                                        className="px-3 py-1.5 rounded-xl bg-brand-sand/40 hover:bg-amber-100 text-brand-espresso hover:text-amber-900 border border-brand-sand/60 text-xs font-sans font-bold flex items-center gap-1.5 transition-all shrink-0 shadow-sm"
+                                        title="Re-allocate (Delete old code and generate a fresh replacement)"
+                                      >
+                                        <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+                                        <span>Re-allocate</span>
+                                      </button>
+                                      {c.is_shared && !c.is_used && (
+                                        <button
+                                          onClick={() => handleUnmarkShared(c.id)}
+                                          className="p-1.5 rounded-xl hover:bg-brand-sand/50 text-brand-muted hover:text-brand-espresso transition-colors"
+                                          title="Undo shared status"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                      {c.is_used && (
+                                        <button
+                                          onClick={() => handleResetCode(c.id)}
+                                          className="px-2 py-1 rounded-xl bg-brand-sand/30 hover:bg-brand-sand text-brand-muted hover:text-brand-espresso text-xs font-semibold transition-colors"
+                                          title="Reset code to available"
+                                        >
+                                          Reset
+                                        </button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="text-xs text-brand-muted/40 font-mono">-</span>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           ))
@@ -1808,10 +2101,310 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
                 })()}
               </motion.div>
             )}
+
+            {activeTab === 'invitations' && (
+              <motion.div
+                key="invitations"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6 sm:space-y-8"
+              >
+                {/* Header / Intro */}
+                <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-brand-goldDark text-xs font-bold uppercase tracking-widest mb-1.5">
+                      <ImageIcon className="w-4 h-4" /> Master Admin Poster Control
+                    </div>
+                    <h3 className="font-serif text-2xl sm:text-3xl text-brand-espresso">Invitation Posters</h3>
+                    <p className="text-xs sm:text-sm font-sans text-brand-muted mt-1 max-w-2xl leading-relaxed">
+                      Upload and manage the official invitation posters for Miracle & Malvin. Whenever you share an invite code, guests will receive the updated artwork corresponding to their tier.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-brand-sand/20 rounded-2xl border border-brand-sand/40 text-xs font-medium text-brand-muted shrink-0">
+                    <Sparkles className="w-4 h-4 text-brand-goldDark" />
+                    <span>Auto-optimized image quality</span>
+                  </div>
+                </div>
+
+                {/* Poster Cards Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* 1. General Invitation Card */}
+                  <div className="bg-white rounded-3xl shadow-sm border border-brand-sand/40 overflow-hidden flex flex-col">
+                    <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-brand-cream/30">
+                      <div>
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-700 bg-emerald-100 font-bold px-2.5 py-0.5 rounded-full">
+                          General Guests
+                        </span>
+                        <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">General Invitation Card</h4>
+                        <p className="text-xs text-brand-muted mt-0.5">Solemnization & Main Reception</p>
+                      </div>
+                      <span className="text-[11px] font-sans text-brand-muted/70 bg-white px-3 py-1 rounded-xl border border-brand-sand/40">
+                        {invitationPosters.generalUpdatedAt || 'Default'}
+                      </span>
+                    </div>
+
+                    <div className="p-5 sm:p-6 flex flex-col items-center flex-1 bg-brand-ivory/30">
+                      <div className="w-full max-w-sm aspect-[4/5] rounded-2xl overflow-hidden bg-brand-sand/20 border-2 border-brand-sand/50 shadow-md relative group">
+                        <img
+                          src={invitationPosters.generalUrl}
+                          alt="General Invitation Poster"
+                          className="w-full h-full object-contain bg-white"
+                        />
+                        <div className="absolute inset-0 bg-brand-espresso/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                          <button
+                            onClick={() => setPreviewPosterUrl(invitationPosters.generalUrl)}
+                            className="px-4 py-2 bg-white text-brand-espresso rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 hover:bg-brand-gold hover:text-white transition-all cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4" /> Full View
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5 sm:p-6 border-t border-brand-sand/30 bg-white flex flex-wrap items-center justify-between gap-3">
+                      <label className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-goldDark transition-colors cursor-pointer shadow-sm">
+                        <UploadCloud className="w-4 h-4" />
+                        <span>{isUploadingPoster === 'general' ? 'Uploading...' : 'Upload New Poster'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={isUploadingPoster === 'general'}
+                          onChange={(e) => handleUploadPoster(e, 'general')}
+                          className="hidden"
+                        />
+                      </label>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setPreviewPosterUrl(invitationPosters.generalUrl)}
+                          className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-brand-sand/30 text-brand-muted hover:text-brand-espresso transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                          title="Preview full image"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span className="hidden sm:inline">Preview</span>
+                        </button>
+                        <button
+                          onClick={() => handleResetPoster('general')}
+                          className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                          title="Reset to default artwork"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span className="hidden sm:inline">Reset</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Close Family & VIP Invitation Card */}
+                  <div className="bg-white rounded-3xl shadow-sm border-2 border-brand-gold/40 overflow-hidden flex flex-col">
+                    <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-gradient-to-r from-brand-gold/10 via-brand-cream/40 to-transparent">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-brand-espresso bg-brand-gold/30 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-brand-goldDark" /> VIP & Family
+                          </span>
+                        </div>
+                        <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">Close Family & VIP Card</h4>
+                        <p className="text-xs text-brand-muted mt-0.5">Includes Engagement & Exclusive Afterparty</p>
+                      </div>
+                      <span className="text-[11px] font-sans text-brand-muted/70 bg-white px-3 py-1 rounded-xl border border-brand-sand/40">
+                        {invitationPosters.familyVipUpdatedAt || 'Default'}
+                      </span>
+                    </div>
+
+                    <div className="p-5 sm:p-6 flex flex-col items-center flex-1 bg-brand-ivory/30">
+                      <div className="w-full max-w-sm aspect-[4/5] rounded-2xl overflow-hidden bg-brand-sand/20 border-2 border-brand-gold/40 shadow-md relative group">
+                        <img
+                          src={invitationPosters.familyVipUrl}
+                          alt="Close Family & VIP Invitation Poster"
+                          className="w-full h-full object-contain bg-white"
+                        />
+                        <div className="absolute inset-0 bg-brand-espresso/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                          <button
+                            onClick={() => setPreviewPosterUrl(invitationPosters.familyVipUrl)}
+                            className="px-4 py-2 bg-white text-brand-espresso rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 hover:bg-brand-gold hover:text-white transition-all cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4" /> Full View
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5 sm:p-6 border-t border-brand-sand/30 bg-white flex flex-wrap items-center justify-between gap-3">
+                      <label className="flex items-center gap-2 px-5 py-2.5 bg-brand-goldDark text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-espresso transition-colors cursor-pointer shadow-sm">
+                        <UploadCloud className="w-4 h-4" />
+                        <span>{isUploadingPoster === 'familyVip' ? 'Uploading...' : 'Upload New Poster'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={isUploadingPoster === 'familyVip'}
+                          onChange={(e) => handleUploadPoster(e, 'familyVip')}
+                          className="hidden"
+                        />
+                      </label>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setPreviewPosterUrl(invitationPosters.familyVipUrl)}
+                          className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-brand-sand/30 text-brand-muted hover:text-brand-espresso transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                          title="Preview full image"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span className="hidden sm:inline">Preview</span>
+                        </button>
+                        <button
+                          onClick={() => handleResetPoster('familyVip')}
+                          className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                          title="Reset to default artwork"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span className="hidden sm:inline">Reset</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
           )}
         </div>
       </div>
+
+      {/* Card Selection Modal on Share */}
+      <AnimatePresence>
+        {sharingCode && (
+          <div 
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-brand-espresso/60 backdrop-blur-sm"
+            onClick={() => setSharingCode(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-brand-sand/60 overflow-hidden relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 sm:p-7">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-brand-goldDark font-bold">
+                      Share Invite Code
+                    </span>
+                    <h3 className="text-xl font-serif text-brand-espresso font-semibold flex items-center gap-2">
+                      Code <span className="font-mono text-brand-goldDark tracking-widest">{sharingCode}</span>
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setSharingCode(null)}
+                    className="w-8 h-8 rounded-full bg-brand-sand/40 hover:bg-brand-sand flex items-center justify-center text-brand-muted hover:text-brand-espresso transition-colors cursor-pointer"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <p className="text-xs text-brand-muted mt-3 mb-5 font-sans leading-relaxed">
+                  Which invitation card would you like to attach for this guest?
+                </p>
+
+                <div className="space-y-3">
+                  {/* Option 1: General Invitation */}
+                  <button
+                    onClick={() => executeShare(sharingCode, 'general')}
+                    className="w-full text-left p-4 rounded-2xl border-2 border-brand-sand/60 hover:border-brand-gold bg-white hover:bg-brand-ivory/60 transition-all group flex items-start gap-4 shadow-sm cursor-pointer"
+                  >
+                    <div className="w-16 h-20 rounded-xl bg-brand-sand/30 overflow-hidden shrink-0 border border-brand-sand/50 shadow-inner">
+                      <img
+                        src={invitationPosters.generalUrl}
+                        alt="General Invitation"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-serif text-base font-semibold text-brand-espresso group-hover:text-brand-goldDark transition-colors">
+                          General Invitation Card
+                        </h4>
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
+                          Standard
+                        </span>
+                      </div>
+                      <p className="text-xs text-brand-muted mt-1 leading-snug">
+                        Solemnization & Main Reception. Perfect for general guests.
+                      </p>
+                      <div className="mt-2 text-xs font-semibold text-brand-goldDark flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        <Share2 className="w-3.5 h-3.5" /> Share this card
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Close Family & VIP */}
+                  <button
+                    onClick={() => executeShare(sharingCode, 'familyVip')}
+                    className="w-full text-left p-4 rounded-2xl border-2 border-brand-gold/40 hover:border-brand-gold bg-gradient-to-br from-white to-brand-gold/5 hover:to-brand-gold/15 transition-all group flex items-start gap-4 shadow-sm cursor-pointer"
+                  >
+                    <div className="w-16 h-20 rounded-xl bg-brand-sand/30 overflow-hidden shrink-0 border border-brand-gold/40 shadow-inner">
+                      <img
+                        src={invitationPosters.familyVipUrl}
+                        alt="Close Family & VIP"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-serif text-base font-semibold text-brand-espresso group-hover:text-brand-goldDark transition-colors flex items-center gap-1.5">
+                          Family & VIP Card
+                          <Sparkles className="w-3.5 h-3.5 text-brand-goldDark" />
+                        </h4>
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-brand-gold/20 text-brand-goldDark font-semibold shrink-0">
+                          VIP
+                        </span>
+                      </div>
+                      <p className="text-xs text-brand-muted mt-1 leading-snug">
+                        Includes Engagement / Traditional ceremony & exclusive Afterparty details.
+                      </p>
+                      <div className="mt-2 text-xs font-semibold text-brand-goldDark flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        <Share2 className="w-3.5 h-3.5" /> Share this card
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Full Screen Poster Preview Lightbox */}
+      <AnimatePresence>
+        {previewPosterUrl && (
+          <div 
+            className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-brand-espresso/80 backdrop-blur-md"
+            onClick={() => setPreviewPosterUrl(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative max-w-3xl max-h-[90vh] bg-transparent rounded-2xl overflow-hidden shadow-2xl flex flex-col items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setPreviewPosterUrl(null)}
+                className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-brand-espresso/80 text-white flex items-center justify-center hover:bg-brand-espresso transition-colors cursor-pointer"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+              <img
+                src={previewPosterUrl}
+                alt="Full Invitation Poster Preview"
+                className="max-h-[85vh] w-auto object-contain rounded-xl shadow-2xl"
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Confirmation Dialog Overlay */}
       <AnimatePresence>

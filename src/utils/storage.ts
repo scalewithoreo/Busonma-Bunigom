@@ -957,6 +957,76 @@ export async function unmarkInviteCodeAsShared(id: string): Promise<void> {
   setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { ...c, is_shared: false } : c));
 }
 
+export async function resetInviteCode(id: string): Promise<void> {
+  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+  setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { ...c, is_used: false, is_shared: false, used_by: undefined } : c));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: "UPDATE invite_codes SET is_used = 0, guest_name = '' WHERE id = ?",
+          args: [id]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to reset invite code in cloud:', err);
+    }
+  }
+}
+
+export async function reallocateInviteCode(id: string, createdBy: string = 'malvin'): Promise<InviteCode> {
+  // 1. Delete old code
+  await deleteInviteCodes([id]);
+
+  // 2. Generate new unique 5-digit code
+  const currentCodes = await getInviteCodes();
+  const existingSet = new Set(currentCodes.map(c => c.code));
+
+  let code = '';
+  while (true) {
+    code = Math.floor(10000 + Math.random() * 90000).toString();
+    if (!existingSet.has(code)) break;
+  }
+
+  const newCode: InviteCode = {
+    id: 'code_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    code,
+    is_used: false,
+    is_shared: false,
+    created_by: createdBy,
+    created_at: new Date().toISOString()
+  };
+
+  const updatedCodes = [newCode, ...currentCodes.filter(c => c.id !== id)];
+  setLocalDb(MM_DB_CODES, updatedCodes);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at)
+                VALUES (?, ?, '', ?, 1, 0, ?)`,
+          args: [newCode.id, newCode.code, newCode.created_by || 'malvin', newCode.created_at]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to insert reallocated code in cloud:', err);
+    }
+  }
+
+  return newCode;
+}
+
+export async function bulkMakeCodesAvailable(ids: string[]): Promise<void> {
+  if (!ids.length) return;
+  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+  const idSet = new Set(ids);
+  setLocalDb(MM_DB_CODES, currentCodes.map(c => idSet.has(c.id) ? { ...c, is_shared: false } : c));
+}
+
 export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[]> {
   if (isTursoConfigured()) {
     try {
@@ -1045,4 +1115,83 @@ export async function exportInviteCodesCsv(filterByRole?: string): Promise<void>
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+// --- Invitation Posters Management ---
+
+export interface InvitationPostersConfig {
+  generalUrl: string;
+  familyVipUrl: string;
+  generalUpdatedAt?: string;
+  familyVipUpdatedAt?: string;
+}
+
+const INVITATION_POSTERS_KEY = 'mm_invitation_posters';
+
+export const DEFAULT_POSTERS: InvitationPostersConfig = {
+  generalUrl: '/invitation.png?v=2',
+  familyVipUrl: '/Main IV.png?v=2',
+  generalUpdatedAt: 'Default Asset',
+  familyVipUpdatedAt: 'Default Asset'
+};
+
+export function getStoredInvitationPosters(): InvitationPostersConfig {
+  try {
+    const raw = localStorage.getItem(INVITATION_POSTERS_KEY);
+    if (!raw) return DEFAULT_POSTERS;
+    const parsed = JSON.parse(raw);
+    return {
+      generalUrl: parsed.generalUrl || DEFAULT_POSTERS.generalUrl,
+      familyVipUrl: parsed.familyVipUrl || DEFAULT_POSTERS.familyVipUrl,
+      generalUpdatedAt: parsed.generalUpdatedAt || DEFAULT_POSTERS.generalUpdatedAt,
+      familyVipUpdatedAt: parsed.familyVipUpdatedAt || DEFAULT_POSTERS.familyVipUpdatedAt
+    };
+  } catch {
+    return DEFAULT_POSTERS;
+  }
+}
+
+export function saveStoredInvitationPosters(config: InvitationPostersConfig): void {
+  try {
+    localStorage.setItem(INVITATION_POSTERS_KEY, JSON.stringify(config));
+  } catch (e) {
+    console.warn('Could not save invitation posters to localStorage', e);
+  }
+}
+
+export async function uploadInvitationPoster(
+  file: File,
+  _tier: 'general' | 'familyVip'
+): Promise<string> {
+  // Client-side optimized image compression via HTML5 Canvas (JPEG 0.88, max width 1600px)
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1600;
+        let width = img.width;
+        let height = img.height;
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+        resolve(compressedDataUrl);
+      };
+      img.onerror = () => resolve(e.target?.result as string);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }

@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, FC } from 'react';
-import { motion } from 'framer-motion';
-import { Volume2, VolumeX, ArrowRight, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Volume2, VolumeX, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { audioManager } from '../utils/audio';
 
@@ -9,32 +9,18 @@ interface EnvelopeIntroProps {
   onOpeningStart?: () => void;
 }
 
-/**
- * Exact 100% Reverse-Engineered Opening Engine from The Digital Yes Theme 26 (Floral)
- * Customized for Miracle & Malvin:
- * - Red Wax Seal embossed with "M & M"
- * - High-prominence "Tap to Open Invitation" button
- * - Opens with the exact video unsealing & flap unfold sequence from Theme 26
- * - Smooth white glow fade into the botanical floral hero
- */
-export const EnvelopeIntro: FC<EnvelopeIntroProps> = ({ onComplete, onOpeningStart }) => {
-  const [status, setStatus] = useState<'idle' | 'playing' | 'fading' | 'dismissed'>('idle');
-  const [canPlay, setCanPlay] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpeningStart }) => {
+  // Always start sealed on page refresh so animation runs fresh every time
+  const [stage, setStage] = useState<'sealed' | 'opening' | 'dismissed'>('sealed');
 
   // Track audio state reactively
   const [isPlaying, setIsPlaying] = useState(audioManager.isPlaying);
   const [isMuted, setIsMuted] = useState(audioManager.isMuted);
 
   useEffect(() => {
-    if (status !== 'dismissed') {
+    // Lock scroll while envelope covers the viewport
+    if (stage !== 'dismissed') {
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    if (videoRef.current) {
-      videoRef.current.load();
     }
 
     const unsubscribe = audioManager.subscribe(() => {
@@ -43,13 +29,8 @@ export const EnvelopeIntro: FC<EnvelopeIntroProps> = ({ onComplete, onOpeningSta
     });
 
     (window as any).replayWeddingEnvelope = () => {
-      setStatus('idle');
-      setCanPlay(false);
+      setStage('sealed');
       document.body.style.overflow = 'hidden';
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.load();
-      }
     };
 
     return () => {
@@ -57,19 +38,12 @@ export const EnvelopeIntro: FC<EnvelopeIntroProps> = ({ onComplete, onOpeningSta
       unsubscribe();
       delete (window as any).replayWeddingEnvelope;
     };
-  }, [status]);
+  }, [stage]);
 
-  const handleCanPlayThrough = () => {
-    setCanPlay(true);
-  };
+  const handleOpenEnvelope = () => {
+    if (stage !== 'sealed') return;
 
-  const handleTap = () => {
-    if (status !== 'idle' || !canPlay) return;
-
-    setStatus('playing');
-    if (onOpeningStart) onOpeningStart();
-
-    // 1. Play wedding music on first guest interaction
+    // 1. Play music if not muted
     try {
       if (!audioManager.isMuted) {
         audioManager.play();
@@ -78,53 +52,37 @@ export const EnvelopeIntro: FC<EnvelopeIntroProps> = ({ onComplete, onOpeningSta
       console.warn('Audio play failed:', e);
     }
 
-    // 2. Confetti sparkle blast in Crimson & Gold
+    // 2. Confetti sparkle blast from center
     try {
       confetti({
-        particleCount: 75,
+        particleCount: 55,
         spread: 90,
         origin: { y: 0.52 },
-        colors: ['#B91C1C', '#991B1B', '#E5A93C', '#FAF6F0', '#FFFFFF'],
-        startVelocity: 32,
+        colors: ['#B91C1C', '#991B1B', '#E5A93C', '#F5EDE4', '#FFFFFF'],
+        startVelocity: 30,
         gravity: 0.75,
-        ticks: 150,
+        ticks: 160,
         disableForReducedMotion: true,
       });
     } catch (e) {}
 
-    // 3. Play envelope opening video
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
-    }
-  };
+    // 3. Initiate Slow Pull-Back Reveal Sequence
+    setStage('opening');
+    if (onOpeningStart) onOpeningStart();
 
-  const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
-    const vid = videoRef.current;
-    // When video is within 0.8s of completion, trigger white glow bloom into Hero
-    if (vid.duration - vid.currentTime <= 0.8 && status === 'playing') {
-      setStatus('fading');
-      setTimeout(() => {
-        setStatus('dismissed');
-        if (onComplete) onComplete();
-      }, 800);
-    }
+    // 4. Once all 4 envelope parts have smoothly pulled back to the page edges (~3.0s), dismiss the overlay
+    setTimeout(() => {
+      setStage('dismissed');
+      document.body.style.overflow = '';
+      if (onComplete) onComplete();
+    }, 6200);
   };
 
   const handleSkip = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setStatus('fading');
-    setTimeout(() => {
-      setStatus('dismissed');
-      if (onComplete) onComplete();
-    }, 400);
-
-    try {
-      if (!audioManager.isMuted) {
-        audioManager.play();
-      }
-    } catch (err) {}
+    setStage('dismissed');
+    document.body.style.overflow = '';
+    if (onComplete) onComplete();
   };
 
   const handleAudioToggle = (e: React.MouseEvent) => {
@@ -132,136 +90,251 @@ export const EnvelopeIntro: FC<EnvelopeIntroProps> = ({ onComplete, onOpeningSta
     audioManager.toggle();
   };
 
-  if (status === 'dismissed') {
+  if (stage === 'dismissed') {
     return null;
   }
 
+  // 350gsm Felt-Pressed Cotton Paper Surface
+  const paperTextureStyle: React.CSSProperties = {
+    backgroundImage: `url('/assets/cotton-paper-texture.jpg')`,
+    backgroundSize: '750px auto',
+    backgroundColor: '#F7F3EE',
+  };
+
   return (
-    <div
-      className="fixed inset-0 z-50 cursor-pointer bg-[#FAF6F0] overflow-hidden select-none"
-      onClick={handleTap}
-    >
-      {/* Audio Controller */}
-      <button
-        onClick={handleAudioToggle}
-        className="fixed bottom-6 left-4 sm:bottom-auto sm:top-6 sm:left-8 z-55 flex items-center gap-2 px-3.5 py-2 sm:py-1.5 rounded-full bg-black/75 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase shadow-2xl transition-all active:scale-95 cursor-pointer pointer-events-auto"
-        aria-label={isMuted || !isPlaying ? 'Unmute wedding music' : 'Mute wedding music'}
-      >
-        {isMuted || !isPlaying ? (
-          <>
-            <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="opacity-80">Muted &bull; Tap to Play</span>
-          </>
-        ) : (
-          <>
-            <Volume2 className="w-3.5 h-3.5 text-[#B91C1C] animate-pulse" />
-            <span className="opacity-95 font-medium">Do 4 Love &bull; Tap to Mute</span>
-          </>
-        )}
-      </button>
-
-      {/* Floating Skip Button */}
-      <button
-        onClick={handleSkip}
-        className="fixed top-4 sm:top-6 right-4 sm:right-8 z-55 flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 hover:border-[#B91C1C]/60 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-xl cursor-pointer pointer-events-auto"
-        aria-label="Skip into website"
-      >
-        <span>Skip</span>
-        <ArrowRight className="w-3.5 h-3.5 text-[#B91C1C]" />
-      </button>
-
-      {/* 1. Theme 26 Sealed Envelope Background Poster */}
-      <motion.img
-        src="/assets/intro-poster-cma-eou6SMwT.jpg"
-        alt="Sealed Wedding Envelope"
-        className="absolute inset-0 w-full h-full object-cover"
-        initial={{ opacity: 1 }}
-        animate={{ opacity: status === 'idle' ? 1 : 0 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
-      />
-
-      {/* 2. Theme 26 Envelope Opening Video */}
-      <motion.video
-        ref={videoRef}
-        src="/assets/intro-cma-BtcZIfbL.mp4"
-        className="absolute inset-0 w-full h-full object-cover"
-        onTimeUpdate={handleTimeUpdate}
-        onCanPlayThrough={handleCanPlayThrough}
-        playsInline
-        muted
-        preload="auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: status !== 'idle' ? 1 : 0 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
-      />
-
-      {/* ================= CUSTOMIZED RED M & M WAX SEAL & PROMINENT TAP BUTTON ================= */}
-      {status === 'idle' && (
-        <div className="absolute top-[52.9%] left-[51.9%] -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center pointer-events-none">
-          {/* Custom Red 3D Wax Seal with "M & M" Embossing */}
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: [1, 1.03, 1], opacity: 1 }}
-            transition={{
-              scale: { repeat: Infinity, duration: 2.4, ease: 'easeInOut' },
-              opacity: { duration: 0.5 },
-            }}
-            className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 flex items-center justify-center filter drop-shadow-[0_16px_36px_rgba(185,28,28,0.7)] drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]"
-          >
-            <img
-              src="/assets/wax-seal-mm.png"
-              alt="Miracle & Malvin Custom Red Wax Seal with M&M Embossing"
-              className="w-full h-full object-contain select-none"
-              draggable={false}
-            />
-          </motion.div>
-
-          {/* Prominent, Evident "TAP TO OPEN" Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{
-              opacity: 1,
-              y: [0, -5, 0],
-            }}
-            transition={{
-              opacity: { duration: 0.6, delay: 0.2 },
-              y: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
-            }}
-            className="mt-6 sm:mt-7"
-          >
-            <div className="inline-flex items-center gap-2.5 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full bg-[#181310]/95 hover:bg-[#B91C1C] text-white shadow-[0_12px_35px_rgba(0,0,0,0.5),0_0_25px_rgba(185,28,28,0.5)] border-2 border-[#B91C1C]/70 hover:border-white transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer">
-              <Sparkles className="w-4 h-4 text-[#B91C1C] animate-pulse" />
-              <span className="font-sans font-bold text-xs sm:text-sm tracking-[0.26em] uppercase text-white whitespace-nowrap">
-                Tap to Open Invitation
-              </span>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Disintegrating / Opening Seal Transition when Tapped */}
-      {status === 'playing' && (
-        <motion.div
-          initial={{ scale: 1, opacity: 1, y: 0 }}
-          animate={{ scale: 1.35, opacity: 0, y: -25, rotate: 8 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-          className="absolute top-[52.9%] left-[51.9%] -translate-x-1/2 -translate-y-1/2 z-30 w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 flex items-center justify-center filter drop-shadow-[0_20px_40px_rgba(185,28,28,0.9)] pointer-events-none"
-        >
-          <img
-            src="/assets/wax-seal-mm.png"
-            alt=""
-            className="w-full h-full object-contain"
-          />
-        </motion.div>
-      )}
-
-      {/* 3. Theme 26 Signature White Fade Transition */}
+    <AnimatePresence>
       <motion.div
-        className="absolute inset-0 bg-white pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: status === 'fading' ? 1 : 0 }}
-        transition={{ duration: 0.8, ease: 'easeInOut' }}
-      />
-    </div>
+        key="photoreal-3d-staggered-envelope"
+        initial={{ opacity: 1 }}
+        exit={{ opacity: 0, transition: { duration: 0.3 } }}
+        className="fixed inset-0 z-50 w-screen h-screen overflow-hidden select-none pointer-events-none"
+        style={{ perspective: '2200px' }}
+      >
+        {/* Audio Pill: Lower-Left on Mobile, Top-Left on Desktop */}
+        <button
+          onClick={handleAudioToggle}
+          className="fixed bottom-6 left-4 sm:bottom-auto sm:top-6 sm:left-8 z-50 flex items-center gap-2 px-3.5 py-2 sm:py-1.5 rounded-full bg-black/75 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase shadow-2xl transition-all active:scale-95 cursor-pointer pointer-events-auto"
+          aria-label={isMuted || !isPlaying ? 'Unmute wedding music' : 'Mute wedding music'}
+        >
+          {isMuted || !isPlaying ? (
+            <>
+              <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="opacity-80">Muted &bull; Tap to Play</span>
+            </>
+          ) : (
+            <>
+              <Volume2 className="w-3.5 h-3.5 text-[#B91C1C] animate-pulse" />
+              <span className="opacity-95 font-medium">Do 4 Love &bull; Tap to Mute</span>
+            </>
+          )}
+        </button>
+
+        {/* Quick Skip Button: Top-Right */}
+        <button
+          onClick={handleSkip}
+          className="fixed top-4 sm:top-6 right-4 sm:right-8 z-50 flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 hover:border-[#B91C1C]/60 text-white text-[10px] sm:text-[11px] font-sans tracking-widest uppercase transition-all duration-200 shadow-xl cursor-pointer pointer-events-auto"
+          aria-label="Skip into website"
+        >
+          <span>Skip</span>
+          <ArrowRight className="w-3.5 h-3.5 text-[#B91C1C]" />
+        </button>
+
+        {/* ================= 4-PART PULL-BACK REVEAL ENVELOPE ================= */}
+        <div className="relative w-full h-full overflow-hidden">
+
+          {/* ================= TOP FLAP: SLOWLY PULLS UPWARDS ================= */}
+          <motion.div
+            initial={{ y: 0, opacity: 1 }}
+            animate={
+              stage === 'opening'
+                ? {
+                    y: '-105%',
+                    opacity: [1, 1, 0.9, 0],
+                    transition: {
+                      duration: 5.8,
+                      delay: 0.15,
+                      times: [0, 0.75, 0.95, 1],
+                      ease: [0.22, 1, 0.36, 1],
+                    },
+                  }
+                : { y: 0, opacity: 1 }
+            }
+            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-[18vh] sm:pt-[20vh] md:pt-[22vh]"
+            onClick={handleOpenEnvelope}
+          >
+            {/* The clipped paper flap background (ClipPath applied ONLY to background so typography is NEVER clipped) */}
+            <div
+              style={{
+                ...paperTextureStyle,
+                clipPath: 'polygon(-0.5% -0.5%, 100.5% -0.5%, 50% 50.5%)',
+              }}
+              className="absolute inset-0 pointer-events-none"
+            >
+              {/* Soft depth shadow cast over lower flaps */}
+              <div className="absolute inset-0 shadow-[0_16px_40px_rgba(0,0,0,0.22)]" />
+              <div className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-white/30 via-transparent to-black/10 pointer-events-none" />
+            </div>
+
+            {/* Top Flap Typography: Moved down toward center with noticeably larger font sizes */}
+            <motion.div
+              animate={stage === 'opening' ? { opacity: [1, 1, 0.7, 0] } : { opacity: 1 }}
+              transition={{ duration: 5.0, times: [0, 0.7, 0.92, 1] }}
+              className="relative z-35 flex flex-col items-center text-center px-4 max-w-full pointer-events-none select-none"
+            >
+              <p className="text-xs xs:text-sm sm:text-base md:text-lg font-sans tracking-[0.3em] uppercase text-[#7A6B5C] mb-2.5 sm:mb-3.5 font-semibold whitespace-nowrap">
+                JANUARY 2027
+              </p>
+
+              <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-[#1C1510] tracking-[0.08em] xs:tracking-[0.1em] sm:tracking-[0.18em] uppercase drop-shadow-sm leading-none whitespace-nowrap">
+                MIRACLE &amp; MALVIN
+              </h1>
+            </motion.div>
+          </motion.div>
+
+          {/* ================= RIGHT FLAP: SLOWLY PULLS RIGHTWARDS ================= */}
+          <motion.div
+            initial={{ x: 0, opacity: 1 }}
+            animate={
+              stage === 'opening'
+                ? {
+                    x: '105%',
+                    opacity: [1, 1, 0.9, 0],
+                    transition: {
+                      duration: 5.8,
+                      delay: 0.15,
+                      times: [0, 0.75, 0.95, 1],
+                      ease: [0.22, 1, 0.36, 1],
+                    },
+                  }
+                : { x: 0, opacity: 1 }
+            }
+            style={{
+              ...paperTextureStyle,
+              clipPath: 'polygon(100.5% -0.5%, 100.5% 100.5%, 49.5% 50%)',
+            }}
+            className="absolute inset-0 z-24 pointer-events-none"
+          >
+            {/* Crease shading */}
+            <div className="absolute inset-0 shadow-[inset_14px_0_35px_rgba(0,0,0,0.18)]" />
+            <div className="absolute inset-0 bg-gradient-to-l from-black/5 via-transparent to-black/10" />
+          </motion.div>
+
+          {/* ================= LEFT FLAP: SLOWLY PULLS LEFTWARDS ================= */}
+          <motion.div
+            initial={{ x: 0, opacity: 1 }}
+            animate={
+              stage === 'opening'
+                ? {
+                    x: '-105%',
+                    opacity: [1, 1, 0.9, 0],
+                    transition: {
+                      duration: 5.8,
+                      delay: 0.15,
+                      times: [0, 0.75, 0.95, 1],
+                      ease: [0.22, 1, 0.36, 1],
+                    },
+                  }
+                : { x: 0, opacity: 1 }
+            }
+            style={{
+              ...paperTextureStyle,
+              clipPath: 'polygon(-0.5% -0.5%, 50.5% 50%, -0.5% 100.5%)',
+            }}
+            className="absolute inset-0 z-22 pointer-events-none"
+          >
+            {/* Crease shading */}
+            <div className="absolute inset-0 shadow-[inset_-14px_0_35px_rgba(0,0,0,0.18)]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/10" />
+          </motion.div>
+
+          {/* ================= BOTTOM FLAP: SLOWLY PULLS DOWNWARDS ================= */}
+          <motion.div
+            initial={{ y: 0, opacity: 1 }}
+            animate={
+              stage === 'opening'
+                ? {
+                    y: '105%',
+                    opacity: [1, 1, 0.9, 0],
+                    transition: {
+                      duration: 5.8,
+                      delay: 0.15,
+                      times: [0, 0.75, 0.95, 1],
+                      ease: [0.22, 1, 0.36, 1],
+                    },
+                  }
+                : { y: 0, opacity: 1 }
+            }
+            style={{
+              ...paperTextureStyle,
+              clipPath: 'polygon(-0.5% 100.5%, 50% 49.5%, 100.5% 100.5%)',
+            }}
+            className="absolute inset-0 z-20 pointer-events-none"
+          >
+            {/* Bottom flap crease shadow */}
+            <div className="absolute inset-0 shadow-[0_-18px_40px_rgba(0,0,0,0.2)]" />
+            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/20 via-black/5 to-transparent" />
+          </motion.div>
+
+          {/* ================= WAX SEAL & TAP BUTTON ================= */}
+          <div className="absolute top-[52%] sm:top-[51%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center pointer-events-auto">
+
+            {/* Photorealistic 3D Wax Seal Button */}
+            <motion.button
+              onClick={handleOpenEnvelope}
+              whileHover={stage === 'sealed' ? { scale: 1.05 } : {}}
+              whileTap={stage === 'sealed' ? { scale: 0.95 } : {}}
+              animate={
+                stage === 'opening'
+                  ? {
+                      scale: 1.25,
+                      y: -40,
+                      rotate: 12,
+                      opacity: 0,
+                      filter: 'drop-shadow(0 25px 40px rgba(185,28,28,0.95))',
+                      transition: { duration: 1.2, ease: 'easeOut' },
+                    }
+                  : {
+                      scale: [1, 1.025, 1],
+                      transition: { repeat: Infinity, duration: 2.2, ease: 'easeInOut' },
+                    }
+              }
+              className="relative z-50 cursor-pointer focus:outline-none rounded-full"
+              aria-label="Click to break wax seal and open invitation"
+            >
+              <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 flex items-center justify-center">
+                <img
+                  src="/assets/wax-seal-mm.png"
+                  alt="Miracle & Malvin 3D Wax Seal"
+                  className="w-full h-full object-contain filter drop-shadow-[0_18px_36px_rgba(185,28,28,0.7)] drop-shadow-[0_8px_16px_rgba(0,0,0,0.55)] transition-transform duration-200 select-none pointer-events-none"
+                  draggable={false}
+                />
+              </div>
+            </motion.button>
+
+            {/* Sleek, Single-Line "TAP TO UNSEAL" Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={
+                stage === 'opening'
+                  ? { opacity: 0, y: 20, transition: { duration: 0.2 } }
+                  : { opacity: 1, y: 0 }
+              }
+              transition={{ delay: 0.15 }}
+              onClick={handleOpenEnvelope}
+              className="mt-6 sm:mt-7 flex flex-col items-center justify-center cursor-pointer"
+            >
+              <div className="inline-flex items-center justify-center px-8 sm:px-10 py-3 sm:py-3.5 rounded-full bg-[#181310] hover:bg-[#B91C1C] text-white shadow-xl hover:shadow-[0_8px_30px_rgba(185,28,28,0.5)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20 whitespace-nowrap shrink-0">
+                <span className="font-sans font-bold text-xs sm:text-sm tracking-[0.22em] uppercase text-white whitespace-nowrap select-none">
+                  Tap to Unseal
+                </span>
+              </div>
+            </motion.div>
+
+          </div>
+
+        </div>
+
+      </motion.div>
+    </AnimatePresence>
   );
 };

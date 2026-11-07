@@ -39,6 +39,14 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
 
   // Check lockout state on mount and set up countdown
   useEffect(() => {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocal) {
+      localStorage.removeItem(ATTEMPTS_STORAGE_KEY);
+      localStorage.removeItem(LOCKOUT_STORAGE_KEY);
+      setLockoutRemaining(0);
+      return;
+    }
+
     const checkLockout = () => {
       const lockoutUntil = parseInt(localStorage.getItem(LOCKOUT_STORAGE_KEY) || '0', 10);
       const remaining = lockoutUntil - Date.now();
@@ -79,7 +87,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
 
   const handlePinSubmit = async (e: Event | React.FormEvent) => {
     if (e && 'preventDefault' in e) e.preventDefault();
-    if (lockoutRemaining > 0) return;
+    if (lockoutRemaining > 0 && window.location.hostname !== 'localhost') return;
 
     setPinError('');
 

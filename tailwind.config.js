@@ -49,9 +49,6 @@ export default {
         tangerine: ['"Tangerine"', 'cursive'],
         playfair: ['"Playfair Display"', 'Georgia', 'serif'],
         serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-        display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-        body: ['"EB Garamond"', '"Cormorant Garamond"', 'serif'],
-        script: ['"Pinyon Script"', '"Great Vibes"', 'cursive'],
         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       keyframes: {

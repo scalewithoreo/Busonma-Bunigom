@@ -16,7 +16,7 @@ import { MusicPlayer } from './components/MusicPlayer';
 import { Collaborate } from './components/Collaborate';
 import { AdminPage } from './pages/AdminPage';
 import { FloatingRSVP } from './components/FloatingRSVP';
-// import { EnvelopeIntro } from './components/EnvelopeIntro';
+import { EnvelopeIntro } from './components/EnvelopeIntro';
 import { ToastContainer } from './components/Toast';
 import { ToastMessage } from './types';
 import Lenis from 'lenis';
@@ -100,8 +100,7 @@ export function App() {
 
   const HomePage = () => (
     <>
-      {/* Theme 26 Floral Hero loads directly */}
-      {/* <EnvelopeIntro /> */}
+      <EnvelopeIntro />
       <Navbar onOpenRsvp={scrollToRsvp} />
       <main>
         <Hero onRsvpClick={scrollToRsvp} />
