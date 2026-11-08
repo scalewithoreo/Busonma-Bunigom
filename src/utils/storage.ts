@@ -700,7 +700,7 @@ export async function getStoredWishlistItems(): Promise<WishlistItem[]> {
     try {
       const client = getTursoClient();
       if (client) {
-        const res = await client.execute('SELECT * FROM wishlist ORDER BY created_at DESC');
+        const res = await client.execute("SELECT * FROM wishlist WHERE id != '00000000-0000-0000-0000-000000000001' AND name != '__APP_INVITATION_POSTERS__' ORDER BY created_at DESC");
         if (res.rows.length > 0) {
           const items: WishlistItem[] = res.rows.map((row: any) => ({
             id: String(row.id),
@@ -730,7 +730,7 @@ export async function getStoredWishlistItems(): Promise<WishlistItem[]> {
 
   const customItems = getLocalDb<WishlistItem[] | null>(MM_DB_WISHLIST, null);
   if (customItems && customItems.length > 0) {
-    return customItems;
+    return customItems.filter(i => i.id !== '00000000-0000-0000-0000-000000000001' && i.name !== '__APP_INVITATION_POSTERS__');
   }
   return INITIAL_WISHLIST_ITEMS;
 }
@@ -1135,7 +1135,7 @@ export const DEFAULT_POSTERS: InvitationPostersConfig = {
   familyVipUpdatedAt: 'Default Asset'
 };
 
-export function getStoredInvitationPosters(): InvitationPostersConfig {
+export function getLocalInvitationPosters(): InvitationPostersConfig {
   try {
     const raw = localStorage.getItem(INVITATION_POSTERS_KEY);
     if (!raw) return DEFAULT_POSTERS;
@@ -1151,11 +1151,60 @@ export function getStoredInvitationPosters(): InvitationPostersConfig {
   }
 }
 
-export function saveStoredInvitationPosters(config: InvitationPostersConfig): void {
+export async function getStoredInvitationPosters(): Promise<InvitationPostersConfig> {
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const res = await client.execute({
+          sql: "SELECT description FROM wishlist WHERE id = '00000000-0000-0000-0000-000000000001' LIMIT 1",
+          args: []
+        });
+        if (res.rows.length > 0 && res.rows[0].description) {
+          const parsed = JSON.parse(String(res.rows[0].description));
+          const config: InvitationPostersConfig = {
+            generalUrl: parsed.generalUrl || DEFAULT_POSTERS.generalUrl,
+            familyVipUrl: parsed.familyVipUrl || DEFAULT_POSTERS.familyVipUrl,
+            generalUpdatedAt: parsed.generalUpdatedAt || DEFAULT_POSTERS.generalUpdatedAt,
+            familyVipUpdatedAt: parsed.familyVipUpdatedAt || DEFAULT_POSTERS.familyVipUpdatedAt
+          };
+          try {
+            localStorage.setItem(INVITATION_POSTERS_KEY, JSON.stringify(config));
+          } catch {}
+          return config;
+        }
+      }
+    } catch (err) {
+      console.warn('[turso] Could not fetch cloud invitation posters, using local fallback:', err);
+    }
+  }
+
+  return getLocalInvitationPosters();
+}
+
+export async function saveStoredInvitationPosters(config: InvitationPostersConfig): Promise<void> {
   try {
     localStorage.setItem(INVITATION_POSTERS_KEY, JSON.stringify(config));
   } catch (e) {
     console.warn('Could not save invitation posters to localStorage', e);
+  }
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const payloadStr = JSON.stringify(config);
+        const imageUrl = config.generalUrl.startsWith('data:') ? '' : config.generalUrl;
+        await client.execute({
+          sql: `INSERT INTO wishlist (id, name, quantity, price, formatted_price, category, image, description, is_funded, is_reserved)
+                VALUES ('00000000-0000-0000-0000-000000000001', '__APP_INVITATION_POSTERS__', 1, 1, '₦1', 'Milestone Gift', ?, ?, 0, 0)
+                ON CONFLICT(id) DO UPDATE SET description = excluded.description, image = excluded.image`,
+          args: [imageUrl, payloadStr]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Could not persist invitation posters to cloud:', err);
+    }
   }
 }
 
