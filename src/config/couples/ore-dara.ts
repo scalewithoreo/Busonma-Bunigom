@@ -49,6 +49,7 @@ export const oreDaraConfig: WeddingConfig = {
     },
   },
   theme: {
+    preset: 'champagne-luxury',
     introStyle: 'none',
     colors: {
       primary: '#c5a880',

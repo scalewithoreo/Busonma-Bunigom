@@ -65,6 +65,14 @@ export interface ThemeColors {
   muted: string;
 }
 
+export type ThemePresetId =
+  | 'champagne-luxury'
+  | 'editorial-noir'
+  | 'botanical-sage'
+  | 'parisian-blush'
+  | 'terracotta-earth'
+  | 'royal-sapphire';
+
 export interface ColorLookItem {
   id: string;
   src: string;
@@ -82,6 +90,7 @@ export interface ColorBandItem {
 }
 
 export interface ThemeConfig {
+  preset?: ThemePresetId;
   introStyle: 'none' | 'envelope';
   envelope?: {
     monogram: string;

@@ -49,6 +49,7 @@ export const miracleMalvinConfig: WeddingConfig = {
     },
   },
   theme: {
+    preset: 'editorial-noir',
     introStyle: 'envelope',
     envelope: {
       monogram: 'MM',

@@ -1,12 +1,16 @@
 import { createContext, useContext, useState, useEffect, useMemo, FC, ReactNode } from 'react';
-import { WeddingConfig, AdminRoleConfig } from '../types/wedding';
+import { WeddingConfig, AdminRoleConfig, ThemeColors, ThemePresetId } from '../types/wedding';
 import { COUPLE_CONFIGS, ALL_COUPLES, resolveCoupleId, DEFAULT_COUPLE_ID } from '../config/couples';
+import { THEME_PRESETS, ALL_THEME_PRESETS, ThemePreset } from '../config/themePresets';
 
 interface WeddingContextValue {
   wedding: WeddingConfig;
   activeCoupleId: string;
   setCoupleId: (id: string) => void;
   availableCouples: WeddingConfig[];
+  activePresetId: ThemePresetId;
+  setPresetId: (id: ThemePresetId) => void;
+  availablePresets: ThemePreset[];
   isMasterAdmin: (role?: string) => boolean;
   getRoleConfig: (role?: string) => AdminRoleConfig | undefined;
 }
@@ -54,10 +58,9 @@ function detectInitialCoupleId(): string {
   return DEFAULT_COUPLE_ID;
 }
 
-function applyThemeVariables(wedding: WeddingConfig) {
+function applyThemeVariables(colors: ThemeColors, title: string) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  const colors = wedding.theme.colors;
 
   root.style.setProperty('--brand-primary', colors.primary);
   root.style.setProperty('--brand-primary-dark', colors.primaryDark);
@@ -75,18 +78,40 @@ function applyThemeVariables(wedding: WeddingConfig) {
   root.style.setProperty('--brand-muted', colors.muted);
 
   // Update Page Title
-  document.title = `${wedding.couple.title} | Wedding Celebration`;
+  document.title = `${title} | Wedding Celebration`;
 }
 
 export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [activeCoupleId, setActiveCoupleId] = useState<string>(detectInitialCoupleId);
 
-  const wedding = useMemo(() => {
+  const rawWedding = useMemo(() => {
     return COUPLE_CONFIGS[activeCoupleId] || COUPLE_CONFIGS[DEFAULT_COUPLE_ID];
   }, [activeCoupleId]);
 
+  const [activePresetId, setActivePresetId] = useState<ThemePresetId>(() => {
+    return rawWedding.theme.preset || 'champagne-luxury';
+  });
+
+  // Keep preset in sync when couple changes
   useEffect(() => {
-    applyThemeVariables(wedding);
+    setActivePresetId(rawWedding.theme.preset || 'champagne-luxury');
+  }, [rawWedding]);
+
+  // Merge active preset with wedding colors
+  const wedding: WeddingConfig = useMemo(() => {
+    const preset = THEME_PRESETS[activePresetId] || THEME_PRESETS['champagne-luxury'];
+    return {
+      ...rawWedding,
+      theme: {
+        ...rawWedding.theme,
+        preset: activePresetId,
+        colors: preset.colors,
+      },
+    };
+  }, [rawWedding, activePresetId]);
+
+  useEffect(() => {
+    applyThemeVariables(wedding.theme.colors, wedding.couple.title);
   }, [wedding]);
 
   const setCoupleId = (id: string) => {
@@ -99,6 +124,12 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
       window.history.replaceState({}, '', url.toString());
     } catch (e) {
       // Ignore URL state errors
+    }
+  };
+
+  const setPresetId = (id: ThemePresetId) => {
+    if (THEME_PRESETS[id]) {
+      setActivePresetId(id);
     }
   };
 
@@ -123,28 +154,53 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         activeCoupleId,
         setCoupleId,
         availableCouples: ALL_COUPLES,
+        activePresetId,
+        setPresetId,
+        availablePresets: ALL_THEME_PRESETS,
         isMasterAdmin,
         getRoleConfig,
       }}
     >
       {children}
 
-      {/* Floating Developer Couple Switcher Pill (Dev / Preview Mode) */}
+      {/* Floating Developer Theme & Couple Switcher Pill (Dev / Preview Mode) */}
       {isDev && (
-        <div className="fixed bottom-4 left-4 z-50 flex items-center gap-1.5 bg-black/85 backdrop-blur-md text-white px-3 py-1.5 rounded-full shadow-2xl border border-white/20 text-xs font-sans select-none">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[11px] text-neutral-400 font-mono">CORE:</span>
-          <select
-            value={activeCoupleId}
-            onChange={(e) => setCoupleId(e.target.value)}
-            className="bg-transparent text-white font-medium cursor-pointer focus:outline-none text-xs pr-1"
-          >
-            {ALL_COUPLES.map((c) => (
-              <option key={c.id} value={c.id} className="bg-neutral-900 text-white">
-                {c.couple.title} ({c.id})
-              </option>
-            ))}
-          </select>
+        <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2 bg-neutral-950/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full shadow-2xl border border-white/20 text-xs font-sans select-none">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          
+          {/* Couple Selector */}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-neutral-400 font-mono uppercase">Couple:</span>
+            <select
+              value={activeCoupleId}
+              onChange={(e) => setCoupleId(e.target.value)}
+              className="bg-transparent text-white font-medium cursor-pointer focus:outline-none text-xs pr-1"
+            >
+              {ALL_COUPLES.map((c) => (
+                <option key={c.id} value={c.id} className="bg-neutral-900 text-white">
+                  {c.couple.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="w-[1px] h-3 bg-white/20" />
+
+          {/* Theme Preset Selector */}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-neutral-400 font-mono uppercase">Theme:</span>
+            <select
+              value={activePresetId}
+              onChange={(e) => setPresetId(e.target.value as ThemePresetId)}
+              className="bg-transparent text-amber-300 font-medium cursor-pointer focus:outline-none text-xs pr-1"
+            >
+              {ALL_THEME_PRESETS.map((p) => (
+                <option key={p.id} value={p.id} className="bg-neutral-900 text-white">
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
     </WeddingContext.Provider>
