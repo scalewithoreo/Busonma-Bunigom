@@ -58,24 +58,44 @@ function detectInitialCoupleId(): string {
   return DEFAULT_COUPLE_ID;
 }
 
+function hexToRgb(hex: string): string {
+  let c = hex.replace('#', '').trim();
+  if (c.length === 3) {
+    c = c.split('').map(x => x + x).join('');
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return '250 248 242';
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `${r} ${g} ${b}`;
+}
+
 function applyThemeVariables(colors: ThemeColors, title: string) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
 
-  root.style.setProperty('--brand-primary', colors.primary);
-  root.style.setProperty('--brand-primary-dark', colors.primaryDark);
-  root.style.setProperty('--brand-primary-light', colors.primaryLight);
-  root.style.setProperty('--brand-espresso', colors.espresso);
-  root.style.setProperty('--brand-charcoal', colors.charcoal);
-  root.style.setProperty('--brand-cream', colors.cream);
-  root.style.setProperty('--brand-ivory', colors.ivory);
-  root.style.setProperty('--brand-sand', colors.sand);
-  root.style.setProperty('--brand-sand-dark', colors.sandDark);
-  root.style.setProperty('--brand-gold', colors.gold);
-  root.style.setProperty('--brand-gold-dark', colors.goldDark);
-  root.style.setProperty('--brand-gold-light', colors.goldLight);
-  root.style.setProperty('--brand-wine', colors.wine);
-  root.style.setProperty('--brand-muted', colors.muted);
+  const mapping: Record<string, string> = {
+    'primary': colors.primary,
+    'primary-dark': colors.primaryDark,
+    'primary-light': colors.primaryLight,
+    'espresso': colors.espresso,
+    'charcoal': colors.charcoal,
+    'cream': colors.cream,
+    'ivory': colors.ivory,
+    'sand': colors.sand,
+    'sand-dark': colors.sandDark,
+    'gold': colors.gold,
+    'gold-dark': colors.goldDark,
+    'gold-light': colors.goldLight,
+    'wine': colors.wine,
+    'muted': colors.muted,
+  };
+
+  Object.entries(mapping).forEach(([key, hex]) => {
+    root.style.setProperty(`--brand-${key}`, hex);
+    root.style.setProperty(`--brand-${key}-rgb`, hexToRgb(hex));
+  });
 
   // Update Page Title
   document.title = `${title} | Wedding Celebration`;

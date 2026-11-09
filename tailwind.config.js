@@ -1,4 +1,13 @@
 /** @type {import('tailwindcss').Config} */
+function withOpacity(varName, fallbackRgb) {
+  return ({ opacityValue }) => {
+    if (opacityValue !== undefined) {
+      return `rgb(var(${varName}, ${fallbackRgb}) / ${opacityValue})`;
+    }
+    return `rgb(var(${varName}, ${fallbackRgb}))`;
+  };
+}
+
 export default {
   content: [
     "./index.html",
@@ -8,32 +17,31 @@ export default {
     extend: {
       colors: {
         brand: {
-          // Dynamic CSS variable tokens injected by WeddingContext
-          primary: 'var(--brand-primary, #c5a880)',
-          primaryDark: 'var(--brand-primary-dark, #997d59)',
-          primaryLight: 'var(--brand-primary-light, #e4d2bc)',
-          
-          beige: 'var(--brand-beige, #f5f5dc)',
-          cream: 'var(--brand-cream, #faf8f2)',
-          ivory: 'var(--brand-ivory, #fcfbfa)',
-          sand: 'var(--brand-sand, #eae3d2)',
-          sandDark: 'var(--brand-sand-dark, #d5cbb8)',
-          alabaster: 'var(--brand-cream, #faf8f2)',
+          primary: withOpacity('--brand-primary-rgb', '197 168 128'),
+          primaryDark: withOpacity('--brand-primary-dark-rgb', '153 125 89'),
+          primaryLight: withOpacity('--brand-primary-light-rgb', '228 210 188'),
 
-          gold: 'var(--brand-gold, #c5a880)',
-          goldDark: 'var(--brand-gold-dark, #997d59)',
-          goldLight: 'var(--brand-gold-light, #e4d2bc)',
+          beige: withOpacity('--brand-beige-rgb', '245 245 220'),
+          cream: withOpacity('--brand-cream-rgb', '250 248 242'),
+          ivory: withOpacity('--brand-ivory-rgb', '252 251 250'),
+          sand: withOpacity('--brand-sand-rgb', '234 227 210'),
+          sandDark: withOpacity('--brand-sand-dark-rgb', '213 203 184'),
+          alabaster: withOpacity('--brand-cream-rgb', '250 248 242'),
 
-          wine: 'var(--brand-wine, #A80A4E)',
-          crimson: 'var(--brand-primary, #B91C1C)',
-          scarlet: 'var(--brand-primary, #B91C1C)',
-          red: 'var(--brand-primary, #B91C1C)',
+          gold: withOpacity('--brand-gold-rgb', '197 168 128'),
+          goldDark: withOpacity('--brand-gold-dark-rgb', '153 125 89'),
+          goldLight: withOpacity('--brand-gold-light-rgb', '228 210 188'),
 
-          noir: 'var(--brand-espresso, #141210)',
-          espresso: 'var(--brand-espresso, #141210)',
-          charcoal: 'var(--brand-charcoal, #221f1c)',
-          warmGray: 'var(--brand-warm-gray, #383430)',
-          muted: 'var(--brand-muted, #7a7268)',
+          wine: withOpacity('--brand-wine-rgb', '168 10 78'),
+          crimson: withOpacity('--brand-primary-rgb', '185 28 28'),
+          scarlet: withOpacity('--brand-primary-rgb', '185 28 28'),
+          red: withOpacity('--brand-primary-rgb', '185 28 28'),
+
+          noir: withOpacity('--brand-espresso-rgb', '20 18 16'),
+          espresso: withOpacity('--brand-espresso-rgb', '20 18 16'),
+          charcoal: withOpacity('--brand-charcoal-rgb', '34 31 28'),
+          warmGray: withOpacity('--brand-warm-gray-rgb', '56 52 48'),
+          muted: withOpacity('--brand-muted-rgb', '122 114 104'),
         }
       },
       fontFamily: {
