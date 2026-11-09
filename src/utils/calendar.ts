@@ -1,50 +1,62 @@
-export const WEDDING_EVENT = {
+export interface CalendarEventData {
+  title: string;
+  description: string;
+  location: string;
+  startDate: string; // UTC ISO formatted e.g. 20261212T100000Z
+  endDate: string;
+  startLocal?: string;
+  endLocal?: string;
+  downloadFilename?: string;
+}
+
+export const WEDDING_EVENT: CalendarEventData = {
   title: "Miracle & Malvin's Wedding",
   description: "Join us in celebrating the joyful wedding of Miracle & Malvin! Church Wedding at 11:00 AM at Celebration Church Int'l (Celebr8 Centre HQ) followed by Reception at 2:00 PM at Celebration Church Int'l (Celebr8 Centre HQ) (Annex 2).",
   location: "Celebration Church Int'l (Celebr8 Centre HQ) (Annex 2), Vori Close, off Acme Road, Ogba, Lagos",
-  startDate: "20270127T100000Z", // 11:00 AM Lagos (WAT is UTC+1 -> 10:00 UTC)
-  endDate: "20270127T200000Z",   // 9:00 PM Lagos
+  startDate: "20270127T100000Z",
+  endDate: "20270127T200000Z",
   startLocal: "2027-01-27T11:00:00",
   endLocal: "2027-01-27T21:00:00",
+  downloadFilename: "wedding-event.ics",
 };
 
-export function getGoogleCalendarUrl(): string {
+export function getGoogleCalendarUrl(event: CalendarEventData = WEDDING_EVENT): string {
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: WEDDING_EVENT.title,
-    dates: `${WEDDING_EVENT.startDate}/${WEDDING_EVENT.endDate}`,
-    details: WEDDING_EVENT.description,
-    location: WEDDING_EVENT.location,
+    text: event.title,
+    dates: `${event.startDate}/${event.endDate}`,
+    details: event.description,
+    location: event.location,
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-export function getOutlookCalendarUrl(): string {
+export function getOutlookCalendarUrl(event: CalendarEventData = WEDDING_EVENT): string {
   const params = new URLSearchParams({
     path: '/calendar/action/compose',
     rru: 'addevent',
-    subject: WEDDING_EVENT.title,
-    startdt: WEDDING_EVENT.startLocal,
-    enddt: WEDDING_EVENT.endLocal,
-    body: WEDDING_EVENT.description,
-    location: WEDDING_EVENT.location,
+    subject: event.title,
+    startdt: event.startLocal || event.startDate,
+    enddt: event.endLocal || event.endDate,
+    body: event.description,
+    location: event.location,
   });
   return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
 }
 
-export function downloadIcsFile(): void {
+export function downloadIcsFile(event: CalendarEventData = WEDDING_EVENT): void {
   const icsData = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Miracle and Malvin//Wedding Event//EN',
+    'PRODID:-//Wedding Event//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `SUMMARY:${WEDDING_EVENT.title}`,
-    `DESCRIPTION:${WEDDING_EVENT.description.replace(/\n/g, '\\n')}`,
-    `LOCATION:${WEDDING_EVENT.location}`,
-    `DTSTART:${WEDDING_EVENT.startDate}`,
-    `DTEND:${WEDDING_EVENT.endDate}`,
+    `SUMMARY:${event.title}`,
+    `DESCRIPTION:${event.description.replace(/\n/g, '\\n')}`,
+    `LOCATION:${event.location}`,
+    `DTSTART:${event.startDate}`,
+    `DTEND:${event.endDate}`,
     `STATUS:CONFIRMED`,
     'END:VEVENT',
     'END:VCALENDAR',
@@ -54,7 +66,7 @@ export function downloadIcsFile(): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.setAttribute('download', 'Miracle-and-Malvin-Wedding.ics');
+  link.setAttribute('download', event.downloadFilename || `${event.title.replace(/[^a-zA-Z0-9]/g, '-')}.ics`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

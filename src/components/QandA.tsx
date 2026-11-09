@@ -1,54 +1,12 @@
 import { FC, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
+import { useWedding } from '../context/WeddingContext';
 
 export const QandA: FC = () => {
+  const { wedding } = useWedding();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const faqs = [
-    {
-      question: "What’s the RSVP deadline?",
-      answer: "We kindly request that you RSVP on or before January 10th to help us finalize our preparations."
-    },
-    {
-      question: "Can I bring a guest?",
-      answer: "While we would love to celebrate with everyone, our venue capacity is limited. We are only able to accommodate guests who have received a formal invite."
-    },
-    {
-      question: "Can I bring my children?",
-      answer: "While we love your little ones, this is strictly an adult-only event. We appreciate you making arrangements ahead of time so you can relax and celebrate with us!"
-    },
-    {
-      question: "Would there be parking spaces available?",
-      answer: "Yes, ample parking space will be available within the venue compound for your convenience."
-    },
-    {
-      question: "Are the ceremony and reception happening in the same venue?",
-      answer: "Yes! Both the church ceremony and reception will be held at Celebration Church Int'l (Celebr8 Centre HQ), with the reception taking place in Annex 2 on the same premises."
-    },
-    {
-      question: "Is the wedding indoors or outdoors?",
-      answer: "All of our events—including the church ceremony and reception—will be held beautifully indoors."
-    },
-    {
-      question: "What’s the colour of the day?",
-      answer: "Our dress code is High-Fashion Editorial Black-Tie with statement touches and accents of Scarlet and Crimson Red, complemented by warm champagne and cream tones. We warmly invite our guests to express themselves in sharp contemporary or traditional styles with these rich accents."
-    },
-    {
-      question: "Can we spray the couple with cash?",
-      answer: "We deeply appreciate your generous cash gifts! However, to comply with government regulations against spraying money on the floor, we kindly ask that you place all monetary gifts into the elegant boxes provided at the venue."
-    },
-    {
-      question: "Who can I reach out to if I have questions?",
-      answer: (
-        <>
-          For any further inquiries or assistance, please feel free to contact our coordinators:<br />
-          <strong>Victor:</strong> +234 907 323 4900<br />
-          <strong>Kachi:</strong> +234 814 010 2038
-        </>
-      )
-    }
-  ];
+  const faqs = wedding.qa;
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -120,7 +78,18 @@ export const QandA: FC = () => {
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                   >
                     <div className="px-6 pb-6 pt-2 font-sans text-brand-muted text-[15px] sm:text-base leading-relaxed border-t border-brand-sand/20">
-                      {faq.answer}
+                      {faq.contacts && faq.contacts.length > 0 ? (
+                        <>
+                          For any further inquiries or assistance, please feel free to contact our coordinators:<br />
+                          {faq.contacts.map((c, i) => (
+                            <span key={i}>
+                              <strong>{c.name}:</strong> {c.phone}<br />
+                            </span>
+                          ))}
+                        </>
+                      ) : (
+                        faq.answer
+                      )}
                     </div>
                   </motion.div>
                 )}

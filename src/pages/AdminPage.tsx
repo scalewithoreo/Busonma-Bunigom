@@ -1,27 +1,27 @@
-import { useState, useEffect, FC } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { KeyRound, AlertCircle, ArrowLeft, ShieldAlert, Settings, RefreshCw, CheckCircle2, X, Lock } from 'lucide-react';
-import { AdminModal } from '../components/AdminModal';
-import { useNavigate } from 'react-router-dom';
-import {
-  AdminRole,
-  hashPin,
-  verifyEnteredPin,
-  getStoredPin,
-  saveCustomPin,
-  resetRolePinToDefault,
-  INITIAL_ADMIN_ROLES,
-  MASTER_EMERGENCY_PIN
-} from '../config/adminConfig';
-
 export type { AdminRole } from '../config/adminConfig';
+import React, { useState, useEffect, FC } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { KeyRound, ShieldAlert, ArrowLeft, Settings, X, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { AdminModal } from '../components/AdminModal';
+import { 
+  AdminRole, 
+  hashPin, 
+  verifyEnteredPin, 
+  getStoredPin, 
+  saveCustomPin, 
+  resetRolePinToDefault, 
+  MASTER_EMERGENCY_PIN 
+} from '../config/adminConfig';
+import { useWedding } from '../context/WeddingContext';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-const LOCKOUT_STORAGE_KEY = 'mm_admin_lockout_until';
-const ATTEMPTS_STORAGE_KEY = 'mm_admin_attempts';
+const LOCKOUT_STORAGE_KEY = 'wedding_admin_lockout_until';
+const ATTEMPTS_STORAGE_KEY = 'wedding_admin_attempts';
 
 export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void }> = ({ onNotify }) => {
+  const { wedding } = useWedding();
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState('');
   const [authenticatedRole, setAuthenticatedRole] = useState<AdminRole | null>(null);
@@ -30,12 +30,19 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
   const navigate = useNavigate();
 
   // Reset Modal Form State
-  const [targetRole, setTargetRole] = useState<AdminRole>('miracle');
+  const [targetRole, setTargetRole] = useState<AdminRole>(() => wedding.admin.roles[0]?.role || 'master');
   const [currentOrMasterPin, setCurrentOrMasterPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
   const [resetError, setResetError] = useState('');
   const [resetSuccess, setResetSuccess] = useState('');
+
+  // Update targetRole if wedding switches
+  useEffect(() => {
+    if (wedding.admin.roles.length > 0) {
+      setTargetRole(wedding.admin.roles[0].role);
+    }
+  }, [wedding]);
 
   // Check lockout state on mount and set up countdown
   useEffect(() => {
@@ -48,13 +55,14 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
     }
 
     const checkLockout = () => {
-      const lockoutUntil = parseInt(localStorage.getItem(LOCKOUT_STORAGE_KEY) || '0', 10);
-      const remaining = lockoutUntil - Date.now();
-      if (remaining > 0) {
-        setLockoutRemaining(Math.ceil(remaining / 1000));
-      } else {
-        setLockoutRemaining(0);
-        localStorage.removeItem(LOCKOUT_STORAGE_KEY);
+      const lockoutUntil = localStorage.getItem(LOCKOUT_STORAGE_KEY);
+      if (lockoutUntil) {
+        const remaining = Math.max(0, Math.ceil((parseInt(lockoutUntil, 10) - Date.now()) / 1000));
+        setLockoutRemaining(remaining);
+        if (remaining === 0) {
+          localStorage.removeItem(LOCKOUT_STORAGE_KEY);
+          localStorage.removeItem(ATTEMPTS_STORAGE_KEY);
+        }
       }
     };
 
@@ -63,73 +71,48 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
     return () => clearInterval(interval);
   }, []);
 
-  // Global key listener so they don't have to click the input
-  useEffect(() => {
-    if (authenticatedRole || lockoutRemaining > 0 || isResetModalOpen) return;
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.altKey || e.metaKey) return;
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  const getFailedAttempts = (): number => {
+    return parseInt(localStorage.getItem(ATTEMPTS_STORAGE_KEY) || '0', 10);
+  };
 
-      if (e.key === 'Backspace') {
-        setPin(prev => prev.slice(0, -1));
-      } else if (/^\d$/.test(e.key)) {
-        setPin(prev => (prev.length < 4 ? prev + e.key : prev));
-      } else if (e.key === 'Enter' && pin.length === 4) {
-        const form = document.getElementById('admin-login-form');
-        if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-      }
-    };
+  const recordFailedAttempt = (): number => {
+    const newCount = getFailedAttempts() + 1;
+    localStorage.setItem(ATTEMPTS_STORAGE_KEY, newCount.toString());
+    if (newCount >= MAX_FAILED_ATTEMPTS) {
+      const lockoutTime = Date.now() + LOCKOUT_DURATION_MS;
+      localStorage.setItem(LOCKOUT_STORAGE_KEY, lockoutTime.toString());
+      setLockoutRemaining(Math.ceil(LOCKOUT_DURATION_MS / 1000));
+    }
+    return newCount;
+  };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [authenticatedRole, lockoutRemaining, pin, isResetModalOpen]);
+  const resetFailedAttempts = () => {
+    localStorage.removeItem(ATTEMPTS_STORAGE_KEY);
+    localStorage.removeItem(LOCKOUT_STORAGE_KEY);
+    setLockoutRemaining(0);
+  };
 
-  const handlePinSubmit = async (e: Event | React.FormEvent) => {
-    if (e && 'preventDefault' in e) e.preventDefault();
-    if (lockoutRemaining > 0 && window.location.hostname !== 'localhost') return;
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (lockoutRemaining > 0) return;
 
-    setPinError('');
-
-    // 1. Fast local check (allows immediate operation without serverless/Supabase dependencies)
-    const localCheck = verifyEnteredPin(pin);
-    if (localCheck.success && localCheck.role) {
-      localStorage.removeItem(ATTEMPTS_STORAGE_KEY);
-      localStorage.removeItem(LOCKOUT_STORAGE_KEY);
-      const pinHash = await hashPin(pin);
-      localStorage.setItem('admin_pin_hash', pinHash);
-      setAuthenticatedRole(localCheck.role);
-      onNotify('Admin Unlocked', `Welcome ${localCheck.label || localCheck.role}!`);
+    if (pin.length !== 4) {
+      setPinError('Please enter a 4-digit PIN');
       return;
     }
 
-    // 2. Fallback to API verify if deployed
-    try {
-      const enteredHash = await hashPin(pin);
-      const res = await fetch('/api/admin-db', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pinHash: enteredHash, action: 'verifyPin' })
-      });
-      
-      const json = await res.json();
-      if (res.ok && json.success && json.data?.role) {
-        localStorage.removeItem(ATTEMPTS_STORAGE_KEY);
-        localStorage.removeItem(LOCKOUT_STORAGE_KEY);
-        localStorage.setItem('admin_pin_hash', enteredHash);
-        setAuthenticatedRole(json.data.role as AdminRole);
-        return;
-      } else {
-        throw new Error('Invalid PIN');
-      }
-    } catch {
-      const attempts = parseInt(localStorage.getItem(ATTEMPTS_STORAGE_KEY) || '0', 10) + 1;
-      localStorage.setItem(ATTEMPTS_STORAGE_KEY, attempts.toString());
+    // Secure verification
+    const verification = verifyEnteredPin(pin, wedding.admin.roles, wedding.admin.emergencyPin);
 
+    if (verification.success && verification.role) {
+      resetFailedAttempts();
+      const pinHash = await hashPin(pin, wedding.admin.pinSalt);
+      localStorage.setItem('admin_pin_hash', pinHash);
+      setAuthenticatedRole(verification.role);
+      onNotify('Admin Access Granted', `Welcome back, ${verification.label}!`);
+    } else {
+      const attempts = recordFailedAttempt();
       if (attempts >= MAX_FAILED_ATTEMPTS) {
-        const lockoutUntil = Date.now() + LOCKOUT_DURATION_MS;
-        localStorage.setItem(LOCKOUT_STORAGE_KEY, lockoutUntil.toString());
-        setLockoutRemaining(Math.ceil(LOCKOUT_DURATION_MS / 1000));
         setPinError(`Too many failed attempts. Security lockout active for 5 minutes.`);
       } else {
         setPinError(`Incorrect PIN. ${MAX_FAILED_ATTEMPTS - attempts} attempt(s) remaining.`);
@@ -143,10 +126,11 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
     setResetError('');
     setResetSuccess('');
 
-    const activeCurrentPin = getStoredPin(targetRole);
+    const activeRoleConfig = wedding.admin.roles.find(r => r.role === targetRole);
+    const activeCurrentPin = getStoredPin(targetRole, activeRoleConfig?.defaultPin);
 
     // Verify current PIN or emergency override
-    if (currentOrMasterPin.trim() !== activeCurrentPin && currentOrMasterPin.trim() !== MASTER_EMERGENCY_PIN) {
+    if (currentOrMasterPin.trim() !== activeCurrentPin && currentOrMasterPin.trim() !== wedding.admin.emergencyPin && currentOrMasterPin.trim() !== MASTER_EMERGENCY_PIN) {
       setResetError('Authorization failed. Please enter the current PIN for this role or the Master Recovery Code (0000).');
       return;
     }
@@ -179,9 +163,10 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
   };
 
   const handleRestoreDefaults = () => {
-    INITIAL_ADMIN_ROLES.forEach(r => resetRolePinToDefault(r.role));
+    wedding.admin.roles.forEach(r => resetRolePinToDefault(r.role));
     setResetSuccess('All PINs restored to default values.');
-    onNotify('Defaults Restored', 'Miracle: 1111 | Malvin: 2222');
+    const summary = wedding.admin.roles.filter(r => r.isMaster).map(r => `${r.label.split(' ')[0]}: ${r.defaultPin}`).join(' | ');
+    onNotify('Defaults Restored', summary);
     setTimeout(() => {
       setIsResetModalOpen(false);
       setResetSuccess('');
@@ -203,15 +188,20 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
     );
   }
 
+  const masterDefaultsText = wedding.admin.roles
+    .filter(r => r.isMaster)
+    .map(r => `${r.label.split(' ')[0]} (${r.defaultPin})`)
+    .join(' • ') + ' • Emergency (0000)';
+
   return (
     <div className="min-h-screen bg-brand-espresso flex items-center justify-center p-4 relative">
       {/* Background watermark */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-gold/5 rounded-full blur-3xl pointer-events-none" />
 
+      {/* Main Lock Form */}
       <motion.form
-        id="admin-login-form"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         onSubmit={handlePinSubmit}
         className="bg-brand-cream/95 backdrop-blur-md rounded-3xl p-8 sm:p-12 shadow-2xl text-center max-w-sm w-full relative z-10 border border-brand-gold/20"
       >
@@ -219,7 +209,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
           <KeyRound className="w-8 h-8 text-brand-goldDark" />
         </div>
 
-        <h1 className="font-serif text-2xl sm:text-3xl text-brand-espresso mb-1">Miracle & Malvin</h1>
+        <h1 className="font-serif text-2xl sm:text-3xl text-brand-espresso mb-1">{wedding.couple.title}</h1>
         <p className="text-xs uppercase tracking-widest text-brand-goldDark font-semibold mb-4">
           Admin Dashboard
         </p>
@@ -274,7 +264,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
             </button>
 
             <div className="text-[11px] font-mono text-brand-muted/80 bg-brand-sand/20 rounded-lg px-2.5 py-1.5 w-full text-center">
-              Defaults: Miracle (1111) • Malvin (2222) • Master (0000)
+              Defaults: {masterDefaultsText}
             </div>
           </div>
 
@@ -283,20 +273,15 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
             onClick={() => navigate('/')}
             className="w-full py-2.5 rounded-xl text-brand-muted text-xs font-sans font-medium tracking-wider uppercase hover:text-brand-espresso transition-colors flex items-center justify-center gap-2"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Website
+            <ArrowLeft className="w-4 h-4" /> Return to Website
           </button>
         </div>
       </motion.form>
 
-      {/* Interactive PIN Reset Modal */}
+      {/* PIN Reset / Change Modal */}
       <AnimatePresence>
         {isResetModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          >
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -344,7 +329,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
                     onChange={(e) => setTargetRole(e.target.value as AdminRole)}
                     className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-sans text-sm focus:border-brand-gold outline-none"
                   >
-                    {INITIAL_ADMIN_ROLES.map(r => (
+                    {wedding.admin.roles.map(r => (
                       <option key={r.role} value={r.role}>
                         {r.label}
                       </option>
@@ -354,15 +339,15 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
 
                 <div>
                   <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
-                    Current PIN (or Master Code: 0000)
+                    Current PIN (or Emergency Override: 0000)
                   </label>
                   <input
                     type="password"
                     maxLength={4}
                     value={currentOrMasterPin}
                     onChange={(e) => setCurrentOrMasterPin(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Enter current PIN or 0000"
-                    className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono text-center tracking-widest text-lg focus:border-brand-gold outline-none"
+                    placeholder="Enter current 4-digit code"
+                    className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
                     required
                   />
                 </div>
@@ -377,12 +362,11 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
                       maxLength={4}
                       value={newPin}
                       onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
-                      placeholder="e.g. 5678"
-                      className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono text-center tracking-widest text-lg focus:border-brand-gold outline-none"
+                      placeholder="e.g. 5555"
+                      className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
                       required
                     />
                   </div>
-
                   <div>
                     <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
                       Confirm PIN
@@ -392,8 +376,8 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
                       maxLength={4}
                       value={confirmNewPin}
                       onChange={(e) => setConfirmNewPin(e.target.value.replace(/\D/g, ''))}
-                      placeholder="Confirm"
-                      className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono text-center tracking-widest text-lg focus:border-brand-gold outline-none"
+                      placeholder="e.g. 5555"
+                      className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
                       required
                     />
                   </div>
@@ -402,7 +386,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
                 <div className="pt-2 flex flex-col gap-2">
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-xl bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-bold tracking-widest uppercase transition-colors shadow-md"
+                    className="w-full py-3.5 rounded-xl bg-brand-espresso text-brand-cream text-xs font-sans font-bold tracking-widest uppercase hover:bg-brand-charcoal transition-all shadow-md"
                   >
                     Save New PIN
                   </button>
@@ -410,14 +394,14 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
                   <button
                     type="button"
                     onClick={handleRestoreDefaults}
-                    className="w-full py-2.5 rounded-xl text-brand-muted hover:text-rose-700 text-xs font-sans font-semibold tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2.5 rounded-xl border border-brand-sand/60 text-brand-muted hover:text-brand-espresso text-xs font-sans font-medium tracking-wider uppercase transition-colors"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" /> Restore Default PINs
+                    Restore All Defaults
                   </button>
                 </div>
               </form>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -9,12 +9,14 @@ import { INITIAL_WISHLIST_ITEMS } from '../data/wishlistData';
 import { WishlistItem, GiftPledge } from '../types';
 import { getStoredGiftPledges, saveGiftPledge, saveReminder, getActiveReservations, getStoredWishlistItems } from '../utils/storage';
 import { sendReservationConfirmationEmail, sendGiftNotificationEmail } from '../utils/email';
+import { useWedding } from '../context/WeddingContext';
 
 interface GiftWishlistProps {
   onNotify: (title: string, message?: string) => void;
 }
 
 export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
+  const { wedding } = useWedding();
   const [items, setItems] = useState<WishlistItem[]>(INITIAL_WISHLIST_ITEMS);
 
   const [activeItem, setActiveItem] = useState<WishlistItem | null>(null);
@@ -60,18 +62,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
   }, [isAnyModalOpen]);
 
   // Bank account details for gifts
-  const bankAccounts = [
-    {
-      accountName: 'Malvin',
-      bankName: 'Zenith Bank',
-      accountNumber: '2209775057',
-    },
-    {
-      accountName: 'Miracle',
-      bankName: 'Providus Bank',
-      accountNumber: '6506945948',
-    }
-  ];
+  const bankAccounts = wedding.bankAccounts;
 
   useEffect(() => {
     // Load any existing pledges and active reservations from Supabase
@@ -252,7 +243,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
 
       setIsSubmitting(false);
       setJustGifted(pledge);
-      onNotify('Gift Recorded!', `Thank you ${giverName.trim()} for blessing Miracle & Malvin!`);
+      onNotify('Gift Recorded!', `Thank you ${giverName.trim()} for blessing ${wedding.couple.title}!`);
     } catch (e) {
       console.error(e);
       onNotify('Error', 'Failed to save pledge. Please try again.');
@@ -284,8 +275,8 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
           >
             <div className="absolute inset-0 bg-brand-espresso/10 group-hover:bg-transparent transition-colors duration-500 z-10" />
             <img loading="lazy" decoding="async" 
-              src="/assets/0V3A8999.jpg" 
-              alt="Miracle & Malvin - Our forever starts now"
+              src={wedding.couple.wishlistImage}
+              alt={wedding.couple.wishlistAlt}
               className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
             />
           </motion.div>
@@ -512,7 +503,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
                       Your gift of <span className="font-semibold">{justGifted.itemName}</span> ({(justGifted.amount).toLocaleString('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 })}) has been recorded with love.
                     </p>
                     <p className="text-brand-muted text-xs sm:text-[17px] font-sans max-w-md mx-auto leading-relaxed">
-                      Miracle & Malvin deeply appreciate your kindness, generosity, and prayers as they build their new home together.
+                      {wedding.couple.title} deeply appreciates your kindness, generosity, and prayers as they build their new home together.
                     </p>
                     <button
                       onClick={closeModal}
@@ -870,7 +861,7 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
                     </div>
                   </div>
                   <p className="text-[11px] text-brand-muted font-sans italic">
-                    Miracle & Malvin deeply appreciate your love and prayers!
+                    {wedding.couple.title} deeply appreciates your love and prayers!
                   </p>
                   <button
                     onClick={closeReminderModal}

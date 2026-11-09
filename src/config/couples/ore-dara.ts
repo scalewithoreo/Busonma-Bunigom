@@ -1,0 +1,272 @@
+import { WeddingConfig } from '../../types/wedding';
+
+export const oreDaraConfig: WeddingConfig = {
+  id: 'ore-dara',
+  slug: 'ore-dara',
+  domains: ['oreanddara.online', 'www.oreanddara.online'],
+  couple: {
+    names: {
+      bride: 'Oluwadara',
+      groom: 'Oreoluwa',
+    },
+    formalNames: {
+      bride: 'Oluwadara Alao',
+      groom: 'Oreoluwa Okunade',
+    },
+    title: 'Oluwadara & Oreoluwa',
+    hashtag: '#BecomingTheOkunades',
+    locationText: 'Lagos, Nigeria',
+    dateTeaser: 'December 2026',
+    logoImage: '/assets/logo-ore-dara.png',
+    heroImage: '/assets/hero-image-new.jpg',
+    wishlistImage: '/assets/0V3A8999.jpg',
+    wishlistAlt: 'Oreoluwa & Oluwadara - Our forever starts now',
+  },
+  event: {
+    date: '2026-12-12T11:00:00+01:00',
+    displayDate: 'Saturday, December 12, 2026',
+    confettiColors: ['#A80A4E', '#334a33', '#c5a880', '#faf8f2', '#141210'],
+    church: {
+      name: 'Church',
+      venueName: "Celebration Church Int'l (Celebr8 Centre HQ)",
+      address: 'Vori Close, off Acme Road, Ogba, Lagos',
+      mapQuery: "Celebration+Church+Int'l+(Celebr8+Centre+HQ),+Vori+Close,+off+Acme+Road,+Ogba,+Lagos",
+      directionsUrl: "https://maps.google.com/?q=Celebration+Church+Int'l+(Celebr8+Centre+HQ),+Vori+Close,+off+Acme+Road,+Ogba,+Lagos",
+    },
+    reception: {
+      name: 'Reception',
+      venueName: "Celebration Church Int'l (Celebr8 Centre HQ) (Annex 2)",
+      address: 'Vori Close, off Acme Road, Ogba, Lagos',
+      mapQuery: "Celebration+Church+Int'l+(Celebr8+Centre+HQ),+Vori+Close,+off+Acme+Road,+Ogba,+Lagos",
+      directionsUrl: "https://maps.google.com/?q=Celebration+Church+Int'l+(Celebr8+Centre+HQ),+Vori+Close,+off+Acme+Road,+Ogba,+Lagos",
+    },
+    calendar: {
+      title: "Oreoluwa & Oluwadara's Wedding",
+      description: 'Join us in celebrating the holy matrimony and reception of Oreoluwa & Oluwadara.',
+      location: "Celebration Church Int'l (Celebr8 Centre HQ), Vori Close, off Acme Road, Ogba, Lagos",
+      startDate: '20261212T100000Z',
+      endDate: '20261212T170000Z',
+    },
+  },
+  theme: {
+    introStyle: 'none',
+    colors: {
+      primary: '#c5a880',
+      primaryDark: '#997d59',
+      primaryLight: '#e4d2bc',
+      espresso: '#141210',
+      charcoal: '#221f1c',
+      cream: '#faf8f2',
+      ivory: '#fcfbfa',
+      sand: '#eae3d2',
+      sandDark: '#d5cbb8',
+      gold: '#c5a880',
+      goldDark: '#997d59',
+      goldLight: '#e4d2bc',
+      wine: '#A80A4E',
+      muted: '#7a7268',
+    },
+    dressCodeDescription:
+      'We invite our guests to express themselves in beautiful traditional, contemporary, red carpet, or modern chic styles in shades of Vintage Wine and Forest Green with champagne gold accents.',
+    paletteLayout: 'bands',
+    paletteBands: [
+      {
+        name: 'Vintage Wine',
+        hex: '#75074B',
+        subtitle: 'Rich Velvet & Silk Tones',
+        bgImage: '/assets/vintage_wine_silk.jpg',
+      },
+      {
+        name: 'Forest Green',
+        hex: '#334a33',
+        subtitle: 'Deep Earthy & Regal Emerald Tones',
+        bgImage: '/assets/forest_green_silk.jpg',
+      },
+    ],
+    looks: [
+      {
+        id: 'look-1',
+        src: '/assets/contemporary-palette-flatlay.jpg',
+        title: 'Pantone & Palette Moodboard',
+        category: 'Curated Flatlay',
+        caption: 'Vintage Wine (#75074B) slip dress, Forest Green (#334a33) double-breasted blazer, and champagne gold accessories.',
+      },
+      {
+        id: 'look-2',
+        src: '/assets/contemporary-redcarpet.jpg',
+        title: 'Modern Dinner Gala',
+        category: 'Style Inspiration',
+        caption: 'Inspiration for non-traditional, sharp tailoring and sweeping contemporary silhouettes.',
+      },
+      {
+        id: 'look-3',
+        src: '/assets/contemporary-dinner-look.jpg',
+        title: 'Avant-Garde Evening',
+        category: 'Silhouettes',
+        caption: 'Architectural lines and refined luxury for a contemporary black-tie aesthetic.',
+      },
+      {
+        id: 'look-4',
+        src: '/assets/moodboard_trad_couple.jpg',
+        title: 'Traditional Elegance & Aso Ebi',
+        category: 'Cultural Attire',
+        caption: 'Stunning Forest Green Agbada and Vintage Wine lace, beautifully complemented by a Champagne Gold Gele and Fila.',
+      },
+    ],
+  },
+  story: {
+    title: 'Our Story',
+    subtitle: 'How It All Began',
+    image: '/assets/0V3A8914.jpg',
+    imageAlt: 'Ore and Dara',
+    paragraphs: [
+      'We met through a friend at church. I used to drive to church with my friend, Jemima Kponu, and one Sunday, Jemima brought Dara to tag along. We were introduced, exchanged pleasantries, and went in for the service.',
+      'After the service ended, Dara walked up to me and asked for my name. I told her my name, and she simply replied, "okay..." and was about to walk away.',
+      "Thankfully, I wasn't going to just let her leave like that. I asked, \"Is that all?\" and told her to sit down.",
+      'We ended up talking, and that simple moment was the beginning of a truly beautiful friendship. From that day on, we built a bond that grew stronger with time, leading us to this very moment—ready to spend the rest of our lives together.',
+    ],
+    signoff: '— Ore',
+  },
+  programme: [
+    {
+      time: '11:00 AM',
+      title: 'Church Wedding',
+      subtitle: 'Holy Matrimony & Sacred Vows',
+      description: 'Guests are kindly requested to be seated by 10:30 AM for the processional, exchange of vows, and nuptial blessing.',
+      icon: 'church',
+      highlight: true,
+    },
+    {
+      time: '2:00 PM',
+      title: 'Reception & Banquet',
+      subtitle: 'Feast, Speeches & Celebration',
+      description: 'Grand entrance of the bridal party, couple first dance, gourmet dinner service, toasts, and cake cutting.',
+      icon: 'utensils',
+      highlight: true,
+    },
+  ],
+  qa: [
+    {
+      question: "What’s the RSVP deadline?",
+      answer: 'We kindly request that you RSVP on or before November 20th, 2026 to help us finalize our preparations.',
+    },
+    {
+      question: 'Can I bring a guest?',
+      answer: 'While we would love to celebrate with everyone, our venue capacity is limited. We are only able to accommodate guests who have received a formal invite.',
+    },
+    {
+      question: 'Can I bring my children?',
+      answer: 'While we love your little ones, this is strictly an adult-only event. We appreciate you making arrangements ahead of time so you can relax and celebrate with us!',
+    },
+    {
+      question: 'Would there be parking spaces available?',
+      answer: 'Yes, ample parking space will be available within the venue compound for your convenience.',
+    },
+    {
+      question: 'Are the ceremony and reception happening in the same venue?',
+      answer: "Yes! Both the church ceremony and reception will be held at Celebration Church Int'l (Celebr8 Centre HQ), with the reception taking place in Annex 2 on the same premises.",
+    },
+    {
+      question: 'Is the wedding indoors or outdoors?',
+      answer: 'All of our events—including the church ceremony and reception—will be held beautifully indoors.',
+    },
+    {
+      question: 'What’s the colour of the day?',
+      answer: 'Our chosen colors are Vintage Wine and Forest Green, with Champagne Gold accents. We warmly invite our guests to wear traditional or contemporary styles in these stunning shades.',
+    },
+    {
+      question: 'Can we spray the couple with cash?',
+      answer: 'We deeply appreciate your generous cash gifts! However, to comply with government regulations against spraying money on the floor, we kindly ask that you place all monetary gifts into the elegant boxes provided at the venue.',
+    },
+    {
+      question: 'Who can I reach out to if I have questions?',
+      answer: 'For any further inquiries or assistance, please feel free to contact our coordinators:\nVictor: +234 907 323 4900\nKachi: +234 814 010 2038',
+      contacts: [
+        { name: 'Victor', phone: '+234 907 323 4900' },
+        { name: 'Kachi', phone: '+234 814 010 2038' },
+      ],
+    },
+  ],
+  bankAccounts: [
+    {
+      accountName: 'Oreoluwa Okunade',
+      bankName: 'Zenith Bank',
+      accountNumber: '2209775057',
+    },
+    {
+      accountName: 'Oluwadara Alao',
+      bankName: 'Providus Bank',
+      accountNumber: '6506945948',
+    },
+  ],
+  admin: {
+    roles: [
+      { role: 'ore', label: 'Ore (Master Admin)', defaultPin: '1111', isMaster: true, relationFilter: 'ore' },
+      { role: 'dara', label: 'Dara (Master Admin)', defaultPin: '2222', isMaster: true, relationFilter: 'dara' },
+      { role: 'custom1964', label: "Ore's Dad", defaultPin: '1964', isMaster: false, relationFilter: "Ore's Dad" },
+      { role: 'groomsfamily', label: "Ore's Mum", defaultPin: '3333', isMaster: false, relationFilter: "Ore's Mum" },
+      { role: 'bridesfamily', label: "Dara's Mum", defaultPin: '4444', isMaster: false, relationFilter: "Dara's Mum" },
+    ],
+    pinSalt: 'OreDara_Wedding_2026_Salt_',
+    emergencyPin: '0000',
+  },
+  gallery: [
+    {
+      id: '1',
+      src: '/assets/0V3A8999.jpg',
+      alt: 'Couple walking under the archway',
+      caption: 'Our forever starts now',
+      featured: false,
+    },
+    {
+      id: '2',
+      src: '/assets/0V3A8960 1.jpg',
+      alt: 'Oreoluwa and Oluwadara smiling together',
+      caption: 'Joy in every shared smile',
+      featured: false,
+    },
+    {
+      id: '3',
+      src: '/assets/0V3A8979.jpg',
+      alt: 'Couple facing the historic colonial building',
+      caption: 'Two souls, one beautiful journey',
+      featured: false,
+    },
+    {
+      id: '4',
+      src: '/assets/0V3A8930.jpg',
+      alt: 'Oreoluwa and Oluwadara dancing along the colonnade',
+      caption: 'Every love story is beautiful, but ours is our favorite',
+      featured: true,
+    },
+    {
+      id: '5',
+      src: '/assets/0V3A8976.jpg',
+      alt: 'Close up tender moment with engagement ring',
+      caption: 'Walking into forever, hand in hand',
+      featured: false,
+    },
+    {
+      id: '6',
+      src: '/assets/0V3A8914.jpg',
+      alt: 'Romantic portrait of the couple',
+      caption: 'In your eyes, I found my home',
+      featured: false,
+    },
+    {
+      id: '7',
+      src: '/assets/0V3A8849_(2).jpg',
+      alt: 'Oreoluwa and Oluwadara embracing with flowers',
+      caption: 'Laughter and light filled days',
+      featured: true,
+    },
+  ],
+  database: {
+    type: 'supabase',
+    storagePrefix: 'ore_dara_',
+    supabase: {
+      url: 'https://rmgrhxvbxwdpctvegppb.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZ3JoeHZieHdkcGN0dmVncHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODAwMDB9.EXAMPLE',
+    },
+  },
+};

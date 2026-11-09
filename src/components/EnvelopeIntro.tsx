@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { audioManager } from '../utils/audio';
+import { useWedding } from '../context/WeddingContext';
 
 interface EnvelopeIntroProps {
   onComplete?: () => void;
@@ -10,6 +11,7 @@ interface EnvelopeIntroProps {
 }
 
 export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpeningStart }) => {
+  const { wedding } = useWedding();
   // Always start sealed on page refresh so animation runs fresh every time
   const [stage, setStage] = useState<'sealed' | 'opening' | 'dismissed'>('sealed');
 
@@ -182,11 +184,11 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               className="relative z-35 flex flex-col items-center text-center px-4 max-w-full pointer-events-none select-none"
             >
               <p className="text-xs xs:text-sm sm:text-base md:text-lg font-sans tracking-[0.3em] uppercase text-[#7A6B5C] mb-2.5 sm:mb-3.5 font-semibold whitespace-nowrap">
-                JANUARY 2027
+                {wedding.couple.dateTeaser.toUpperCase()}
               </p>
 
               <h1 className="font-serif text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-[#1C1510] tracking-[0.08em] xs:tracking-[0.1em] sm:tracking-[0.18em] uppercase drop-shadow-sm leading-none whitespace-nowrap">
-                MIRACLE &amp; MALVIN
+                {wedding.couple.title.toUpperCase()}
               </h1>
             </motion.div>
           </motion.div>
@@ -303,8 +305,8 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
             >
               <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 flex items-center justify-center">
                 <img
-                  src="/assets/wax-seal-mm.png"
-                  alt="Miracle & Malvin 3D Wax Seal"
+                  src={wedding.theme.envelope?.waxSealImage || "/assets/wax-seal-mm.png"}
+                  alt={`${wedding.couple.title} 3D Wax Seal`}
                   className="w-full h-full object-contain filter drop-shadow-[0_18px_36px_rgba(185,28,28,0.7)] drop-shadow-[0_8px_16px_rgba(0,0,0,0.55)] transition-transform duration-200 select-none pointer-events-none"
                   draggable={false}
                 />

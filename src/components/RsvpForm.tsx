@@ -4,12 +4,14 @@ import confetti from 'canvas-confetti';
 import { Send, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
 import { saveRsvp, getUserActiveRsvp, verifyInviteCode, markCodeAsUsed } from '../utils/storage';
 import { RsvpSubmission } from '../types';
+import { useWedding } from '../context/WeddingContext';
 
 interface RsvpFormProps {
   onNotify: (title: string, message?: string) => void;
 }
 
 export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
+  const { wedding } = useWedding();
   const [passcode, setPasscode] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -93,20 +95,16 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
           particleCount: 100,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#B91C1C', '#991B1B', '#121212', '#F5EDE4'],
+          colors: wedding.event.confettiColors || ['#B91C1C', '#991B1B', '#121212', '#F5EDE4'],
         });
       }
       onNotify('RSVP Received', 'Thank you for responding!');
 
       // 4. Trigger Webhook and Email securely via Backend API
-      const roleLabels: Record<string, string> = {
-        'master': 'Master',
-        'miracle': 'Miracle',
-        'malvin': 'Malvin',
-        'groomsfamily': "Malvin's Family",
-        'bridesfamily': "Miracle's Family",
-        'custom1964': "Coordinator"
-      };
+      const roleLabels: Record<string, string> = { 'master': 'Master Admin' };
+      wedding.admin.roles.forEach(r => {
+        roleLabels[r.role] = r.label;
+      });
       const creatorLabel = roleLabels[inviteCodeObj.created_by || 'master'] || 'Unknown';
 
       fetch('/api/submit-rsvp', {
@@ -137,7 +135,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-16 flex flex-col items-center">
           <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-full overflow-hidden mb-8 shadow-lg relative border-4 border-white">
-            <img loading="lazy" decoding="async" src="/assets/hero-image-new.jpg" alt="Miracle & Malvin" className="w-full h-full object-cover object-[center_30%]" />
+            <img loading="lazy" decoding="async" src={wedding.couple.heroImage} alt={wedding.couple.title} className="w-full h-full object-cover object-[center_30%]" />
             <div className="absolute inset-0 bg-brand-espresso/10"></div>
           </div>
           <motion.p
@@ -381,7 +379,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                 <textarea
                   id="message"
                   rows={3}
-                  placeholder="Share a sweet note, prayers, or well wishes for Miracle & Malvin..."
+                  placeholder={`Share a sweet note, prayers, or well wishes for ${wedding.couple.title}...`}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   className="w-full px-4 py-3.5 rounded-2xl bg-white border border-brand-sand focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none text-brand-espresso font-sans text-[17px] transition-all resize-none"

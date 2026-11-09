@@ -1,8 +1,11 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
+import { useWedding } from '../context/WeddingContext';
 
 export const Footer: FC = () => {
+  const { wedding } = useWedding();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -21,8 +24,8 @@ export const Footer: FC = () => {
           className="mb-6 flex items-center justify-center"
         >
           <img loading="lazy" decoding="async" 
-            src="/assets/logo-mm.png?v=2027" 
-            alt="Miracle & Malvin Logo" 
+            src={wedding.couple.logoImage} 
+            alt={`${wedding.couple.title} Logo`} 
             className="h-24 sm:h-32 w-auto object-contain drop-shadow-md"
           />
         </motion.div>
@@ -37,7 +40,7 @@ export const Footer: FC = () => {
           Thank you for celebrating with us
         </motion.h2>
 
-        {/* Heading 2: Miracle & Malvin */}
+        {/* Heading 2: Couple Name */}
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -45,17 +48,17 @@ export const Footer: FC = () => {
           transition={{ delay: 0.15 }}
           className="font-alex tracking-normal text-3xl sm:text-5xl md:text-6xl text-brand-gold my-4"
         >
-          Miracle & Malvin
+          {wedding.couple.title}
         </motion.p>
 
         <p className="text-sm font-sans tracking-[0.2em] uppercase text-brand-muted/70 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 justify-center mb-10">
           {import.meta.env.VITE_SITE_MODE === 'public' ? (
-            <span>January 2027</span>
+            <span>{wedding.couple.dateTeaser}</span>
           ) : (
             <>
-              <span>Wednesday, January 27, 2027</span>
+              <span>{wedding.event.displayDate}</span>
               <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-brand-gold/30"></span>
-              <span>Lagos, Nigeria</span>
+              <span>{wedding.couple.locationText}</span>
             </>
           )}
         </p>
@@ -73,7 +76,7 @@ export const Footer: FC = () => {
 
         {/* Copyright */}
         <div className="w-full pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 text-xs font-sans text-brand-muted">
-          <div>© 2027 Miracle & Malvin. All Rights Reserved.</div>
+          <p>© {new Date().getFullYear()} {wedding.couple.title}. All rights reserved.</p>
         </div>
       </div>
     </footer>

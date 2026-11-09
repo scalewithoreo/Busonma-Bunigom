@@ -1,39 +1,12 @@
 import { FC, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { useWedding } from '../context/WeddingContext';
 
 export const Colours: FC = () => {
-  const looks = [
-    {
-      id: 'look-1',
-      src: '/assets/miracle-malvin-3.jpg',
-      title: 'Editorial Noir & Scarlet Red Draping',
-      category: 'Black Tie Editorial',
-      caption: 'A striking statement: sweeping scarlet crimson gown paired with sharp midnight black tailoring for a high-contrast editorial entrance.',
-    },
-    {
-      id: 'look-2',
-      src: '/assets/miracle-malvin-2.jpg',
-      title: 'Velvet Burgundy & Crimson Florals',
-      category: 'Regal Contemporary',
-      caption: 'Bespoke deep burgundy velvet dinner jacket and sculptural architectural bridal couture with rich crimson garden accents.',
-    },
-    {
-      id: 'look-3',
-      src: '/assets/miracle-malvin-1.jpg',
-      title: 'Chic Daytime Contemporary',
-      category: 'Modern Elegance',
-      caption: 'Sophisticated champagne silk and cream linen textures elevated by subtle ruby and gold fine jewelry.',
-    },
-    {
-      id: 'look-4',
-      src: '/assets/story-couple.jpg',
-      title: 'Evening Romance & Velvet Accents',
-      category: 'Intimate Luxury',
-      caption: 'Moody candlelight luxury with crimson silk accessories and understated red carpet glamour.',
-    }
-  ];
-
+  const { wedding } = useWedding();
+  const theme = wedding.theme;
+  const looks = theme.looks;
   const [activeModalIndex, setActiveModalIndex] = useState<number | null>(null);
 
   const handleNextModal = () => {
@@ -51,7 +24,7 @@ export const Colours: FC = () => {
   return (
     <section id="colours" className="py-24 sm:py-32 bg-brand-cream relative overflow-hidden">
       {/* Editorial Ambient Glows */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-brand-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-black/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
       
       <div className="max-w-6xl mx-auto px-6 lg:px-8 relative z-10">
@@ -78,153 +51,209 @@ export const Colours: FC = () => {
           </motion.h2>
           
           <p className="font-sans text-brand-muted text-[17px] sm:text-lg mt-5 leading-relaxed max-w-2xl mx-auto">
-            Our dress code is <strong>High-Fashion Editorial & Contemporary Black-Tie</strong>. Think timeless architectural black and warm cream, electrified by <strong>bold touches and accents of scarlet and crimson red</strong>.
+            {theme.dressCodeDescription}
           </p>
         </div>
 
-        {/* Color Palette Bands - High Contrast Editorial Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16 max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl">
-          {/* Editorial Noir */}
-          <div className="h-48 md:h-80 bg-[#121212] text-white flex flex-col justify-end p-8 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-            <div className="relative z-10">
-              <span className="text-xs tracking-widest uppercase font-mono text-neutral-400 block mb-1">Base Neutral</span>
-              <h3 className="font-serif text-2xl sm:text-3xl text-neutral-100">Editorial Noir</h3>
-              <p className="text-xs text-neutral-400 mt-1 font-mono">#121212 • Black-Tie</p>
-            </div>
+        {/* Color Palette Display */}
+        {theme.paletteLayout === 'grid' ? (
+          /* High Contrast Editorial Grid (e.g. Miracle & Malvin) */
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16 max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl">
+            {theme.paletteBands.map((band) => (
+              <div
+                key={band.name}
+                className="h-48 md:h-80 flex flex-col justify-end p-8 relative overflow-hidden group"
+                style={{ backgroundColor: band.hex }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="relative z-10">
+                  {band.tag && (
+                    <span className="text-xs tracking-widest uppercase font-mono text-neutral-300 block mb-1">
+                      {band.tag}
+                    </span>
+                  )}
+                  <h3 className="font-serif text-2xl sm:text-3xl text-white">{band.name}</h3>
+                  <p className="text-xs text-neutral-300 mt-1 font-mono">{band.subtitle}</p>
+                </div>
+              </div>
+            ))}
           </div>
-
-          {/* Statement Red */}
-          <div className="h-48 md:h-80 bg-[#B91C1C] text-white flex flex-col justify-end p-8 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-t from-[#7F1D1D]/80 to-transparent" />
-            <div className="relative z-10">
-              <span className="text-xs tracking-widest uppercase font-mono text-red-200 block mb-1">Primary Accent</span>
-              <h3 className="font-serif text-2xl sm:text-3xl text-white">Scarlet & Crimson</h3>
-              <p className="text-xs text-red-200 mt-1 font-mono">#B91C1C • Dramatic Red Touches</p>
-            </div>
+        ) : (
+          /* Stacked Silk Silk Bands (e.g. Ore & Dara) */
+          <div className="flex flex-col w-full h-[500px] sm:h-[600px] mb-16 rounded-3xl overflow-hidden shadow-2xl max-w-5xl mx-auto">
+            {theme.paletteBands.map((band) => (
+              <div
+                key={band.name}
+                className="w-full h-1/2 relative flex items-center justify-center bg-cover bg-center"
+                style={{
+                  backgroundImage: band.bgImage ? `url('${band.bgImage}')` : undefined,
+                  backgroundColor: band.hex,
+                }}
+              >
+                <div className="absolute inset-0 bg-black/15"></div>
+                <motion.h3 
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="relative z-10 text-white/95 font-serif text-4xl sm:text-5xl md:text-6xl tracking-widest drop-shadow-lg"
+                >
+                  {band.name}
+                </motion.h3>
+              </div>
+            ))}
           </div>
-
-          {/* Warm Champagne Alabaster */}
-          <div className="h-48 md:h-80 bg-[#F5EDE4] text-brand-espresso flex flex-col justify-end p-8 relative overflow-hidden group border border-brand-sand/50">
-            <div className="absolute inset-0 bg-gradient-to-t from-[#ebe0d4]/80 to-transparent" />
-            <div className="relative z-10">
-              <span className="text-xs tracking-widest uppercase font-mono text-brand-goldDark block mb-1">Warm Foundation</span>
-              <h3 className="font-serif text-2xl sm:text-3xl text-brand-espresso">Warm Alabaster</h3>
-              <p className="text-xs text-brand-muted mt-1 font-mono">#F5EDE4 • Champagne Cream</p>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Lookbook Header */}
         <div className="text-center mt-24 mb-12">
           <motion.h3 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-3xl sm:text-4xl font-serif text-brand-espresso mb-3"
           >
-            Style & Editorial Inspiration
+            Style Inspiration & Lookbook
           </motion.h3>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-brand-muted text-[17px] sm:text-lg font-sans"
-          >
-            Curated silhouettes featuring editorial tailoring and striking red statements
-          </motion.p>
+          <p className="font-sans text-brand-muted text-[17px] max-w-xl mx-auto">
+            Curated silhouettes and styling details to guide your wedding celebration attire.
+          </p>
         </div>
 
-        {/* Lookbook Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* Looks Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {looks.map((look, index) => (
             <motion.div
               key={look.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              transition={{ delay: index * 0.1, duration: 0.6 }}
               onClick={() => setActiveModalIndex(index)}
-              className="group bg-white rounded-3xl p-5 shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col justify-between"
+              className="group cursor-pointer flex flex-col bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-brand-sand/40 hover:-translate-y-1.5"
             >
-              <div>
-                <div className="relative rounded-2xl overflow-hidden shadow-md mb-4 aspect-[4/3] bg-brand-sand/20">
-                  <img
-                    src={look.src}
-                    alt={look.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-4">
-                    <span className="text-white text-xs font-sans tracking-wider uppercase font-semibold">
-                      Click to View
-                    </span>
-                    <span className="px-2.5 py-1 rounded-full bg-red-600/80 text-white text-[11px] font-sans font-medium tracking-wide">
-                      {look.category}
-                    </span>
-                  </div>
+              <div className="relative aspect-[3/4] overflow-hidden bg-brand-espresso">
+                <img loading="lazy" decoding="async" 
+                  src={look.src} 
+                  alt={look.title}
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-6">
+                  <span className="text-white text-xs font-sans uppercase tracking-widest flex items-center gap-1.5">
+                    <Maximize2 className="w-4 h-4 text-brand-gold" />
+                    Enlarge Look
+                  </span>
                 </div>
+                <div className="absolute top-4 left-4">
+                  <span className="bg-brand-espresso/80 backdrop-blur-md text-brand-cream text-[11px] font-sans uppercase tracking-widest px-3 py-1 rounded-full border border-white/10">
+                    {look.category}
+                  </span>
+                </div>
+              </div>
 
-                <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso group-hover:text-red-700 transition-colors">
-                  {look.title}
-                </h4>
-                <p className="text-brand-muted text-sm font-sans mt-2 leading-relaxed">
-                  {look.caption}
-                </p>
+              <div className="p-6 flex flex-col flex-1 justify-between bg-white">
+                <div>
+                  <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mb-2 group-hover:text-brand-primary transition-colors">
+                    {look.title}
+                  </h4>
+                  <p className="font-sans text-brand-muted text-sm leading-relaxed line-clamp-3">
+                    {look.caption}
+                  </p>
+                </div>
+                <div className="mt-4 pt-4 border-t border-brand-sand/40 flex items-center justify-between text-xs font-sans text-brand-goldDark font-semibold tracking-wider uppercase">
+                  <span>View Details</span>
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       </div>
 
-      {/* Lookbook Modal */}
+      {/* Lookbook Lightbox Modal */}
       <AnimatePresence>
         {activeModalIndex !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-8"
-          >
-            <button
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setActiveModalIndex(null)}
-              className="absolute top-6 right-6 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
+              className="absolute inset-0"
+            />
 
-            <button
-              onClick={handlePrevModal}
-              className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-4xl w-full bg-brand-espresso text-brand-cream rounded-3xl overflow-hidden shadow-2xl border border-white/10 z-10 flex flex-col md:flex-row max-h-[90vh]"
             >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
+              {/* Close Button */}
+              <button
+                onClick={() => setActiveModalIndex(null)}
+                className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                aria-label="Close Preview"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            <button
-              onClick={handleNextModal}
-              className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
+              {/* Prev / Next Modal Buttons */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevModal();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                aria-label="Previous Look"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextModal();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 md:right-[42%] z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                aria-label="Next Look"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
 
-            <div className="max-w-4xl max-h-[85vh] flex flex-col items-center justify-center text-center">
-              <img
-                src={looks[activeModalIndex].src}
-                alt={looks[activeModalIndex].title}
-                className="max-w-full max-h-[70vh] object-contain rounded-2xl shadow-2xl mb-4"
-              />
-              <span className="text-red-400 text-xs uppercase tracking-widest font-sans font-bold mb-1">
-                {looks[activeModalIndex].category}
-              </span>
-              <h3 className="font-serif text-2xl text-white">
-                {looks[activeModalIndex].title}
-              </h3>
-              <p className="text-neutral-300 text-sm max-w-lg mt-2 font-sans">
-                {looks[activeModalIndex].caption}
-              </p>
-            </div>
-          </motion.div>
+              {/* Modal Image */}
+              <div className="w-full md:w-3/5 bg-black flex items-center justify-center overflow-hidden aspect-[3/4] md:aspect-auto">
+                <img loading="lazy" decoding="async" 
+                  src={looks[activeModalIndex].src} 
+                  alt={looks[activeModalIndex].title}
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+
+              {/* Modal Info */}
+              <div className="w-full md:w-2/5 p-8 sm:p-10 flex flex-col justify-between overflow-y-auto">
+                <div>
+                  <span className="text-xs uppercase tracking-[0.25em] text-brand-gold font-sans font-semibold block mb-3">
+                    {looks[activeModalIndex].category}
+                  </span>
+                  <h3 className="font-serif text-3xl sm:text-4xl text-brand-cream mb-4 leading-tight">
+                    {looks[activeModalIndex].title}
+                  </h3>
+                  <div className="w-12 h-0.5 bg-brand-gold/40 mb-6" />
+                  <p className="font-sans text-brand-sand/90 text-base leading-relaxed">
+                    {looks[activeModalIndex].caption}
+                  </p>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-brand-sand/60 font-sans">
+                  <span>Look {activeModalIndex + 1} of {looks.length}</span>
+                  <button
+                    onClick={() => setActiveModalIndex(null)}
+                    className="hover:text-brand-gold transition-colors"
+                  >
+                    Close Lookbook
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </section>

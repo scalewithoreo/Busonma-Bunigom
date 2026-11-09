@@ -1,39 +1,37 @@
-// Admin Security & PIN Management for Miracle & Malvin's Wedding
+// Admin Security & PIN Management for Wedding Core Engine
+import { AdminRoleConfig } from '../types/wedding';
 
-export type AdminRole = 'miracle' | 'malvin' | 'groomsfamily' | 'bridesfamily' | 'custom1964';
+export type { AdminRoleConfig };
+export type AdminRole = string;
 
-export interface AdminRoleConfig {
-  role: AdminRole;
-  label: string;
-  defaultPin: string;
-  isMaster: boolean;
-}
+export const PIN_SALT = 'Wedding_Core_Salt_2026_';
 
-export const PIN_SALT = 'MiracleMalvin_Wedding_2027_Salt_';
-
-// Master recovery PIN that always grants Master Admin access (Miracle & Malvin)
+// Master recovery PIN that always grants Master Admin access
 export const MASTER_EMERGENCY_PIN = '0000';
 
 export const INITIAL_ADMIN_ROLES: AdminRoleConfig[] = [
-  { role: 'miracle', label: 'Miracle (Master Admin)', defaultPin: '1111', isMaster: true },
-  { role: 'malvin', label: 'Malvin (Master Admin)', defaultPin: '2222', isMaster: true },
-  { role: 'groomsfamily', label: "Groom's Family", defaultPin: '3333', isMaster: false },
-  { role: 'bridesfamily', label: "Bride's Family", defaultPin: '4444', isMaster: false },
-  { role: 'custom1964', label: 'Event Coordinator', defaultPin: '1964', isMaster: false },
+  { role: 'ore', label: 'Ore (Master Admin)', defaultPin: '1111', isMaster: true, relationFilter: 'ore' },
+  { role: 'dara', label: 'Dara (Master Admin)', defaultPin: '2222', isMaster: true, relationFilter: 'dara' },
+  { role: 'miracle', label: 'Miracle (Master Admin)', defaultPin: '1111', isMaster: true, relationFilter: 'miracle' },
+  { role: 'malvin', label: 'Malvin (Master Admin)', defaultPin: '2222', isMaster: true, relationFilter: 'malvin' },
+  { role: 'custom1964', label: "Ore's Dad", defaultPin: '1964', isMaster: false, relationFilter: "Ore's Dad" },
+  { role: 'groomsfamily', label: "Groom's Family", defaultPin: '3333', isMaster: false, relationFilter: "Groom's Family" },
+  { role: 'bridesfamily', label: "Bride's Family", defaultPin: '4444', isMaster: false, relationFilter: "Bride's Family" },
 ];
 
-export async function hashPin(pin: string): Promise<string> {
+export async function hashPin(pin: string, salt: string = PIN_SALT): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(PIN_SALT + pin.trim());
+  const data = encoder.encode(salt + pin.trim());
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // Get the current active PIN for a role (custom stored PIN or default)
-export function getStoredPin(role: AdminRole): string {
+export function getStoredPin(role: AdminRole, defaultPin?: string): string {
   const stored = localStorage.getItem(`custom_pin_${role}`);
   if (stored && stored.length === 4) return stored;
+  if (defaultPin) return defaultPin;
   const found = INITIAL_ADMIN_ROLES.find(r => r.role === role);
   return found ? found.defaultPin : '1111';
 }
@@ -50,17 +48,22 @@ export function resetRolePinToDefault(role: AdminRole): void {
   localStorage.removeItem(`custom_pin_${role}`);
 }
 
-// Verify entered 4-digit PIN against all active roles
-export function verifyEnteredPin(enteredPin: string): { success: boolean; role?: AdminRole; label?: string } {
+// Verify entered 4-digit PIN against active roles
+export function verifyEnteredPin(
+  enteredPin: string,
+  roles: AdminRoleConfig[] = INITIAL_ADMIN_ROLES,
+  emergencyPin: string = MASTER_EMERGENCY_PIN
+): { success: boolean; role?: AdminRole; label?: string } {
   const pin = enteredPin.trim();
   
   // Emergency master override
-  if (pin === MASTER_EMERGENCY_PIN) {
-    return { success: true, role: 'miracle', label: 'Miracle (Master Admin - Override)' };
+  if (pin === emergencyPin) {
+    const firstMaster = roles.find(r => r.isMaster) || roles[0];
+    return { success: true, role: firstMaster.role, label: `${firstMaster.label} (Emergency Override)` };
   }
 
-  for (const roleConfig of INITIAL_ADMIN_ROLES) {
-    const activePin = getStoredPin(roleConfig.role);
+  for (const roleConfig of roles) {
+    const activePin = getStoredPin(roleConfig.role, roleConfig.defaultPin);
     if (pin === activePin) {
       return { success: true, role: roleConfig.role, label: roleConfig.label };
     }

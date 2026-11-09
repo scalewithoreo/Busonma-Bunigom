@@ -2,12 +2,14 @@ import { useState, useEffect, FC } from 'react';
 import { Menu, X, Heart, Users, Image as ImageIcon, Palette, ShoppingBag, HelpCircle, VolumeX } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { audioManager } from '../utils/audio';
+import { useWedding } from '../context/WeddingContext';
 
 interface NavbarProps {
   onOpenRsvp: () => void;
 }
 
 export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
+  const { wedding } = useWedding();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(audioManager.isPlaying);
@@ -124,9 +126,9 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
             to="/"
             className="flex items-center group transition-transform duration-300 hover:scale-105"
           >
-            <img  decoding="sync" 
-              src="/assets/logo-mm.png?v=2027" 
-              alt="Miracle & Malvin Logo" 
+            <img decoding="sync" 
+              src={wedding.couple.logoImage} 
+              alt={`${wedding.couple.title} Logo`} 
               className="h-16 sm:h-[90px] w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-300"
             />
           </Link>
@@ -157,7 +159,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
             })}
           </nav>
 
-          {/* CTA Button - Clean, Borderless */}
+          {/* CTA Button */}
           <div className="hidden sm:flex items-center gap-4">
             {!isPublicMode && (
               <button
@@ -169,24 +171,22 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
             )}
           </div>
 
-          {/* Mobile Right Actions: Music Button & Burger Menu horizontally aligned */}
-          <div className="flex items-center gap-2 md:hidden">
+          {/* Mobile Right Icons (Audio Toggle + Hamburger Menu) */}
+          <div className="flex md:hidden items-center gap-2">
             <button
               onClick={() => audioManager.toggle()}
-              aria-label={isMuted || !isPlaying ? 'Play wedding song' : 'Mute wedding song'}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-espresso/90 border border-brand-gold/35 text-brand-cream text-[10px] font-sans font-semibold tracking-wider uppercase shadow-md active:scale-95 transition-all"
+              className="p-2 text-brand-cream hover:text-brand-gold transition-colors flex items-center gap-1.5"
+              aria-label="Toggle Background Music Mute"
             >
-              <div className="relative flex items-center justify-center w-5 h-5 rounded-full bg-brand-gold/15 text-brand-gold shrink-0">
-                {isMuted ? (
-                  <VolumeX className="w-2.5 h-2.5 text-brand-muted" />
-                ) : (
-                  <div className="flex items-end justify-center gap-0.5 h-2.5 w-2.5">
-                    <span className="w-0.5 bg-brand-gold rounded-full animate-[pulse_0.7s_ease-in-out_infinite] h-full" />
-                    <span className="w-0.5 bg-brand-gold rounded-full animate-[pulse_1.1s_ease-in-out_infinite] h-2/3" />
-                    <span className="w-0.5 bg-brand-gold rounded-full animate-[pulse_0.9s_ease-in-out_infinite] h-4/5" />
-                  </div>
-                )}
-              </div>
+              {isMuted || !isPlaying ? (
+                <VolumeX className="w-5 h-5 opacity-70 text-brand-cream" />
+              ) : (
+                <div className="flex items-center gap-0.5 h-4">
+                  <span className="w-0.5 bg-brand-gold animate-bounce" style={{ height: '60%', animationDelay: '0ms' }} />
+                  <span className="w-0.5 bg-brand-gold animate-bounce" style={{ height: '100%', animationDelay: '150ms' }} />
+                  <span className="w-0.5 bg-brand-gold animate-bounce" style={{ height: '40%', animationDelay: '300ms' }} />
+                </div>
+              )}
               <span className="text-[10px] font-bold text-brand-cream tracking-wider">
                 {isMuted || !isPlaying ? 'MUTED' : 'PLAYING'}
               </span>
@@ -206,11 +206,11 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-30 bg-[#121212] flex flex-col justify-center items-center p-6 md:hidden animate-fade-in">
+        <div className="fixed inset-0 z-30 bg-brand-espresso flex flex-col justify-center items-center p-6 md:hidden animate-fade-in">
           <div className="text-center mb-8">
-            <h3 className="font-alex text-4xl text-brand-cream">Miracle & Malvin</h3>
+            <h3 className="font-alex text-4xl text-brand-cream">{wedding.couple.title}</h3>
             <p className="text-brand-gold text-xs tracking-widest uppercase mt-2">
-              {isPublicMode ? 'January 2027' : 'Wednesday, January 27, 2027'}
+              {isPublicMode ? wedding.couple.dateTeaser : wedding.event.displayDate}
             </p>
           </div>
 
@@ -238,7 +238,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
                 }}
                 className="mt-4 w-full py-3.5 rounded-full bg-brand-primary text-white font-sans text-[17px] font-semibold tracking-widest uppercase hover:bg-brand-primaryDark transition-colors shadow-lg"
               >
-                Confirm Attendance
+                RSVP Now
               </button>
             )}
           </div>

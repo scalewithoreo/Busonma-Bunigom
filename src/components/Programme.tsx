@@ -1,26 +1,26 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
-import { Church, Utensils } from 'lucide-react';
+import { Church, Utensils, Music, Camera } from 'lucide-react';
+import { useWedding } from '../context/WeddingContext';
 
 export const Programme: FC = () => {
-  const schedule = [
-    {
-      time: '11:00 AM',
-      title: 'Church Wedding',
-      subtitle: 'Holy Matrimony & Sacred Vows',
-      description: 'Guests are kindly requested to be seated by 10:30 AM for the processional, exchange of vows, and nuptial blessing.',
-      icon: Church,
-      highlight: true,
-    },
-    {
-      time: '2:00 PM',
-      title: 'Reception & Banquet',
-      subtitle: 'Feast, Speeches & Celebration',
-      description: 'Grand entrance of the bridal party, couple first dance, gourmet dinner service, toasts, and cake cutting.',
-      icon: Utensils,
-      highlight: true,
-    },
-  ];
+  const { wedding } = useWedding();
+  const schedule = wedding.programme;
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'church':
+        return Church;
+      case 'utensils':
+        return Utensils;
+      case 'music':
+        return Music;
+      case 'camera':
+        return Camera;
+      default:
+        return Church;
+    }
+  };
 
   return (
     <section id="programme" className="py-24 sm:py-32 px-4 sm:px-6 bg-brand-cream relative">
@@ -52,54 +52,42 @@ export const Programme: FC = () => {
         {/* Timeline */}
         <div className="relative border-l-2 border-brand-gold/30 ml-4 sm:ml-32 md:ml-40 space-y-12 pb-4">
           {schedule.map((item, idx) => {
-            const Icon = item.icon;
+            const Icon = getIcon(item.icon);
             return (
               <motion.div
                 key={item.title}
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                transition={{ duration: 0.5, delay: idx * 0.15 }}
                 className="relative pl-8 sm:pl-10 group"
               >
-                {/* Timeline node */}
-                <div
-                  className={`absolute -left-[17px] top-1.5 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-transform duration-300 group-hover:scale-110 ${
-                    item.highlight
-                      ? 'bg-brand-espresso border-brand-gold text-brand-gold'
-                      : 'bg-white border-brand-sand text-brand-muted'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
+                {/* Node marker */}
+                <div className="absolute -left-[17px] top-1.5 w-8 h-8 rounded-full bg-brand-espresso border-2 border-brand-gold flex items-center justify-center text-brand-gold shadow-md group-hover:scale-110 transition-transform">
+                  <Icon className="w-4 h-4" />
                 </div>
 
-                {/* Time Badge (Desktop floating left, Mobile inline) */}
-                <div className="sm:absolute sm:-left-36 md:-left-44 top-1.5 mb-1 sm:mb-0">
-                  <span
-                    className={`inline-block font-serif text-xl sm:text-2xl font-medium tracking-tight ${
-                      item.highlight ? 'text-brand-goldDark' : 'text-brand-espresso/80'
-                    }`}
-                  >
+                {/* Time Indicator (Desktop Left Side Callout) */}
+                <div className="sm:absolute sm:-left-36 md:-left-44 top-1 text-left sm:text-right w-32 hidden sm:block">
+                  <span className="font-serif text-2xl text-brand-goldDark font-semibold block leading-none">
                     {item.time}
                   </span>
                 </div>
 
-                {/* Content Area - Clean & Minimal (No Box) */}
-                <div className="pt-0.5 pb-8 sm:pb-12">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="font-serif text-2xl sm:text-3xl text-brand-espresso font-normal">
-                      {item.title}
-                    </h3>
-                    {item.highlight && (
-                      <span className="text-[10px] uppercase font-sans font-bold tracking-widest px-2.5 py-0.5 rounded-full bg-brand-gold/20 text-brand-goldDark">
-                        Official
-                      </span>
-                    )}
-                  </div>
-                  <p className="font-serif italic text-[17px] text-brand-goldDark mt-0.5">
+                {/* Card Content */}
+                <div className="bg-white/80 backdrop-blur-sm p-6 sm:p-8 rounded-2xl border border-brand-sand/50 shadow-sm hover:shadow-md transition-shadow">
+                  {/* Mobile Time */}
+                  <span className="sm:hidden inline-block text-xs uppercase font-mono tracking-wider px-3 py-1 bg-brand-gold/15 text-brand-goldDark rounded-full mb-3 font-semibold">
+                    {item.time}
+                  </span>
+
+                  <h3 className="font-serif text-2xl sm:text-3xl text-brand-espresso font-light mb-1">
+                    {item.title}
+                  </h3>
+                  <p className="font-serif italic text-sm text-brand-goldDark mb-3">
                     {item.subtitle}
                   </p>
-                  <p className="text-brand-muted text-[17px] font-sans mt-3 leading-relaxed">
+                  <p className="font-sans text-brand-muted text-[15px] sm:text-base leading-relaxed">
                     {item.description}
                   </p>
                 </div>

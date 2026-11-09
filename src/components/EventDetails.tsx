@@ -3,16 +3,27 @@ import { motion } from 'framer-motion';
 import { MapPin, ExternalLink, CalendarPlus, ChevronDown, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getGoogleCalendarUrl, getOutlookCalendarUrl, downloadIcsFile } from '../utils/calendar';
+import { useWedding } from '../context/WeddingContext';
 
 interface EventDetailsProps {
   onNotify: (title: string, message?: string) => void;
 }
 
 export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
+  const { wedding } = useWedding();
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  const calendarData = {
+    title: wedding.event.calendar.title,
+    description: wedding.event.calendar.description,
+    location: wedding.event.calendar.location,
+    startDate: wedding.event.calendar.startDate,
+    endDate: wedding.event.calendar.endDate,
+    downloadFilename: `${wedding.slug}-wedding.ics`,
+  };
+
   const handleDownloadIcs = () => {
-    downloadIcsFile();
+    downloadIcsFile(calendarData);
     setCalendarOpen(false);
     onNotify('Calendar File Downloaded', 'Open the downloaded .ics file to add to Apple Calendar or Outlook.');
   };
@@ -52,7 +63,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                     particleCount: 65,
                     spread: 80,
                     origin: { y: 0.45 },
-                    colors: ['#B91C1C', '#991B1B', '#121212', '#ffffff', '#F5EDE4'],
+                    colors: wedding.event.confettiColors || ['#c5a880', '#faf8f2', '#141210'],
                     disableForReducedMotion: true
                   });
                 }, 700);
@@ -67,7 +78,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 transition={{ duration: 1.1, delay: 0.4, ease: [0.77, 0, 0.175, 1] }}
                 className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-brand-espresso via-brand-espresso to-brand-gold/90 z-20 shadow-2xl flex items-center justify-end overflow-hidden"
               >
-                <div className="w-1.5 h-full bg-brand-primary shadow-[0_0_12px_#B91C1C]" />
+                <div className="w-1.5 h-full bg-brand-primary shadow-[0_0_12px_var(--brand-primary)]" />
               </motion.div>
 
               {/* Right Curtain */}
@@ -78,12 +89,12 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 transition={{ duration: 1.1, delay: 0.4, ease: [0.77, 0, 0.175, 1] }}
                 className="absolute top-0 bottom-0 right-0 bg-gradient-to-l from-brand-espresso via-brand-espresso to-brand-gold/90 z-20 shadow-2xl flex items-center justify-start overflow-hidden"
               >
-                <div className="w-1.5 h-full bg-brand-primary shadow-[0_0_12px_#B91C1C]" />
+                <div className="w-1.5 h-full bg-brand-primary shadow-[0_0_12px_var(--brand-primary)]" />
               </motion.div>
 
               {/* Revealed Date Text */}
               <span className="font-serif italic text-2xl sm:text-4xl md:text-5xl text-brand-goldDark select-none block">
-                Wednesday, January 27, 2027
+                {wedding.event.displayDate}
               </span>
             </motion.div>
           </div>
@@ -94,67 +105,67 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
           {/* Events Left Column (7 cols) */}
           <div className="lg:col-span-7 flex flex-col gap-6">
             <div className="bg-brand-cream/80 rounded-3xl p-8 sm:p-12 shadow-sm text-center flex flex-col justify-center h-full items-center border border-brand-sand/30 relative overflow-hidden">
-                {/* Faint Background Image */}
-                <div className="absolute inset-0 z-0 opacity-15">
-                  <img loading="lazy" decoding="async" src="/assets/hero-image-new.jpg" alt="Couple" className="w-full h-full object-cover object-top mix-blend-luminosity grayscale" />
-                </div>
-                
-                <div className="relative z-10 flex flex-col items-center w-full">
-                  <CalendarPlus className="w-10 h-10 text-brand-goldDark mb-5 opacity-80" />
-                  <h3 className="font-serif text-3xl sm:text-4xl text-brand-espresso mb-3">Save the Date</h3>
-                  <p className="text-brand-muted font-sans text-[17px] mb-8 max-w-md leading-relaxed font-medium">
-                     We are so excited to celebrate our special day with you. Add the wedding to your calendar to stay updated!
-                  </p>
-                  {/* Add to Calendar Action */}
-                  <div className="relative w-full max-w-sm text-left">
-              <button
-                onClick={() => setCalendarOpen(!calendarOpen)}
-                className="w-full py-4 px-6 rounded-2xl bg-brand-espresso hover:bg-brand-charcoal text-brand-cream flex items-center justify-between transition-all duration-300 shadow-md"
-              >
-                <span className="flex items-center gap-3 font-sans text-[17px] tracking-wider uppercase font-medium">
-                  <CalendarPlus className="w-5 h-5 text-brand-gold" />
-                  Add Wedding to Calendar
-                </span>
-                <ChevronDown className={`w-5 h-5 text-brand-sand transition-transform duration-300 ${calendarOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {calendarOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl p-3 shadow-2xl z-20 flex flex-col gap-1 animate-fade-in">
-                  <a
-                    href={getGoogleCalendarUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setCalendarOpen(false)}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors"
-                  >
-                    <span>Google Calendar</span>
-                    <ExternalLink className="w-4 h-4 text-brand-muted" />
-                  </a>
-                  <a
-                    href={getOutlookCalendarUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setCalendarOpen(false)}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors"
-                  >
-                    <span>Outlook Calendar</span>
-                    <ExternalLink className="w-4 h-4 text-brand-muted" />
-                  </a>
+              {/* Faint Background Image */}
+              <div className="absolute inset-0 z-0 opacity-15">
+                <img loading="lazy" decoding="async" src={wedding.couple.heroImage} alt={wedding.couple.title} className="w-full h-full object-cover object-top mix-blend-luminosity grayscale" />
+              </div>
+              
+              <div className="relative z-10 flex flex-col items-center w-full">
+                <CalendarPlus className="w-10 h-10 text-brand-goldDark mb-5 opacity-80" />
+                <h3 className="font-serif text-3xl sm:text-4xl text-brand-espresso mb-3">Save the Date</h3>
+                <p className="text-brand-muted font-sans text-[17px] mb-8 max-w-md leading-relaxed font-medium">
+                   We are so excited to celebrate our special day with you. Add the wedding to your calendar to stay updated!
+                </p>
+                {/* Add to Calendar Action */}
+                <div className="relative w-full max-w-sm text-left">
                   <button
-                    onClick={handleDownloadIcs}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors text-left"
+                    onClick={() => setCalendarOpen(!calendarOpen)}
+                    className="w-full py-4 px-6 rounded-2xl bg-brand-espresso hover:bg-brand-charcoal text-brand-cream flex items-center justify-between transition-all duration-300 shadow-md"
                   >
-                    <span>Apple Calendar / iCal (.ics)</span>
-                    <Check className="w-4 h-4 text-brand-gold" />
+                    <span className="flex items-center gap-3 font-sans text-[17px] tracking-wider uppercase font-medium">
+                      <CalendarPlus className="w-5 h-5 text-brand-gold" />
+                      Add Wedding to Calendar
+                    </span>
+                    <ChevronDown className={`w-5 h-5 text-brand-sand transition-transform duration-300 ${calendarOpen ? 'rotate-180' : ''}`} />
                   </button>
+
+                  {calendarOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl p-3 shadow-2xl z-20 flex flex-col gap-1 animate-fade-in">
+                      <a
+                        href={getGoogleCalendarUrl(calendarData)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setCalendarOpen(false)}
+                        className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors"
+                      >
+                        <span>Google Calendar</span>
+                        <ExternalLink className="w-4 h-4 text-brand-muted" />
+                      </a>
+                      <a
+                        href={getOutlookCalendarUrl(calendarData)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setCalendarOpen(false)}
+                        className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors"
+                      >
+                        <span>Outlook Calendar</span>
+                        <ExternalLink className="w-4 h-4 text-brand-muted" />
+                      </a>
+                      <button
+                        onClick={handleDownloadIcs}
+                        className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors text-left"
+                      >
+                        <span>Apple Calendar / iCal (.ics)</span>
+                        <Check className="w-4 h-4 text-brand-gold" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Location / Venue Right Column (5 cols) */}
+          {/* Location / Venue Right Column (5 cols) */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -164,7 +175,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
           >
             {/* Background Image Layer */}
             <div className="absolute inset-0 z-0">
-              <img loading="lazy" decoding="async" src="/assets/celebr8-center.jpg" alt="Celebr8 Center" className="w-full h-full object-cover opacity-15 mix-blend-luminosity" />
+              <img loading="lazy" decoding="async" src="/assets/celebr8-center.jpg" alt="Venue" className="w-full h-full object-cover opacity-15 mix-blend-luminosity" />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-espresso via-brand-espresso/70 to-transparent" />
             </div>
 
@@ -178,23 +189,23 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
               </div>
 
               <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
-                Church
+                {wedding.event.church.name}
               </h3>
               <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm mt-1 mb-6">
-                Celebration Church Int'l (Celebr8 Centre HQ), Vori Close, off Acme Road, Ogba, Lagos
+                {wedding.event.church.address}
               </p>
               
               <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
-                Reception
+                {wedding.event.reception.name}
               </h3>
               <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm mt-1">
-                Celebration Church Int'l (Celebr8 Centre HQ) (Annex 2), Vori Close, off Acme Road, Ogba, Lagos
+                {wedding.event.reception.address}
               </p>
             </div>
 
             <div className="relative z-10 mt-8 pt-6 border-t border-white/10 flex flex-col gap-3">
               <a
-                href="https://maps.google.com/?q=Celebration+Church+Int'l+(Celebr8+Centre+HQ),+Vori+Close,+off+Acme+Road,+Ogba,+Lagos"
+                href={wedding.event.church.directionsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-white/10 hover:bg-white/20 text-brand-cream text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 backdrop-blur-sm"
@@ -203,7 +214,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 <ExternalLink className="w-4 h-4" />
               </a>
               <a
-                href="https://maps.google.com/?q=Celebration+Church+Int'l+(Celebr8+Centre+HQ),+Vori+Close,+off+Acme+Road,+Ogba,+Lagos"
+                href={wedding.event.reception.directionsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md"

@@ -8,34 +8,32 @@ export default {
     extend: {
       colors: {
         brand: {
-          // Warm Foundation: Warm Alabaster
-          beige: '#F5EDE4',
-          cream: '#F5EDE4',
-          ivory: '#FAF6F0',
-          sand: '#EAE1D5',
-          sandDark: '#D8C7B5',
-          alabaster: '#F5EDE4',
+          // Dynamic CSS variable tokens injected by WeddingContext
+          primary: 'var(--brand-primary, #c5a880)',
+          primaryDark: 'var(--brand-primary-dark, #997d59)',
+          primaryLight: 'var(--brand-primary-light, #e4d2bc)',
+          
+          beige: 'var(--brand-beige, #f5f5dc)',
+          cream: 'var(--brand-cream, #faf8f2)',
+          ivory: 'var(--brand-ivory, #fcfbfa)',
+          sand: 'var(--brand-sand, #eae3d2)',
+          sandDark: 'var(--brand-sand-dark, #d5cbb8)',
+          alabaster: 'var(--brand-cream, #faf8f2)',
 
-          // Signature Primary: Scarlet & Crimson (#B91C1C)
-          primary: '#B91C1C',
-          primaryDark: '#991B1B',
-          primaryLight: '#DC2626',
-          crimson: '#B91C1C',
-          scarlet: '#B91C1C',
-          red: '#B91C1C',
+          gold: 'var(--brand-gold, #c5a880)',
+          goldDark: 'var(--brand-gold-dark, #997d59)',
+          goldLight: 'var(--brand-gold-light, #e4d2bc)',
 
-          // Accent colors mapped to primary scarlet & crimson palette
-          gold: '#B91C1C',
-          goldDark: '#991B1B',
-          goldLight: '#DC2626',
-          wine: '#831843',
+          wine: 'var(--brand-wine, #A80A4E)',
+          crimson: 'var(--brand-primary, #B91C1C)',
+          scarlet: 'var(--brand-primary, #B91C1C)',
+          red: 'var(--brand-primary, #B91C1C)',
 
-          // Base Neutral: Editorial Noir (#121212)
-          noir: '#121212',
-          espresso: '#121212',
-          charcoal: '#1C1C1C',
-          warmGray: '#2A2A2A',
-          muted: '#6E6760',
+          noir: 'var(--brand-espresso, #141210)',
+          espresso: 'var(--brand-espresso, #141210)',
+          charcoal: 'var(--brand-charcoal, #221f1c)',
+          warmGray: 'var(--brand-warm-gray, #383430)',
+          muted: 'var(--brand-muted, #7a7268)',
         }
       },
       fontFamily: {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useWedding } from './context/WeddingContext';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { OurStory } from './components/OurStory';
@@ -23,6 +24,7 @@ import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 
 export function App() {
+  const { wedding } = useWedding();
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,7 +102,7 @@ export function App() {
 
   const HomePage = () => (
     <>
-      <EnvelopeIntro />
+      {wedding.theme.introStyle === 'envelope' && <EnvelopeIntro />}
       <Navbar onOpenRsvp={scrollToRsvp} />
       <main>
         <Hero onRsvpClick={scrollToRsvp} />
@@ -125,8 +127,8 @@ export function App() {
             {/* Couple Portrait Card */}
             <div className="w-full max-w-[280px] sm:max-w-xs shrink-0 rounded-2xl overflow-hidden shadow-2xl border-2 border-brand-gold/30 bg-brand-espresso group relative aspect-[3/4]">
               <img loading="lazy" decoding="async" 
-                src="/assets/miracle-malvin-3.jpg" 
-                alt="Miracle & Malvin - Our forever starts now" 
+                src={wedding.couple.wishlistImage} 
+                alt={wedding.couple.wishlistAlt} 
                 className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" 
               />
             </div>

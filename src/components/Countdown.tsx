@@ -1,6 +1,7 @@
 import { useState, useEffect, FC } from 'react';
 import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
+import { useWedding } from '../context/WeddingContext';
 
 interface TimeLeft {
   days: number;
@@ -11,12 +12,12 @@ interface TimeLeft {
 }
 
 export const Countdown: FC = () => {
-  // Wedding target: Jan 27, 2027 11:00 AM Lagos Time (UTC+1)
-  const targetDate = new Date('2027-01-27T11:00:00+01:00').getTime();
+  const { wedding } = useWedding();
+  const targetTimestamp = new Date(wedding.event.date).getTime();
 
   const calculateTimeLeft = (): TimeLeft => {
     const now = new Date().getTime();
-    const difference = targetDate - now;
+    const difference = targetTimestamp - now;
 
     if (difference <= 0) {
       return { days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true };
@@ -34,12 +35,13 @@ export const Countdown: FC = () => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft);
 
   useEffect(() => {
+    setTimeLeft(calculateTimeLeft());
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [wedding.event.date]);
 
   const timeUnits = [
     { label: 'Days', value: timeLeft.days },
@@ -48,65 +50,52 @@ export const Countdown: FC = () => {
     { label: 'Seconds', value: timeLeft.seconds },
   ];
 
-  const formatNumber = (num: number) => String(num).padStart(2, '0');
-
   return (
-    <section id="countdown" className="py-20 sm:py-28 px-4 sm:px-6 bg-brand-cream relative overflow-hidden">
-      {/* Decorative subtle flourish */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] bg-gradient-to-r from-transparent via-brand-gold/40 to-transparent" />
+    <section id="countdown" className="py-20 sm:py-24 px-4 sm:px-6 bg-brand-espresso text-brand-cream relative overflow-hidden">
+      {/* Background Subtle Accent */}
+      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#c5a880_1px,transparent_1px)] [background-size:16px_16px]" />
 
-      <div className="max-w-4xl mx-auto text-center">
-        {/* Section Heading */}
+      <div className="max-w-4xl mx-auto text-center relative z-10">
         <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex items-center justify-center gap-2 mb-4 text-brand-gold text-xs uppercase tracking-[0.25em] font-sans font-semibold"
+        >
+          <Clock className="w-4 h-4" />
+          <span>Counting Down</span>
+        </motion.div>
+
+        <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-12"
+          transition={{ delay: 0.1 }}
+          className="font-serif text-3xl sm:text-5xl md:text-6xl text-brand-cream font-light mb-12"
         >
-          <p className="text-xs uppercase tracking-[0.3em] font-sans font-semibold text-brand-goldDark mb-3">
-            The Journey Begins
-          </p>
-          <h2 className="font-serif text-3xl sm:text-5xl text-brand-espresso font-light">
-            Event Starts In
-          </h2>
-          <p className="font-serif italic text-brand-muted text-[17px] sm:text-lg mt-2">
-            Counting down every second until we say “I Do”
-          </p>
-        </motion.div>
+          Until We Say "I Do"
+        </motion.h2>
 
         {/* Countdown Grid */}
-        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 max-w-2xl mx-auto">
           {timeUnits.map((unit, index) => (
             <motion.div
               key={unit.label}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="flex flex-col items-center justify-center relative group"
+              transition={{ delay: 0.1 * (index + 1) }}
+              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center shadow-lg"
             >
-              <span className="font-sans text-5xl sm:text-7xl md:text-8xl font-light text-brand-espresso tracking-tight tabular-nums">
-                {formatNumber(unit.value)}
+              <span className="font-serif text-4xl sm:text-6xl text-brand-gold font-light tabular-nums leading-none mb-2">
+                {String(unit.value).padStart(2, '0')}
               </span>
-              <span className="text-[10px] sm:text-[13px] uppercase tracking-[0.3em] font-sans font-semibold text-brand-goldDark mt-4 sm:mt-6">
+              <span className="font-sans text-[11px] sm:text-xs uppercase tracking-[0.2em] text-brand-sand/70">
                 {unit.label}
               </span>
             </motion.div>
           ))}
         </div>
-
-        {/* Date Reminder footer */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-10 inline-flex items-center gap-2 text-xs sm:text-[17px] text-brand-muted font-sans"
-        >
-          <Clock className="w-4 h-4 text-brand-gold" />
-          <span>Saturday, December 12, 2026</span>
-        </motion.div>
       </div>
     </section>
   );

@@ -2,59 +2,11 @@ import { useState, useEffect, useCallback, FC } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { GalleryPhoto } from '../types';
+import { useWedding } from '../context/WeddingContext';
 
 export const Gallery: FC = () => {
-  const photos: GalleryPhoto[] = [
-    {
-      id: '1',
-      src: '/assets/miracle-malvin-3.jpg',
-      alt: 'Miracle and Malvin black-tie editorial evening portrait',
-      caption: 'Walking into forever, hand in hand',
-      featured: false,
-    },
-    {
-      id: '2',
-      src: '/assets/miracle-malvin-1.jpg',
-      alt: 'Miracle and Malvin smiling together in contemporary chic attire',
-      caption: 'Joy in every shared laugh',
-      featured: false,
-    },
-    {
-      id: '3',
-      src: '/assets/hero-image-new.jpg',
-      alt: 'Miracle and Malvin golden hour celebration portrait',
-      caption: 'Two souls, one divine journey',
-      featured: false,
-    },
-    {
-      id: '4',
-      src: '/assets/miracle-malvin-2.jpg',
-      alt: 'Regal editorial couture portrait of Miracle and Malvin',
-      caption: 'High-fashion elegance anchored in timeless devotion',
-      featured: true,
-    },
-    {
-      id: '5',
-      src: '/assets/story-couple.jpg',
-      alt: 'Romantic candlelight portrait of Miracle and Malvin',
-      caption: 'In your eyes, I found my home',
-      featured: false,
-    },
-    {
-      id: '6',
-      src: '/assets/miracle-malvin-1.jpg',
-      alt: 'Outdoor botanical portrait of the couple',
-      caption: 'Every love story is special, but ours is our favorite',
-      featured: false,
-    },
-    {
-      id: '7',
-      src: '/assets/hero-image-new.jpg',
-      alt: 'Miracle and Malvin embracing on the terrace',
-      caption: 'Our forever starts on Wednesday, January 27, 2027',
-      featured: true,
-    },
-  ];
+  const { wedding } = useWedding();
+  const photos: GalleryPhoto[] = wedding.gallery;
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
