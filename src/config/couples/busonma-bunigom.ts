@@ -13,7 +13,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
       bride: 'Chimbusonma Amaka Obiagwu',
       groom: 'Chukwuebunigom David Mbamalu',
     },
-    title: 'Busonma & Bunigo',
+    title: 'Busonma & Bunigom',
     hashtag: '#LiftedBeautifully27 • #ChiBum27 • #Bunigonma27',
     locationText: 'Victoria Island, Lagos',
     dateTeaser: 'March 2027',
@@ -41,7 +41,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
       directionsUrl: 'https://maps.google.com/?q=Admiralty+Conference+Centre,+Nigerian+Naval+Dockyard+Limited,+Ahmadu+Bello+Way,+Victoria+Island,+Lagos',
     },
     calendar: {
-      title: "Busonma & Bunigo's Wedding Celebration",
+      title: "Busonma & Bunigom's Wedding Celebration",
       description: 'Join us in celebrating the traditional marriage and wedding celebration of Chimbusonma & Chukwuebunigom.',
       location: 'Admiralty Conference Centre, Nigerian Naval Dockyard Limited, Ahmadu Bello Way, Victoria Island, Lagos',
       startDate: '20270327T120000Z',
@@ -123,7 +123,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
     title: 'Our Story',
     subtitle: 'How It All Began',
     welcomeQuote:
-      'Welcome to our little corner of the internet and thank you for becoming part of our story! So whether you’re joining us from down the road or flying across the world, you have a special place in our hearts. So, explore our story, plan your trip, RSVP, pick out a gift if you wish, and get ready for a beautiful celebration! With love, Busonma & Bunigo',
+      'Welcome to our little corner of the internet and thank you for becoming part of our story! So whether you’re joining us from down the road or flying across the world, you have a special place in our hearts. So, explore our story, plan your trip, RSVP, pick out a gift if you wish, and get ready for a beautiful celebration! With love, Busonma & Bunigom',
     image: '/assets/story-couple.jpg',
     imageAlt: 'Chimbusonma and Chukwuebunigom',
     paragraphs: [
@@ -134,7 +134,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
       "Now, here we are: two people who once lived minutes apart, preparing to walk through life side by side. Our favourite plot twist? We didn't have to travel even one mile to find each other. We just had to wait for God's right time for the lines to fall in pleasant places. — Psalm 16:6",
       'And if this is how the story began, we can only imagine how beautiful the chapters ahead will be.',
     ],
-    signoff: '— Busonma & Bunigo',
+    signoff: '— Busonma & Bunigom',
   },
   programme: [
     {
