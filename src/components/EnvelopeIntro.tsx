@@ -306,8 +306,8 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               <div className="relative w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 flex items-center justify-center">
                 <img
                   src={wedding.theme.envelope?.waxSealImage || "/assets/wax-seal-mm.png"}
-                  alt={`${wedding.couple.title} 3D Wax Seal`}
-                  className="w-full h-full object-contain filter drop-shadow-[0_18px_36px_rgba(185,28,28,0.7)] drop-shadow-[0_8px_16px_rgba(0,0,0,0.55)] transition-transform duration-200 select-none pointer-events-none"
+                  alt={`${wedding.couple.title} Seal`}
+                  className="w-full h-full object-contain filter drop-shadow-[0_12px_28px_rgba(0,0,0,0.45)] drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] transition-transform duration-200 select-none pointer-events-none"
                   draggable={false}
                 />
               </div>
