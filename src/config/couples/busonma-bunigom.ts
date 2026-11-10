@@ -1,0 +1,266 @@
+import { WeddingConfig } from '../../types/wedding';
+
+export const busonmaBunigomConfig: WeddingConfig = {
+  id: 'busonma-bunigom',
+  slug: 'bunigom-busonma',
+  domains: ['bunigom-busonma.online', 'www.bunigom-busonma.online'],
+  couple: {
+    names: {
+      bride: 'Chimbusonma',
+      groom: 'Chukwuebunigom',
+    },
+    formalNames: {
+      bride: 'Chimbusonma Amaka Obiagwu',
+      groom: 'Chukwuebunigom David Mbamalu',
+    },
+    title: 'Bunigom & Busonma',
+    hashtag: '#LiftedBeautifully27 • #ChiBum27 • #Bunigonma27',
+    locationText: 'Victoria Island, Lagos',
+    dateTeaser: 'March 2027',
+    logoImage: '/assets/logo.png',
+    heroImage: '/assets/hero-image-final.png',
+    wishlistImage: '/assets/wishlist-couple.png',
+    wishlistAlt: 'Chimbusonma & Chukwuebunigom - Our forever starts now',
+  },
+  event: {
+    date: '2027-03-27T13:00:00+01:00',
+    displayDate: 'Saturday, March 27, 2027',
+    confettiColors: ['#c5a880', '#997d59', '#141210', '#faf8f2', '#e4d2bc'],
+    church: {
+      name: 'Traditional Marriage & Wedding Celebration',
+      venueName: 'Admiralty Conference Centre, Nigerian Naval Dockyard Limited',
+      address: 'Ahmadu Bello Way, Victoria Island, Lagos, Nigeria',
+      mapQuery: 'Admiralty+Conference+Centre,+Nigerian+Naval+Dockyard+Limited,+Ahmadu+Bello+Way,+Victoria+Island,+Lagos',
+      directionsUrl: 'https://maps.google.com/?q=Admiralty+Conference+Centre,+Nigerian+Naval+Dockyard+Limited,+Ahmadu+Bello+Way,+Victoria+Island,+Lagos',
+    },
+    reception: {
+      name: 'Wedding Reception & Banquet',
+      venueName: 'Admiralty Conference Centre, Nigerian Naval Dockyard Limited',
+      address: 'Ahmadu Bello Way, Victoria Island, Lagos, Nigeria',
+      mapQuery: 'Admiralty+Conference+Centre,+Nigerian+Naval+Dockyard+Limited,+Ahmadu+Bello+Way,+Victoria+Island,+Lagos',
+      directionsUrl: 'https://maps.google.com/?q=Admiralty+Conference+Centre,+Nigerian+Naval+Dockyard+Limited,+Ahmadu+Bello+Way,+Victoria+Island,+Lagos',
+    },
+    calendar: {
+      title: "Bunigom & Busonma's Wedding Celebration",
+      description: 'Join us in celebrating the traditional marriage and wedding celebration of Chimbusonma & Chukwuebunigom.',
+      location: 'Admiralty Conference Centre, Nigerian Naval Dockyard Limited, Ahmadu Bello Way, Victoria Island, Lagos',
+      startDate: '20270327T120000Z',
+      endDate: '20270327T200000Z',
+    },
+  },
+  theme: {
+    preset: 'champagne-luxury',
+    introStyle: 'envelope',
+    envelope: {
+      monogram: 'BB',
+      waxSealImage: '/assets/wax-seal-mm.png',
+      paperTextureImage: '/assets/cotton-paper-texture.jpg',
+    },
+    colors: {
+      primary: '#c5a880',
+      primaryDark: '#997d59',
+      primaryLight: '#e4d2bc',
+      espresso: '#141210',
+      charcoal: '#221f1c',
+      cream: '#faf8f2',
+      ivory: '#fcfbfa',
+      sand: '#eae3d2',
+      sandDark: '#d5cbb8',
+      gold: '#c5a880',
+      goldDark: '#997d59',
+      goldLight: '#e4d2bc',
+      wine: '#8C3B2F',
+      muted: '#7a7268',
+    },
+    dressCodeDescription:
+      'Our dress code is Luxury Traditional Attire. We warmly invite our esteemed guests to celebrate with us in their finest traditional wear, adorned in regal tones of champagne gold, warm espresso, and rich festive accents.',
+    paletteLayout: 'grid',
+    paletteBands: [
+      {
+        name: 'Champagne Gold',
+        hex: '#c5a880',
+        subtitle: '#c5a880 • Regal Luxury',
+        tag: 'Metallic Accent',
+      },
+      {
+        name: 'Deep Espresso',
+        hex: '#141210',
+        subtitle: '#141210 • Rich Foundation',
+        tag: 'Base Neutral',
+      },
+      {
+        name: 'Warm Alabaster Cream',
+        hex: '#faf8f2',
+        subtitle: '#faf8f2 • Pure Canvas',
+        tag: 'Highlight Tone',
+      },
+    ],
+    looks: [
+      {
+        id: 'look-1',
+        src: '/assets/moodboard_trad_couple.jpg',
+        title: 'Regal Traditional Splendor',
+        category: 'Traditional Couture',
+        caption: 'Lavishly detailed traditional textiles and handcrafted coral accessories for a royal entrance.',
+      },
+      {
+        id: 'look-2',
+        src: '/assets/traditional-attire.jpg',
+        title: 'Bespoke Traditional Luxury',
+        category: 'Grand Celebration',
+        caption: 'Architectural embroidery and majestic silhouette reflecting timeless cultural heritage.',
+      },
+      {
+        id: 'look-3',
+        src: '/assets/guest-attire-inspiration.jpg',
+        title: 'Contemporary Luxury Traditional',
+        category: 'Festive Glamour',
+        caption: 'Sophisticated silk, velvet, and rich metallic accents styled with contemporary grace.',
+      },
+    ],
+  },
+  story: {
+    title: 'Our Story',
+    subtitle: 'How It All Began',
+    welcomeQuote:
+      'Welcome to our little corner of the internet and thank you for becoming part of our story! So whether you’re joining us from down the road or flying across the world, you have a special place in our hearts. So, explore our story, plan your trip, RSVP, pick out a gift if you wish, and get ready for a beautiful celebration! With love, Bunigom & Busonma',
+    image: '/assets/story-couple.jpg',
+    imageAlt: 'Chimbusonma and Chukwuebunigom',
+    paragraphs: [
+      '“If proximity alone determined who we would marry, you would think we should have met years ago.” We spent much of our lives living just minutes away from each other. Same city, familiar estates, mutual friends and countless opportunities to cross paths, yet somehow, we never did.',
+      'Looking back, it almost feels like God was quietly arranging the details while we went about our separate lives, completely unaware that our stories were heading towards the same chapter.',
+      'And then came law school… the true story began. Who knew The Nigerian Law School would give us more than long draining lectures, criminal legislation arguments and bar finals anxiety?',
+      'What began as an unexpected meeting grew into friendship that has continued to teach us about patience, partnership, faith and choosing each other. We have learnt that love is not simply about finding someone you like. It is about finding someone with whom you can build, laugh, pray, grow and navigate all the beautiful chaos of life.',
+      "Now, here we are: two people who once lived minutes apart, preparing to walk through life side by side. Our favourite plot twist? We didn't have to travel even one mile to find each other. We just had to wait for God's right time for the lines to fall in pleasant places. — Psalm 16:6",
+      'And if this is how the story began, we can only imagine how beautiful the chapters ahead will be.',
+    ],
+    signoff: '— Bunigom & Busonma',
+  },
+  programme: [
+    {
+      time: '1:00 PM',
+      title: 'Arrival & Guest Seating',
+      subtitle: 'Welcome of Dignitaries & Family',
+      description: 'Guests are kindly requested to be seated at Admiralty Conference Centre as the traditional marriage ceremony commences.',
+      icon: 'church',
+      highlight: true,
+    },
+    {
+      time: '2:30 PM',
+      title: 'Traditional Nuptial Ceremonies',
+      subtitle: 'Cultural Rites & Marital Blessings',
+      description: 'Formal family introductions, wine-carrying ceremony, marital blessings, and presentation of the couple.',
+      icon: 'camera',
+      highlight: true,
+    },
+    {
+      time: '4:00 PM',
+      title: 'Grand Reception & Celebration',
+      subtitle: 'Feast, Toasts & Celebrations',
+      description: 'Grand entrance of the newlyweds, dinner banquet, cutting of the cake, toasts, and dancing into the evening.',
+      icon: 'utensils',
+      highlight: true,
+    },
+  ],
+  qa: [
+    {
+      question: "What’s the RSVP deadline?",
+      answer: 'We kindly request that you RSVP on or before February 27th, 2027 to help us finalize our preparations.',
+    },
+    {
+      question: 'Can I bring a plus-one or additional guest?',
+      answer: 'Our venue capacity is strictly limited. Plus-ones are strictly by invitation only, and each unique code is allocated to a specific guest.',
+    },
+    {
+      question: 'Can I bring my children?',
+      answer: 'While we love your little ones, this is strictly an adults-only reception. We appreciate you making arrangements ahead of time so you can relax and celebrate with us!',
+    },
+    {
+      question: 'What is the schedule format and where will the wedding be held?',
+      answer: 'This is a single-day event! Both our Traditional Marriage & Wedding Celebration will be held at Admiralty Conference Centre, Nigerian Naval Dockyard Limited, Ahmadu Bello Way, Victoria Island, Lagos, Nigeria, starting at 1:00 PM WAT.',
+    },
+    {
+      question: 'Would there be parking spaces available at the venue?',
+      answer: 'Yes, secure and ample parking space is available within the Admiralty Conference Centre compound at the Nigerian Naval Dockyard.',
+    },
+    {
+      question: 'What is the dress code / colour of the day?',
+      answer: 'Our dress code is Luxury Traditional Attire. We warmly invite our guests to celebrate with us in their finest traditional wear, accented in champagne gold, espresso, and royal tones.',
+    },
+    {
+      question: 'Can we spray the couple with cash?',
+      answer: 'We deeply appreciate your generous celebrations! However, to comply with venue regulations, we kindly encourage cash gifts via digital bank transfer or placed into the elegant gift boxes provided at the venue.',
+    },
+    {
+      question: 'Who can I reach out to if I have questions?',
+      answer: 'For any further inquiries or coordination, please contact our wedding planner Dulcet or reach out directly to the bridal team.',
+      contacts: [
+        { name: 'Dulcet', phone: 'Wedding Planner / Coordinator' },
+      ],
+    },
+  ],
+  bankAccounts: [
+    {
+      accountName: 'Chukwuebunigom David Mbamalu And Chimbusonma Amaka Obiagwu',
+      bankName: 'Fidelity Bank',
+      accountNumber: '6930007512',
+    },
+  ],
+  admin: {
+    roles: [
+      { role: 'busonma', label: 'Chimbusonma (Bride & Master Admin)', defaultPin: '2703', isMaster: true, relationFilter: 'busonma' },
+      { role: 'bunigom', label: 'Chukwuebunigom (Groom & Master Admin)', defaultPin: '2703', isMaster: true, relationFilter: 'bunigom' },
+      { role: 'mummy_bride', label: 'Mummy of Bride (Mother of Bride)', defaultPin: '2703', isMaster: false, relationFilter: 'Mummy of Bride' },
+      { role: 'mama_groom', label: 'Mama of groom (Mother of Groom)', defaultPin: '2703', isMaster: false, relationFilter: 'Mama of groom' },
+      { role: 'dulcet', label: 'Dulcet (Wedding Planner / Coordinator)', defaultPin: '2703', isMaster: false, relationFilter: 'dulcet' },
+    ],
+    pinSalt: 'BusonmaBunigom_Wedding_2027_Salt_',
+    emergencyPin: '0000',
+  },
+  gallery: [
+    {
+      id: '1',
+      src: '/assets/moodboard_trad_couple.jpg',
+      alt: 'Chimbusonma and Chukwuebunigom traditional wedding portrait',
+      caption: 'Two souls, one divine journey',
+      featured: true,
+    },
+    {
+      id: '2',
+      src: '/assets/traditional-attire.jpg',
+      alt: 'Luxury traditional wedding attire',
+      caption: 'Walking into forever, hand in hand',
+      featured: false,
+    },
+    {
+      id: '3',
+      src: '/assets/story-couple.jpg',
+      alt: 'Chimbusonma and Chukwuebunigom romantic portrait',
+      caption: 'Joy in every shared laugh',
+      featured: false,
+    },
+    {
+      id: '4',
+      src: '/assets/hero-image-final.png',
+      alt: 'Chimbusonma and Chukwuebunigom celebration portrait',
+      caption: 'Our lines have fallen in pleasant places — Psalm 16:6',
+      featured: true,
+    },
+    {
+      id: '5',
+      src: '/assets/guest-attire-inspiration.jpg',
+      alt: 'Celebration glamour',
+      caption: 'Surrounded by love and blessings',
+      featured: false,
+    },
+  ],
+  database: {
+    type: 'turso',
+    storagePrefix: 'bb_',
+  },
+  audio: {
+    title: 'Rebel',
+    artist: 'anendlessocean',
+    src: '/assets/do4love.mp3',
+  },
+};

@@ -5,9 +5,19 @@ class AudioManager {
   public isMuted = false;
   public userHasInteracted = false;
 
-  init() {
-    if (this.audio) return;
-    this.audio = new Audio('/assets/do4love.mp3');
+  init(customSrc?: string) {
+    const src = customSrc || '/assets/do4love.mp3';
+    if (this.audio) {
+      if (this.audio.src.endsWith(src) || this.audio.src === src) return;
+      this.audio.pause();
+      this.audio.src = src;
+      this.audio.load();
+      if (this.isPlaying) {
+        this.audio.play().catch(() => {});
+      }
+      return;
+    }
+    this.audio = new Audio(src);
     this.audio.preload = 'auto';
     this.audio.volume = 0.65;
     this.audio.loop = true;

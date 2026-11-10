@@ -52,7 +52,8 @@ export function resetRolePinToDefault(role: AdminRole): void {
 export function verifyEnteredPin(
   enteredPin: string,
   roles: AdminRoleConfig[] = INITIAL_ADMIN_ROLES,
-  emergencyPin: string = MASTER_EMERGENCY_PIN
+  emergencyPin: string = MASTER_EMERGENCY_PIN,
+  targetRole?: string
 ): { success: boolean; role?: AdminRole; label?: string } {
   const pin = enteredPin.trim();
   
@@ -60,6 +61,18 @@ export function verifyEnteredPin(
   if (pin === emergencyPin) {
     const firstMaster = roles.find(r => r.isMaster) || roles[0];
     return { success: true, role: firstMaster.role, label: `${firstMaster.label} (Emergency Override)` };
+  }
+
+  // If a specific target role is selected to log into:
+  if (targetRole && targetRole !== 'auto') {
+    const targetConfig = roles.find(r => r.role === targetRole);
+    if (targetConfig) {
+      const activePin = getStoredPin(targetConfig.role, targetConfig.defaultPin);
+      if (pin === activePin) {
+        return { success: true, role: targetConfig.role, label: targetConfig.label };
+      }
+      return { success: false };
+    }
   }
 
   for (const roleConfig of roles) {

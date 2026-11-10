@@ -31,6 +31,24 @@ export const OurStory: FC = () => {
           </motion.h2>
         </div>
 
+        {/* Guest Welcome Note (when configured) */}
+        {story.welcomeQuote && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.8 }}
+            className="mb-16 p-6 sm:p-10 rounded-3xl bg-white/70 border border-brand-gold/30 shadow-md text-center max-w-3xl mx-auto backdrop-blur-sm"
+          >
+            <p className="text-xs uppercase tracking-[0.25em] font-sans font-semibold text-brand-goldDark mb-3">
+              A Warm Welcome From The Couple
+            </p>
+            <p className="font-serif italic text-lg sm:text-2xl text-brand-espresso/90 leading-relaxed">
+              "{story.welcomeQuote}"
+            </p>
+          </motion.div>
+        )}
+
         {/* Story Content */}
         <div className="flex flex-col md:flex-row gap-12 lg:gap-20 items-center">
           {/* Image */}

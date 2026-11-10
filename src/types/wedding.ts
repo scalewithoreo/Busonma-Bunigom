@@ -107,10 +107,17 @@ export interface ThemeConfig {
 export interface StoryConfig {
   title: string;
   subtitle: string;
+  welcomeQuote?: string;
   image: string;
   imageAlt: string;
   paragraphs: string[];
   signoff: string;
+}
+
+export interface AudioConfig {
+  title: string;
+  artist: string;
+  src?: string;
 }
 
 export interface ProgrammeItem {
@@ -175,4 +182,5 @@ export interface WeddingConfig {
   admin: AdminSecurityConfig;
   gallery: GalleryItem[];
   database: DatabaseConfig;
+  audio?: AudioConfig;
 }

@@ -1,10 +1,12 @@
 import { WeddingConfig } from '../../types/wedding';
 import { oreDaraConfig } from './ore-dara';
 import { miracleMalvinConfig } from './miracle-malvin';
+import { busonmaBunigomConfig } from './busonma-bunigom';
 
 export const COUPLE_CONFIGS: Record<string, WeddingConfig> = {
   'ore-dara': oreDaraConfig,
   'miracle-malvin': miracleMalvinConfig,
+  'busonma-bunigom': busonmaBunigomConfig,
 };
 
 export const ALL_COUPLES: WeddingConfig[] = Object.values(COUPLE_CONFIGS);
@@ -37,6 +39,9 @@ export function resolveCoupleId(identifier?: string): string {
   }
 
   // 4. Match common keywords
+  if (clean.includes('busonma') || clean.includes('bunigom') || clean.includes('bunigonma') || clean.includes('chibum') || clean.includes('mbamalu') || clean.includes('obiagwu')) {
+    return 'busonma-bunigom';
+  }
   if (clean.includes('miracle') || clean.includes('malvin')) {
     return 'miracle-malvin';
   }

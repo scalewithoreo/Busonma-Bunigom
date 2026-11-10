@@ -2,19 +2,24 @@ import { FC, useState, useEffect } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { audioManager } from '../utils/audio';
+import { useWedding } from '../context/WeddingContext';
 
 export const MusicPlayer: FC = () => {
+  const { wedding } = useWedding();
   const [isPlaying, setIsPlaying] = useState(audioManager.isPlaying);
   const [isMuted, setIsMuted] = useState(audioManager.isMuted);
 
+  const songTitle = wedding.audio?.title || 'Do 4 Love';
+  const songArtist = wedding.audio?.artist || 'Snoh Aalegra';
+
   useEffect(() => {
-    audioManager.init();
+    audioManager.init(wedding.audio?.src);
     const unsubscribe = audioManager.subscribe(() => {
       setIsPlaying(audioManager.isPlaying);
       setIsMuted(audioManager.isMuted);
     });
     return unsubscribe;
-  }, []);
+  }, [wedding.audio?.src]);
 
   return (
     <div className="hidden md:block fixed bottom-6 left-6 z-40">
@@ -39,7 +44,7 @@ export const MusicPlayer: FC = () => {
 
         <div className="text-left flex flex-col pr-1">
           <span className="text-[11px] font-sans font-semibold tracking-wider text-brand-cream uppercase flex items-center gap-1.5 whitespace-nowrap">
-            Do 4 Love &bull; Snoh Aalegra
+            {songTitle} &bull; {songArtist}
           </span>
           <span className="text-[9px] font-sans text-brand-goldLight tracking-widest uppercase">
             {isMuted ? 'Muted • Tap to Play' : 'Playing • Tap to Mute'}
