@@ -39,7 +39,7 @@ export function resolveCoupleId(identifier?: string): string {
   }
 
   // 4. Match common keywords
-  if (clean.includes('busonma') || clean.includes('bunigom') || clean.includes('bunigonma') || clean.includes('chibum') || clean.includes('mbamalu') || clean.includes('obiagwu')) {
+  if (clean.includes('busonma') || clean.includes('bunigom') || clean.includes('bunigo') || clean.includes('bunigonma') || clean.includes('chibum') || clean.includes('mbamalu') || clean.includes('obiagwu')) {
     return 'busonma-bunigom';
   }
   if (clean.includes('miracle') || clean.includes('malvin')) {

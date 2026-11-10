@@ -161,7 +161,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                   }
                 : { y: 0, opacity: 1 }
             }
-            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-[18vh] sm:pt-[20vh] md:pt-[22vh]"
+            className="absolute inset-0 z-30 cursor-pointer pointer-events-auto flex flex-col items-center pt-[8vh] xs:pt-[9vh] sm:pt-[11vh] md:pt-[12vh]"
             onClick={handleOpenEnvelope}
           >
             {/* The clipped paper flap background (ClipPath applied ONLY to background so typography is NEVER clipped) */}
@@ -278,7 +278,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
           </motion.div>
 
           {/* ================= WAX SEAL & TAP BUTTON ================= */}
-          <div className="absolute top-[52%] sm:top-[51%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center pointer-events-auto">
+          <div className="absolute top-[53%] sm:top-[52%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center pointer-events-auto">
 
             {/* Photorealistic 3D Wax Seal Button */}
             <motion.button
@@ -303,7 +303,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               className="relative z-50 cursor-pointer focus:outline-none rounded-full"
               aria-label="Click to break wax seal and open invitation"
             >
-              <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 flex items-center justify-center">
+              <div className="relative w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 flex items-center justify-center">
                 <img
                   src={wedding.theme.envelope?.waxSealImage || "/assets/wax-seal-mm.png"}
                   alt={`${wedding.couple.title} 3D Wax Seal`}
