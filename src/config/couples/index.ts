@@ -1,10 +1,8 @@
 import { WeddingConfig } from '../../types/wedding';
-import { oreDaraConfig } from './ore-dara';
 import { miracleMalvinConfig } from './miracle-malvin';
 import { busonmaBunigomConfig } from './busonma-bunigom';
 
 export const COUPLE_CONFIGS: Record<string, WeddingConfig> = {
-  'ore-dara': oreDaraConfig,
   'miracle-malvin': miracleMalvinConfig,
   'busonma-bunigom': busonmaBunigomConfig,
 };
@@ -12,7 +10,7 @@ export const COUPLE_CONFIGS: Record<string, WeddingConfig> = {
 export const ALL_COUPLES: WeddingConfig[] = Object.values(COUPLE_CONFIGS);
 
 export const DEFAULT_COUPLE_ID =
-  (import.meta.env.VITE_DEFAULT_COUPLE as string) || 'ore-dara';
+  (import.meta.env.VITE_DEFAULT_COUPLE as string) || 'miracle-malvin';
 
 export function resolveCoupleId(identifier?: string): string {
   if (!identifier) return DEFAULT_COUPLE_ID;
@@ -42,11 +40,8 @@ export function resolveCoupleId(identifier?: string): string {
   if (clean.includes('busonma') || clean.includes('bunigom') || clean.includes('bunigo') || clean.includes('bunigonma') || clean.includes('chibum') || clean.includes('mbamalu') || clean.includes('obiagwu')) {
     return 'busonma-bunigom';
   }
-  if (clean.includes('miracle') || clean.includes('malvin')) {
+  if (clean.includes('miracle') || clean.includes('malvin') || clean.includes('chibudike')) {
     return 'miracle-malvin';
-  }
-  if (clean.includes('ore') || clean.includes('dara') || clean.includes('okunade')) {
-    return 'ore-dara';
   }
 
   return DEFAULT_COUPLE_ID;
@@ -54,5 +49,5 @@ export function resolveCoupleId(identifier?: string): string {
 
 export function getWeddingConfig(identifier?: string): WeddingConfig {
   const coupleId = resolveCoupleId(identifier);
-  return COUPLE_CONFIGS[coupleId] || oreDaraConfig;
+  return COUPLE_CONFIGS[coupleId] || miracleMalvinConfig;
 }

@@ -10,11 +10,13 @@ export const PIN_SALT = 'Wedding_Core_Salt_2026_';
 export const MASTER_EMERGENCY_PIN = '0000';
 
 export const INITIAL_ADMIN_ROLES: AdminRoleConfig[] = [
-  { role: 'ore', label: 'Ore (Master Admin)', defaultPin: '1111', isMaster: true, relationFilter: 'ore' },
-  { role: 'dara', label: 'Dara (Master Admin)', defaultPin: '2222', isMaster: true, relationFilter: 'dara' },
   { role: 'miracle', label: 'Miracle (Master Admin)', defaultPin: '1111', isMaster: true, relationFilter: 'miracle' },
   { role: 'malvin', label: 'Malvin (Master Admin)', defaultPin: '2222', isMaster: true, relationFilter: 'malvin' },
-  { role: 'custom1964', label: "Ore's Dad", defaultPin: '1964', isMaster: false, relationFilter: "Ore's Dad" },
+  { role: 'busonma', label: 'Chimbusonma (Bride & Master Admin)', defaultPin: '2703', isMaster: true, relationFilter: 'busonma' },
+  { role: 'bunigom', label: 'Chukwuebunigom (Groom & Master Admin)', defaultPin: '2703', isMaster: true, relationFilter: 'bunigom' },
+  { role: 'mummy_bride', label: 'Mummy of Bride (Mother of Bride)', defaultPin: '2703', isMaster: false, relationFilter: 'Mummy of Bride' },
+  { role: 'mama_groom', label: 'Mama of groom (Mother of Groom)', defaultPin: '2703', isMaster: false, relationFilter: 'Mama of groom' },
+  { role: 'dulcet', label: 'Dulcet (Wedding Planner / Coordinator)', defaultPin: '2703', isMaster: false, relationFilter: 'dulcet' },
   { role: 'groomsfamily', label: "Groom's Family", defaultPin: '3333', isMaster: false, relationFilter: "Groom's Family" },
   { role: 'bridesfamily', label: "Bride's Family", defaultPin: '4444', isMaster: false, relationFilter: "Bride's Family" },
 ];

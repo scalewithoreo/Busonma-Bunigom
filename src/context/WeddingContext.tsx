@@ -20,7 +20,7 @@ const WeddingContext = createContext<WeddingContextValue | null>(null);
 function detectInitialCoupleId(): string {
   if (typeof window === 'undefined') return DEFAULT_COUPLE_ID;
 
-  // 1. URL Query Param: ?couple=miracle-malvin or ?couple=ore-dara
+  // 1. URL Query Param: ?couple=miracle-malvin or ?couple=busonma-bunigom
   try {
     const params = new URLSearchParams(window.location.search);
     const coupleParam = params.get('couple');
@@ -47,7 +47,7 @@ function detectInitialCoupleId(): string {
   try {
     const hostname = window.location.hostname.toLowerCase();
     const resolvedFromHost = resolveCoupleId(hostname);
-    if (resolvedFromHost !== DEFAULT_COUPLE_ID || hostname.includes('ore') || hostname.includes('dara')) {
+    if (resolvedFromHost !== DEFAULT_COUPLE_ID) {
       return resolvedFromHost;
     }
   } catch (e) {

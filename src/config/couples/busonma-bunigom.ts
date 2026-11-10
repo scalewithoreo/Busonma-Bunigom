@@ -17,9 +17,9 @@ export const busonmaBunigomConfig: WeddingConfig = {
     hashtag: '#LiftedBeautifully27 • #ChiBum27 • #Bunigonma27',
     locationText: 'Victoria Island, Lagos',
     dateTeaser: 'March 2027',
-    logoImage: '/assets/logo.png',
-    heroImage: '/assets/hero-image-final.png',
-    wishlistImage: '/assets/wishlist-couple.png',
+    logoImage: '/assets/busonma-bunigom/logo.png',
+    heroImage: '/assets/busonma-bunigom/hero.png',
+    wishlistImage: '/assets/busonma-bunigom/wishlist.png',
     wishlistAlt: 'Chimbusonma & Chukwuebunigom - Our forever starts now',
   },
   event: {
@@ -54,7 +54,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
     envelope: {
       monogram: 'BB',
       waxSealImage: '/assets/wax-seal-mm.png',
-      paperTextureImage: '/assets/cotton-paper-texture.jpg',
+      paperTextureImage: '/assets/common/cotton-paper-texture.jpg',
     },
     colors: {
       primary: '#c5a880',
@@ -98,21 +98,21 @@ export const busonmaBunigomConfig: WeddingConfig = {
     looks: [
       {
         id: 'look-1',
-        src: '/assets/moodboard_trad_couple.jpg',
+        src: '/assets/busonma-bunigom/trad-look-1.jpg',
         title: 'Regal Traditional Splendor',
         category: 'Traditional Couture',
         caption: 'Lavishly detailed traditional textiles and handcrafted coral accessories for a royal entrance.',
       },
       {
         id: 'look-2',
-        src: '/assets/traditional-attire.jpg',
+        src: '/assets/busonma-bunigom/trad-look-2.jpg',
         title: 'Bespoke Traditional Luxury',
         category: 'Grand Celebration',
         caption: 'Architectural embroidery and majestic silhouette reflecting timeless cultural heritage.',
       },
       {
         id: 'look-3',
-        src: '/assets/guest-attire-inspiration.jpg',
+        src: '/assets/busonma-bunigom/trad-look-3.jpg',
         title: 'Contemporary Luxury Traditional',
         category: 'Festive Glamour',
         caption: 'Sophisticated silk, velvet, and rich metallic accents styled with contemporary grace.',
@@ -124,7 +124,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
     subtitle: 'How It All Began',
     welcomeQuote:
       'Welcome to our little corner of the internet and thank you for becoming part of our story! So whether you’re joining us from down the road or flying across the world, you have a special place in our hearts. So, explore our story, plan your trip, RSVP, pick out a gift if you wish, and get ready for a beautiful celebration! With love, Busonma & Bunigom',
-    image: '/assets/story-couple.jpg',
+    image: '/assets/busonma-bunigom/story.jpg',
     imageAlt: 'Chimbusonma and Chukwuebunigom',
     paragraphs: [
       '“If proximity alone determined who we would marry, you would think we should have met years ago.” We spent much of our lives living just minutes away from each other. Same city, familiar estates, mutual friends and countless opportunities to cross paths, yet somehow, we never did.',
@@ -220,35 +220,35 @@ export const busonmaBunigomConfig: WeddingConfig = {
   gallery: [
     {
       id: '1',
-      src: '/assets/moodboard_trad_couple.jpg',
+      src: '/assets/busonma-bunigom/gallery-1.jpg',
       alt: 'Chimbusonma and Chukwuebunigom traditional wedding portrait',
       caption: 'Two souls, one divine journey',
       featured: true,
     },
     {
       id: '2',
-      src: '/assets/traditional-attire.jpg',
+      src: '/assets/busonma-bunigom/gallery-2.jpg',
       alt: 'Luxury traditional wedding attire',
       caption: 'Walking into forever, hand in hand',
       featured: false,
     },
     {
       id: '3',
-      src: '/assets/story-couple.jpg',
+      src: '/assets/busonma-bunigom/gallery-3.jpg',
       alt: 'Chimbusonma and Chukwuebunigom romantic portrait',
       caption: 'Joy in every shared laugh',
       featured: false,
     },
     {
       id: '4',
-      src: '/assets/hero-image-final.png',
+      src: '/assets/busonma-bunigom/gallery-4.png',
       alt: 'Chimbusonma and Chukwuebunigom celebration portrait',
       caption: 'Our lines have fallen in pleasant places — Psalm 16:6',
       featured: true,
     },
     {
       id: '5',
-      src: '/assets/guest-attire-inspiration.jpg',
+      src: '/assets/busonma-bunigom/gallery-5.jpg',
       alt: 'Celebration glamour',
       caption: 'Surrounded by love and blessings',
       featured: false,
@@ -261,6 +261,6 @@ export const busonmaBunigomConfig: WeddingConfig = {
   audio: {
     title: 'Rebel',
     artist: 'anendlessocean',
-    src: '/assets/do4love.mp3',
+    src: '/assets/common/do4love.mp3',
   },
 };
