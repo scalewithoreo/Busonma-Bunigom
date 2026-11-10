@@ -21,6 +21,7 @@ export interface CoupleInfo {
   dateTeaser: string;
   logoImage: string;
   heroImage: string;
+  heroObjectPosition?: string;
   wishlistImage: string;
   wishlistAlt: string;
 }

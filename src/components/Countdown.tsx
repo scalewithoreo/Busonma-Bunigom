@@ -50,52 +50,65 @@ export const Countdown: FC = () => {
     { label: 'Seconds', value: timeLeft.seconds },
   ];
 
+  const formatNumber = (num: number) => String(num).padStart(2, '0');
+
   return (
-    <section id="countdown" className="py-20 sm:py-24 px-4 sm:px-6 bg-brand-espresso text-brand-cream relative overflow-hidden">
-      {/* Background Subtle Accent */}
-      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#c5a880_1px,transparent_1px)] [background-size:16px_16px]" />
+    <section id="countdown" className="py-20 sm:py-28 px-4 sm:px-6 bg-brand-cream relative overflow-hidden border-t border-brand-sand/30">
+      {/* Decorative subtle flourish */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[1px] bg-gradient-to-r from-transparent via-brand-gold/40 to-transparent" />
 
-      <div className="max-w-4xl mx-auto text-center relative z-10">
+      <div className="max-w-4xl mx-auto text-center">
+        {/* Section Heading */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex items-center justify-center gap-2 mb-4 text-brand-gold text-xs uppercase tracking-[0.25em] font-sans font-semibold"
-        >
-          <Clock className="w-4 h-4" />
-          <span>Counting Down</span>
-        </motion.div>
-
-        <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.1 }}
-          className="font-serif text-3xl sm:text-5xl md:text-6xl text-brand-cream font-light mb-12"
+          transition={{ duration: 0.6 }}
+          className="mb-12"
         >
-          Until We Say "I Do"
-        </motion.h2>
+          <p className="text-xs uppercase tracking-[0.3em] font-sans font-semibold text-brand-goldDark mb-3">
+            The Journey Begins
+          </p>
+          <h2 className="font-serif text-3xl sm:text-5xl text-brand-espresso font-light">
+            Event Starts In
+          </h2>
+          <p className="font-serif italic text-brand-muted text-[17px] sm:text-lg mt-2">
+            Counting down every second until we say “I Do”
+          </p>
+        </motion.div>
 
-        {/* Countdown Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 max-w-2xl mx-auto">
+        {/* Countdown Grid - Ore & Dara Large Minimalist Typography */}
+        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 max-w-4xl mx-auto">
           {timeUnits.map((unit, index) => (
             <motion.div
               key={unit.label}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.1 * (index + 1) }}
-              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center shadow-lg"
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="flex flex-col items-center justify-center relative group"
             >
-              <span className="font-serif text-4xl sm:text-6xl text-brand-gold font-light tabular-nums leading-none mb-2">
-                {String(unit.value).padStart(2, '0')}
+              <span className="font-sans text-5xl sm:text-7xl md:text-8xl font-light text-brand-espresso tracking-tight tabular-nums">
+                {formatNumber(unit.value)}
               </span>
-              <span className="font-sans text-[11px] sm:text-xs uppercase tracking-[0.2em] text-brand-sand/70">
+              <span className="text-[10px] sm:text-[13px] uppercase tracking-[0.3em] font-sans font-semibold text-brand-goldDark mt-4 sm:mt-6">
                 {unit.label}
               </span>
             </motion.div>
           ))}
         </div>
+
+        {/* Date Reminder footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-12 inline-flex items-center gap-2 text-xs sm:text-[16px] text-brand-muted font-sans"
+        >
+          <Clock className="w-4 h-4 text-brand-gold" />
+          <span>{wedding.event.displayDate}</span>
+        </motion.div>
       </div>
     </section>
   );

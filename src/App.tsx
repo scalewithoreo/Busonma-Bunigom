@@ -99,10 +99,21 @@ export function App() {
   };
 
   const isPublicMode = import.meta.env.VITE_SITE_MODE === 'public';
+  const [isEnvelopeOpen, setIsEnvelopeOpen] = useState(wedding.theme.introStyle !== 'envelope');
+
+  // If wedding switches or resets
+  useEffect(() => {
+    setIsEnvelopeOpen(wedding.theme.introStyle !== 'envelope');
+  }, [wedding.theme.introStyle]);
 
   const HomePage = () => (
     <>
-      {wedding.theme.introStyle === 'envelope' && <EnvelopeIntro />}
+      {wedding.theme.introStyle === 'envelope' && (
+        <EnvelopeIntro 
+          onOpeningStart={() => setIsEnvelopeOpen(true)}
+          onComplete={() => setIsEnvelopeOpen(true)} 
+        />
+      )}
       <Navbar onOpenRsvp={scrollToRsvp} />
       <main>
         <Hero onRsvpClick={scrollToRsvp} />
@@ -119,7 +130,7 @@ export function App() {
         
         {isPublicMode && <Collaborate onNotify={addToast} />}
         
-        {!isPublicMode && <FloatingRSVP onRSVPClick={scrollToRsvp} />}
+        {!isPublicMode && isEnvelopeOpen && <FloatingRSVP onRSVPClick={scrollToRsvp} />}
 
         {/* Link to Wishlist Page */}
         <section id="wishlist" className="py-24 sm:py-32 px-4 sm:px-6 bg-brand-cream relative border-t border-brand-espresso/10">

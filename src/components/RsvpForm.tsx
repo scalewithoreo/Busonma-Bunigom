@@ -134,9 +134,9 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
       <div className="max-w-3xl mx-auto">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-16 flex flex-col items-center">
-          <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-full overflow-hidden mb-8 shadow-lg relative border-4 border-white">
-            <img loading="lazy" decoding="async" src={wedding.couple.heroImage} alt={wedding.couple.title} className="w-full h-full object-cover object-[center_30%]" />
-            <div className="absolute inset-0 bg-brand-espresso/10"></div>
+          <div className="w-44 h-44 sm:w-60 sm:h-60 rounded-full overflow-hidden mb-8 shadow-xl relative border-4 border-white bg-brand-sand/30">
+            <img loading="lazy" decoding="async" src={wedding.couple.heroImage} alt={wedding.couple.title} className="w-full h-full object-cover object-[center_68%]" />
+            <div className="absolute inset-0 bg-brand-espresso/5 pointer-events-none"></div>
           </div>
           <motion.p
             initial={{ opacity: 0, y: 15 }}

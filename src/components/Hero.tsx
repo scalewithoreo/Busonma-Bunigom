@@ -18,7 +18,8 @@ export const Hero: FC<HeroProps> = () => {
         <img decoding="sync"
           src={wedding.couple.heroImage}
           alt={wedding.couple.title}
-          className="w-full h-full object-cover object-[center_45%] scale-105 transition-transform duration-1000 ease-out"
+          style={{ objectPosition: wedding.couple.heroObjectPosition || 'center 45%' }}
+          className="w-full h-full object-cover scale-105 transition-transform duration-1000 ease-out"
         />
         {/* Layered Gradient Vignette matching reference mood */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/55 to-brand-espresso" />

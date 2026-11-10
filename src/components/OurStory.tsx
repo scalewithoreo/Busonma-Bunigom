@@ -65,7 +65,6 @@ export const OurStory: FC = () => {
                 alt={story.imageAlt}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-brand-gold/10 mix-blend-multiply pointer-events-none" />
             </div>
           </motion.div>
 

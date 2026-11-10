@@ -1,11 +1,13 @@
 import { FC, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useWedding } from '../context/WeddingContext';
 
 interface FloatingRSVPProps {
   onRSVPClick: () => void;
 }
 
 export const FloatingRSVP: FC<FloatingRSVPProps> = ({ onRSVPClick }) => {
+  const { wedding } = useWedding();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export const FloatingRSVP: FC<FloatingRSVPProps> = ({ onRSVPClick }) => {
         >
           <div className="bg-white/95 backdrop-blur-md shadow-2xl rounded-full p-1.5 flex items-center gap-4 sm:gap-6 border border-brand-sand/30 hover:scale-105 transition-transform duration-300">
             <span className="pl-4 sm:pl-6 text-[15px] sm:text-lg font-sans font-medium tracking-wide text-brand-espresso whitespace-nowrap">
-              Wednesday, Jan 27th
+              {wedding.event.displayDate}
             </span>
             <button 
               onClick={onRSVPClick}
