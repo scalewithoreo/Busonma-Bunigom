@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useWedding } from './context/WeddingContext';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
+import { WarmWelcome } from './components/WarmWelcome';
 import { OurStory } from './components/OurStory';
 import { Countdown } from './components/Countdown';
 import { EventDetails } from './components/EventDetails';
@@ -117,6 +118,7 @@ export function App() {
       <Navbar onOpenRsvp={scrollToRsvp} />
       <main>
         <Hero onRsvpClick={scrollToRsvp} />
+        <WarmWelcome />
         <OurStory />
         {!isPublicMode && <Countdown />}
         

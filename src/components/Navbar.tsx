@@ -19,13 +19,17 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    audioManager.init();
+    if (wedding.audio?.src) {
+      audioManager.init(wedding.audio.src, false);
+    } else {
+      audioManager.init(undefined, false);
+    }
     const unsubscribe = audioManager.subscribe(() => {
       setIsPlaying(audioManager.isPlaying);
       setIsMuted(audioManager.isMuted);
     });
     return unsubscribe;
-  }, []);
+  }, [wedding.audio?.src]);
 
   useEffect(() => {
     const handleScroll = () => {

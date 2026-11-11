@@ -31,33 +31,15 @@ export const OurStory: FC = () => {
           </motion.h2>
         </div>
 
-        {/* Guest Welcome Note (when configured) */}
-        {story.welcomeQuote && (
+        {/* Story Content with Sticky Photo on Desktop */}
+        <div className="flex flex-col md:flex-row gap-12 lg:gap-20 items-start relative">
+          {/* Image - Sticky on Desktop (Fade In, No Slide) */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.8 }}
-            className="mb-16 p-6 sm:p-10 rounded-3xl bg-white/70 border border-brand-gold/30 shadow-md text-center max-w-3xl mx-auto backdrop-blur-sm"
-          >
-            <p className="text-xs uppercase tracking-[0.25em] font-sans font-semibold text-brand-goldDark mb-3">
-              A Warm Welcome From The Couple
-            </p>
-            <p className="font-serif italic text-lg sm:text-2xl text-brand-espresso/90 leading-relaxed">
-              "{story.welcomeQuote}"
-            </p>
-          </motion.div>
-        )}
-
-        {/* Story Content */}
-        <div className="flex flex-col md:flex-row gap-12 lg:gap-20 items-center">
-          {/* Image */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="w-full md:w-1/2"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.9, ease: 'easeOut' }}
+            className="w-full md:w-1/2 md:sticky md:top-28 self-start"
           >
             <div className="aspect-[4/5] sm:aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl relative bg-brand-espresso border border-brand-gold/20">
               <img loading="lazy" decoding="async"
@@ -68,12 +50,12 @@ export const OurStory: FC = () => {
             </div>
           </motion.div>
 
-          {/* Text */}
+          {/* Text (Fade In, No Slide) */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.9, delay: 0.2, ease: 'easeOut' }}
             className="w-full md:w-1/2 space-y-6 text-brand-espresso/80 font-sans text-base sm:text-lg leading-relaxed relative"
           >
             <div className="absolute -left-6 -top-6 text-brand-gold/20 font-serif text-9xl pointer-events-none hidden md:block">

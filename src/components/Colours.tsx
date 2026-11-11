@@ -78,13 +78,13 @@ export const Colours: FC = () => {
               </div>
             ))}
           </div>
-        ) : (
-          /* Stacked Silk Silk Bands (e.g. Ore & Dara) */
+        ) : theme.paletteBands.length === 2 ? (
+          /* Stacked Silk Bands (2 items e.g. Ore & Dara) */
           <div className="flex flex-col w-full h-[500px] sm:h-[600px] mb-16 rounded-3xl overflow-hidden shadow-2xl max-w-5xl mx-auto">
             {theme.paletteBands.map((band) => (
               <div
                 key={band.name}
-                className="w-full h-1/2 relative flex items-center justify-center bg-cover bg-center"
+                className="w-full flex-1 relative flex items-center justify-center bg-cover bg-center"
                 style={{
                   backgroundImage: band.bgImage ? `url('${band.bgImage}')` : undefined,
                   backgroundColor: band.hex,
@@ -101,6 +101,47 @@ export const Colours: FC = () => {
                 </motion.h3>
               </div>
             ))}
+          </div>
+        ) : (
+          /* 4-Swatch Fabric Presentation (e.g. Busonma & Bunigom Colors of the Day Card) */
+          <div className="mb-16 max-w-5xl mx-auto">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {theme.paletteBands.map((band, idx) => (
+                <motion.div
+                  key={band.name}
+                  initial={{ opacity: 0, y: 25 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1, duration: 0.5 }}
+                  className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-md hover:shadow-2xl transition-all duration-300 border border-brand-sand/50 flex flex-col group hover:-translate-y-1"
+                >
+                  {/* Draped Fabric Swatch */}
+                  <div 
+                    className="w-full aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden relative shadow-inner bg-cover bg-center transition-transform duration-500 group-hover:scale-[1.02]"
+                    style={{
+                      backgroundImage: band.bgImage ? `url('${band.bgImage}')` : undefined,
+                      backgroundColor: band.hex,
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                  </div>
+                  {/* Swatch Typography */}
+                  <div className="text-center pt-3 pb-1">
+                    <h3 className="font-serif text-sm sm:text-base font-bold tracking-wider text-brand-espresso uppercase">
+                      {band.name}
+                    </h3>
+                    <p className="font-mono text-xs text-brand-goldDark font-semibold tracking-wider uppercase mt-1">
+                      {band.hex}
+                    </p>
+                    {band.tag && (
+                      <span className="inline-block text-[10px] tracking-[0.18em] uppercase font-sans text-brand-muted mt-0.5">
+                        {band.tag}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -119,8 +160,8 @@ export const Colours: FC = () => {
           </p>
         </div>
 
-        {/* Looks Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        {/* Looks Grid - 3 Wide Centralized Cards for Igbo Attire */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 max-w-6xl mx-auto justify-center">
           {looks.map((look, index) => (
             <motion.div
               key={look.id}

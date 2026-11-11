@@ -22,6 +22,7 @@ export interface CoupleInfo {
   logoImage: string;
   heroImage: string;
   heroObjectPosition?: string;
+  rsvpAvatarImage?: string;
   wishlistImage: string;
   wishlistAlt: string;
 }
@@ -37,6 +38,8 @@ export interface EventScheduleItem {
 export interface EventInfo {
   date: string; // ISO date for countdown timer
   displayDate: string; // e.g. "Saturday, December 12, 2026"
+  venueImage?: string;
+  saveTheDateImage?: string;
   church: EventScheduleItem;
   reception: EventScheduleItem;
   confettiColors: string[];

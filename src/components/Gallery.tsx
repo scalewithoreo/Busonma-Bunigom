@@ -88,22 +88,12 @@ export const Gallery: FC = () => {
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
 
-                {/* Gradient scrim */}
-                <div className="absolute inset-0 bg-gradient-to-t from-brand-espresso/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6" />
+                {/* Subtle dark tint on hover */}
+                <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-                {/* Hover Caption Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-between">
-                  <div>
-                    <p className="font-serif italic text-brand-cream text-xl drop-shadow-md">
-                      {photo.caption}
-                    </p>
-                    <p className="text-brand-gold text-xs uppercase tracking-widest font-sans mt-1">
-                      Miracle & Malvin
-                    </p>
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
-                    <Maximize2 className="w-4 h-4" />
-                  </div>
+                {/* Subtle expand icon in bottom-right corner on hover - NO text */}
+                <div className="absolute bottom-5 right-5 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/20 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:scale-105">
+                  <Maximize2 className="w-4 h-4" />
                 </div>
               </motion.div>
             );

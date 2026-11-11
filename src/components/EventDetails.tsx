@@ -104,16 +104,23 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           {/* Events Left Column (7 cols) */}
           <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="bg-brand-cream/80 rounded-3xl p-8 sm:p-12 shadow-sm text-center flex flex-col justify-center h-full items-center border border-brand-sand/30 relative overflow-hidden">
-              {/* Faint Background Image */}
-              <div className="absolute inset-0 z-0 opacity-15">
-                <img loading="lazy" decoding="async" src={wedding.couple.heroImage} alt={wedding.couple.title} className="w-full h-full object-cover object-top mix-blend-luminosity grayscale" />
+            <div className="bg-brand-espresso rounded-3xl p-8 sm:p-12 shadow-2xl text-center flex flex-col justify-center h-full items-center border border-white/10 relative overflow-hidden">
+              {/* Background Image Layer - 100% Vibrant Full Color */}
+              <div className="absolute inset-0 z-0">
+                <img 
+                  loading="lazy" 
+                  decoding="async" 
+                  src={wedding.event.saveTheDateImage || '/assets/busonma-bunigom/gallery-3.jpg'} 
+                  alt={wedding.couple.title} 
+                  className="w-full h-full object-cover object-center opacity-75" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/75 pointer-events-none" />
               </div>
               
               <div className="relative z-10 flex flex-col items-center w-full">
-                <CalendarPlus className="w-10 h-10 text-brand-goldDark mb-5 opacity-80" />
-                <h3 className="font-serif text-3xl sm:text-4xl text-brand-espresso mb-3">Save the Date</h3>
-                <p className="text-brand-muted font-sans text-[17px] mb-8 max-w-md leading-relaxed font-medium">
+                <CalendarPlus className="w-10 h-10 text-brand-gold mb-5 drop-shadow-lg" />
+                <h3 className="font-serif text-3xl sm:text-4xl text-white drop-shadow-md mb-3">Save the Date</h3>
+                <p className="text-brand-cream/90 font-sans text-[17px] mb-8 max-w-md leading-relaxed font-normal drop-shadow-sm">
                    We are so excited to celebrate our special day with you. Add the wedding to your calendar to stay updated!
                 </p>
                 {/* Add to Calendar Action */}
@@ -175,8 +182,14 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
           >
             {/* Background Image Layer */}
             <div className="absolute inset-0 z-0">
-              <img loading="lazy" decoding="async" src="/assets/celebr8-center.jpg" alt="Venue" className="w-full h-full object-cover opacity-15 mix-blend-luminosity" />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-espresso via-brand-espresso/70 to-transparent" />
+              <img 
+                loading="lazy" 
+                decoding="async" 
+                src={wedding.event.venueImage || '/assets/celebr8-center.jpg'} 
+                alt={wedding.event.church.venueName} 
+                className="w-full h-full object-cover opacity-50 mix-blend-luminosity hover:scale-105 transition-transform duration-700" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-espresso via-brand-espresso/65 to-black/25" />
             </div>
 
             {/* Background texture watermark */}
@@ -188,40 +201,79 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 <span>Venue & Location</span>
               </div>
 
-              <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
-                {wedding.event.church.name}
-              </h3>
-              <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm mt-1 mb-6">
-                {wedding.event.church.address}
-              </p>
-              
-              <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
-                {wedding.event.reception.name}
-              </h3>
-              <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm mt-1">
-                {wedding.event.reception.address}
-              </p>
+              {wedding.event.church.venueName === wedding.event.reception.venueName ? (
+                /* Unified Single Day Celebration Venue (e.g. Busonma & Bunigom at Admiralty Conference Centre) */
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-brand-gold font-semibold block mb-1">
+                      Ceremony &amp; Celebration &bull; 1:00 PM WAT
+                    </span>
+                    <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
+                      {wedding.event.church.venueName}
+                    </h3>
+                  </div>
+                  <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm">
+                    {wedding.event.church.address}
+                  </p>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-white/10 text-brand-sand text-xs font-sans tracking-wider uppercase border border-white/10">
+                      Dress Code: {wedding.theme.dressCodeDescription?.includes('Luxury Traditional') ? 'Luxury Traditional Attire' : 'Formal / Traditional'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                /* Split Venues (Church + Reception) */
+                <div>
+                  <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
+                    {wedding.event.church.name}
+                  </h3>
+                  <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm mt-1 mb-6">
+                    {wedding.event.church.address}
+                  </p>
+                  
+                  <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
+                    {wedding.event.reception.name}
+                  </h3>
+                  <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm mt-1">
+                    {wedding.event.reception.address}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="relative z-10 mt-8 pt-6 border-t border-white/10 flex flex-col gap-3">
-              <a
-                href={wedding.event.church.directionsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-white/10 hover:bg-white/20 text-brand-cream text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 backdrop-blur-sm"
-              >
-                <span>Church Directions (Maps)</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-              <a
-                href={wedding.event.reception.directionsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md"
-              >
-                <span>Reception Directions (Maps)</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
+              {wedding.event.church.venueName === wedding.event.reception.venueName ? (
+                <a
+                  href={wedding.event.church.directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-lg hover:scale-105"
+                >
+                  <span>Get Venue Directions (Google Maps)</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              ) : (
+                <>
+                  <a
+                    href={wedding.event.church.directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-white/10 hover:bg-white/20 text-brand-cream text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 backdrop-blur-sm"
+                  >
+                    <span>Church Directions (Maps)</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                  <a
+                    href={wedding.event.reception.directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-md"
+                  >
+                    <span>Reception Directions (Maps)</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </>
+              )}
             </div>
           </motion.div>
         </div>

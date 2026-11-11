@@ -5,8 +5,8 @@ class AudioManager {
   public isMuted = false;
   public userHasInteracted = false;
 
-  init(customSrc?: string) {
-    const src = customSrc || '/assets/do4love.mp3';
+  init(customSrc?: string, autoPlay: boolean = false) {
+    const src = customSrc || '/assets/busonma-bunigom/rebel.mp3';
     if (this.audio) {
       if (this.audio.src.endsWith(src) || this.audio.src === src) return;
       this.audio.pause();
@@ -51,17 +51,20 @@ class AudioManager {
       }
     });
 
-    // Try starting unmuted if allowed by browser policy
-    this.audio.play()
-      .then(() => {
-        this.isPlaying = true;
-        this.notify();
-      })
-      .catch(() => {
-        // Autoplay policy: waiting for user gesture
-        this.isPlaying = false;
-        this.notify();
-      });
+    if (autoPlay) {
+      this.audio.play()
+        .then(() => {
+          this.isPlaying = true;
+          this.notify();
+        })
+        .catch(() => {
+          this.isPlaying = false;
+          this.notify();
+        });
+    } else {
+      this.isPlaying = false;
+      this.notify();
+    }
   }
 
   play() {

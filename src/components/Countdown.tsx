@@ -1,6 +1,5 @@
 import { useState, useEffect, FC } from 'react';
 import { motion } from 'framer-motion';
-import { Clock } from 'lucide-react';
 import { useWedding } from '../context/WeddingContext';
 
 interface TimeLeft {
@@ -77,38 +76,26 @@ export const Countdown: FC = () => {
           </p>
         </motion.div>
 
-        {/* Countdown Grid - Ore & Dara Large Minimalist Typography */}
-        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 max-w-4xl mx-auto">
+        {/* Countdown Grid - Strictly Guaranteed Single Horizontal Line on Every Screen Size */}
+        <div className="grid grid-cols-4 w-full max-w-3xl mx-auto gap-1 xs:gap-2 sm:gap-6 md:gap-12 items-center justify-between">
           {timeUnits.map((unit, index) => (
             <motion.div
               key={unit.label}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="flex flex-col items-center justify-center relative group"
+              className="flex flex-col items-center justify-center min-w-0 px-0.5"
             >
-              <span className="font-sans text-5xl sm:text-7xl md:text-8xl font-light text-brand-espresso tracking-tight tabular-nums">
-                {formatNumber(unit.value)}
+              <span className="font-sans text-2xl xs:text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-brand-espresso tracking-tight tabular-nums leading-none">
+                {unit.label === 'Days' ? unit.value : formatNumber(unit.value)}
               </span>
-              <span className="text-[10px] sm:text-[13px] uppercase tracking-[0.3em] font-sans font-semibold text-brand-goldDark mt-4 sm:mt-6">
+              <span className="text-[8px] xs:text-[10px] sm:text-[13px] uppercase tracking-[0.14em] sm:tracking-[0.25em] font-sans font-semibold text-brand-goldDark mt-1.5 sm:mt-4 whitespace-nowrap">
                 {unit.label}
               </span>
             </motion.div>
           ))}
         </div>
-
-        {/* Date Reminder footer */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-12 inline-flex items-center gap-2 text-xs sm:text-[16px] text-brand-muted font-sans"
-        >
-          <Clock className="w-4 h-4 text-brand-gold" />
-          <span>{wedding.event.displayDate}</span>
-        </motion.div>
       </div>
     </section>
   );
