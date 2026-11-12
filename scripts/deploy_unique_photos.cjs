@@ -79,21 +79,7 @@ async function deploy() {
     .toFile(path.join(destDir, 'gallery-5.jpg'));
   console.log('✓ Gallery 5: from IMG_8381 -> gallery-5.jpg');
 
-  // 11. Gallery 6: from C:/Users/PC/Downloads/IMG_3770.JPG.jpeg
-  await sharp('C:/Users/PC/Downloads/IMG_3770.JPG.jpeg')
-    .resize(1200, 1600, { fit: 'cover', position: 'center' })
-    .jpeg({ quality: 85, mozjpeg: true })
-    .toFile(path.join(destDir, 'gallery-6.jpg'));
-  console.log('✓ Gallery 6: from IMG_3770 -> gallery-6.jpg');
-
-  // 12. Gallery 7: from C:/Users/PC/Downloads/IMG_3816.JPG.jpeg
-  await sharp('C:/Users/PC/Downloads/IMG_3816.JPG.jpeg')
-    .resize(1200, 1600, { fit: 'cover', position: 'center' })
-    .jpeg({ quality: 85, mozjpeg: true })
-    .toFile(path.join(destDir, 'gallery-7.jpg'));
-  console.log('✓ Gallery 7: from IMG_3816 -> gallery-7.jpg');
-
-  console.log('\n🎉 SUCCESS: All 12 photo slots across the entire site are now 100% UNIQUE!');
+  console.log('\n🎉 SUCCESS: All photo slots across the entire site are now 100% UNIQUE!');
 }
 
 deploy().catch(console.error);

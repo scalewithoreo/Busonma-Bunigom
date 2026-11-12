@@ -259,20 +259,6 @@ export const busonmaBunigomConfig: WeddingConfig = {
       caption: 'Surrounded by love and blessings',
       featured: false,
     },
-    {
-      id: '6',
-      src: '/assets/busonma-bunigom/gallery-6.jpg?v=12',
-      alt: 'Joyful celebration',
-      caption: 'Every love story is beautiful, but ours is our favorite',
-      featured: false,
-    },
-    {
-      id: '7',
-      src: '/assets/busonma-bunigom/gallery-7.jpg?v=12',
-      alt: 'Golden moments',
-      caption: 'Blessed and lifted beautifully together',
-      featured: true,
-    },
   ],
   database: {
     type: 'turso',

@@ -35,6 +35,10 @@ export const Gallery: FC = () => {
   }, [activeIndex, handleNext, handlePrev]);
 
   const getSpanClass = (index: number) => {
+    if (photos.length === 5) {
+      if (index === 0) return 'sm:col-span-2 lg:col-span-2';
+      return 'col-span-1';
+    }
     if (index === 3 || index === 6) return 'sm:col-span-2 lg:col-span-2';
     if (index === 2) return 'sm:col-span-2 lg:col-span-1';
     return 'col-span-1';
