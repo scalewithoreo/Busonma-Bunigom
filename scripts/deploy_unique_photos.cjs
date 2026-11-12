@@ -7,12 +7,13 @@ async function deploy() {
 
   console.log('Generating 100% unique web-optimized images for all 12 slots...');
 
-  // 1. Hero: from Hero.jpeg (2560x1440 cover)
+  // 1. Hero: from Hero.jpeg (2560x1440, couple-focused at top: 3400)
   await sharp('public/assets/busonma-bunigom/Hero.jpeg')
-    .resize(2560, 1440, { fit: 'cover', position: 'center' })
-    .jpeg({ quality: 84, mozjpeg: true })
+    .extract({ left: 0, top: 3400, width: 4480, height: 2520 })
+    .resize(2560, 1440)
+    .jpeg({ quality: 88, mozjpeg: true })
     .toFile(path.join(destDir, 'hero-opt.jpg'));
-  console.log('✓ Hero: from Hero.jpeg -> hero-opt.jpg');
+  console.log('✓ Hero: from Hero.jpeg -> hero-opt.jpg (couple-focused)');
 
   // 2. Story: from IMG_8756 (1200x1600 vertical)
   await sharp('public/assets/busonma-bunigom/IMG_8756.JPG.jpeg')

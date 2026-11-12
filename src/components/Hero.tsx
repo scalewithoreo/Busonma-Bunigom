@@ -18,13 +18,11 @@ export const Hero: FC<HeroProps> = () => {
         <img decoding="sync"
           src={wedding.couple.heroImage}
           alt={wedding.couple.title}
-          className="w-full h-full object-cover scale-100 transition-transform duration-1000 ease-out object-[38%_center] sm:object-[42.7%_center] md:object-[42.7%_center] lg:object-[42.7%_center]"
+          className="w-full h-full object-cover scale-100 transition-transform duration-1000 ease-out object-center"
         />
-        {/* Layered Gradient Vignette: Deep contrast top and bottom for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/35 to-brand-espresso" />
-        {/* Dedicated dark contrast scrim across the text area in the lower-middle */}
-        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/20 to-black/70 pointer-events-none" />
+        {/* Layered Cinematic Vignette: Clean contrast for text while keeping the couple clearly visible and radiant */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/25 to-brand-espresso/75 pointer-events-none" />
+        <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/15 to-black/55 pointer-events-none" />
       </div>
 
       {/* Hero Content */}

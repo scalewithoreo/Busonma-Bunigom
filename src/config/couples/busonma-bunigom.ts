@@ -18,7 +18,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
     locationText: 'Victoria Island, Lagos',
     dateTeaser: 'March 2027',
     logoImage: '/assets/busonma-bunigom/logo.png?v=10',
-    heroImage: '/assets/busonma-bunigom/hero-opt.jpg?v=12',
+    heroImage: '/assets/busonma-bunigom/hero-opt.jpg?v=13',
     heroObjectPosition: '42.7% center',
     rsvpAvatarImage: '/assets/busonma-bunigom/rsvp-avatar.jpg?v=12',
     wishlistImage: '/assets/busonma-bunigom/wishlist.jpg?v=12',
