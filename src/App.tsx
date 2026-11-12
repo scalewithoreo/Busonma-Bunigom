@@ -107,11 +107,10 @@ export function App() {
     setIsEnvelopeOpen(wedding.theme.introStyle !== 'envelope');
   }, [wedding.theme.introStyle]);
 
-  const HomePage = () => (
+  const homeView = (
     <>
       {wedding.theme.introStyle === 'envelope' && (
         <EnvelopeIntro 
-          onOpeningStart={() => setIsEnvelopeOpen(true)}
           onComplete={() => setIsEnvelopeOpen(true)} 
         />
       )}
@@ -180,7 +179,7 @@ export function App() {
     </>
   );
 
-  const WishlistPage = () => (
+  const wishlistView = (
     <>
       <Navbar onOpenRsvp={() => navigate('/#rsvp')} />
       <main className="pt-20">
@@ -195,11 +194,11 @@ export function App() {
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
       
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/" element={homeView} />
+        <Route path="/wishlist" element={wishlistView} />
         <Route path="/admin" element={<AdminPage onNotify={addToast} />} />
         <Route path="/admin-01" element={<AdminPage onNotify={addToast} />} />
-        <Route path="*" element={<HomePage />} />
+        <Route path="*" element={homeView} />
       </Routes>
 
       {!location.pathname.startsWith('/admin') && <MusicPlayer />}

@@ -300,7 +300,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
                       transition: { repeat: Infinity, duration: 2.2, ease: 'easeInOut' },
                     }
               }
-              className="relative z-50 cursor-pointer focus:outline-none rounded-full transition-transform active:scale-95 hover:scale-105"
+              className="relative z-50 cursor-pointer focus:outline-none rounded-full transition-transform active:scale-95 hover:scale-105 touch-manipulation select-none"
               aria-label="Click to break wax seal and open invitation"
             >
               <div className="relative w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 flex items-center justify-center pointer-events-none">
@@ -323,7 +323,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
               }
               transition={{ delay: 0.15 }}
               onClick={handleTrigger}
-              className="mt-6 sm:mt-7 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform"
+              className="mt-6 sm:mt-7 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform touch-manipulation"
             >
               <div className="inline-flex items-center justify-center px-8 sm:px-10 py-3 sm:py-3.5 rounded-full bg-[#181310] hover:bg-[#B91C1C] text-white shadow-xl hover:shadow-[0_8px_30px_rgba(185,28,28,0.5)] transition-all duration-300 hover:scale-105 border border-white/20 whitespace-nowrap shrink-0 pointer-events-none">
                 <span className="font-sans font-bold text-xs sm:text-sm tracking-[0.22em] uppercase text-white whitespace-nowrap select-none">
