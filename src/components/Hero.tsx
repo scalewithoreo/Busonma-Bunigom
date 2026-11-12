@@ -91,16 +91,14 @@ export const Hero: FC<HeroProps> = () => {
         )}
 
         {/* Hashtag */}
-        <motion.div
+        <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.9 }}
-          className="mt-2.5 inline-flex items-center justify-center px-5 sm:px-7 py-2 sm:py-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 shadow-2xl"
+          className="mt-2.5 font-sans text-[#F7E7CE] tracking-[0.22em] text-xs sm:text-sm uppercase font-bold drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)] select-none"
         >
-          <span className="font-sans text-[#F7E7CE] tracking-[0.22em] text-xs sm:text-sm uppercase font-bold drop-shadow-md select-none">
-            {wedding.couple.hashtag}
-          </span>
-        </motion.div>
+          {wedding.couple.hashtag}
+        </motion.p>
       </div>
 
       {/* Scroll Down Cue */}
