@@ -109,17 +109,17 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, [activeCoupleId]);
 
   const [activePresetId, setActivePresetId] = useState<ThemePresetId>(() => {
-    return rawWedding.theme.preset || 'champagne-luxury';
+    return rawWedding.theme.preset || 'botanical-sage';
   });
 
   // Keep preset in sync when couple changes
   useEffect(() => {
-    setActivePresetId(rawWedding.theme.preset || 'champagne-luxury');
+    setActivePresetId(rawWedding.theme.preset || 'botanical-sage');
   }, [rawWedding]);
 
   // Merge active preset with wedding colors
   const wedding: WeddingConfig = useMemo(() => {
-    const preset = THEME_PRESETS[activePresetId] || THEME_PRESETS['champagne-luxury'];
+    const preset = THEME_PRESETS[activePresetId] || THEME_PRESETS['botanical-sage'];
     return {
       ...rawWedding,
       theme: {

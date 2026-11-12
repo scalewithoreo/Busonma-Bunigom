@@ -10,7 +10,7 @@ export const COUPLE_CONFIGS: Record<string, WeddingConfig> = {
 export const ALL_COUPLES: WeddingConfig[] = Object.values(COUPLE_CONFIGS);
 
 export const DEFAULT_COUPLE_ID =
-  (import.meta.env.VITE_DEFAULT_COUPLE as string) || 'miracle-malvin';
+  (import.meta.env.VITE_DEFAULT_COUPLE as string) || 'busonma-bunigom';
 
 export function resolveCoupleId(identifier?: string): string {
   if (!identifier) return DEFAULT_COUPLE_ID;
