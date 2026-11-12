@@ -31,7 +31,6 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
 
   // Reset Modal Form State
   const [targetRole, setTargetRole] = useState<AdminRole>(() => wedding.admin.roles[0]?.role || 'master');
-  const [selectedLoginRole, setSelectedLoginRole] = useState<string>('auto');
   const [currentOrMasterPin, setCurrentOrMasterPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
@@ -103,7 +102,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
     }
 
     // Secure verification
-    const verification = verifyEnteredPin(pin, wedding.admin.roles, wedding.admin.emergencyPin, selectedLoginRole);
+    const verification = verifyEnteredPin(pin, wedding.admin.roles, wedding.admin.emergencyPin);
 
     if (verification.success && verification.role) {
       resetFailedAttempts();
@@ -220,27 +219,6 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
         </p>
 
         <div className="space-y-4">
-          {/* Optional Role Scoping Selector */}
-          {wedding.admin.roles.length > 1 && lockoutRemaining === 0 && (
-            <div className="text-left mb-2">
-              <label className="block text-[11px] font-sans font-semibold uppercase tracking-wider text-brand-muted mb-1.5">
-                Logging in as:
-              </label>
-              <select
-                value={selectedLoginRole}
-                onChange={(e) => setSelectedLoginRole(e.target.value)}
-                className="w-full text-xs font-sans px-3 py-2.5 rounded-xl border border-brand-sand bg-white/80 text-brand-espresso focus:border-brand-gold outline-none"
-              >
-                <option value="auto">Auto-Detect Role (By PIN)</option>
-                {wedding.admin.roles.map((r) => (
-                  <option key={r.role} value={r.role}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           {lockoutRemaining > 0 ? (
             <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-rose-800 text-sm font-sans flex flex-col items-center gap-2">
               <ShieldAlert className="w-8 h-8 text-rose-600 animate-pulse" />
