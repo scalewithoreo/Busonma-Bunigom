@@ -31,3 +31,10 @@ yarn-error.log*
 *.sln
 *.sw?
 tsconfig.tsbuildinfo
+
+# Raw uncompressed camera originals & master scans (keep local only)
+public/assets/busonma-bunigom/IMG_*
+public/assets/busonma-bunigom/Hero.jpeg
+public/assets/busonma-bunigom/*WEDDING-LOGO*
+public/assets/busonma-bunigom/wedding-logo.png
+public/assets/busonma-bunigom/anendlessocean*
