@@ -6,7 +6,7 @@ import {
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
   getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, InviteCode,
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
-  getStoredReminders, deleteReservation, markReservationFulfilled, clearMiracleMalvinDatabase,
+  getStoredReminders, deleteReservation, markReservationFulfilled,
   getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, DEFAULT_POSTERS
 } from '../utils/storage';
 import { sendReservationReminderEmail } from '../utils/email';
@@ -769,26 +769,6 @@ To help us finalize our guest list, please use your unique code ðŸ‘‰ *${code}* ð
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {isMaster && (
-            <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to completely clear the guest list and reset the database for {wedding.couple.title}? This will reset all RSVPs, invite codes, and pledges.')) {
-                  clearMiracleMalvinDatabase();
-                  setRsvps([]);
-                  setCodes([]);
-                  setPledges([]);
-                  setReservations([]);
-                  setWishlistItems(INITIAL_WISHLIST_ITEMS);
-                  onNotify('Database Cleared', '${wedding.couple.title} database has been reset fresh.');
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 bg-red-950/40 border border-red-500/30 rounded-xl text-red-300 hover:bg-red-900/60 transition-colors text-xs font-semibold tracking-wider uppercase"
-              title="Reset backend database"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Reset DB</span>
-            </button>
-          )}
           <button
             onClick={onClose}
             className="flex items-center gap-2 px-4 py-2 bg-brand-cream/10 rounded-xl text-brand-cream hover:bg-brand-primary hover:text-white transition-colors text-sm font-semibold tracking-wider uppercase"
