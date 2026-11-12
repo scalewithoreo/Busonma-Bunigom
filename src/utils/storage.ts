@@ -1117,22 +1117,90 @@ export async function exportInviteCodesCsv(filterByRole?: string): Promise<void>
   document.body.removeChild(link);
 }
 
-// --- Invitation Posters Management ---
+// --- Invitation Posters & Messages Management ---
+
+export const DEFAULT_INVITATION_MESSAGES = {
+  general: `*WEDDING INVITATION 💍*
+We are absolutely overjoyed to invite you to celebrate with us as we tie the knot on *Saturday, March 27, 2027*!
+
+📌 *YOUR EXCLUSIVE RSVP CODE* 📌
+To help us finalize our guest list, please use your unique code 👉 *{code}* 👈 to RSVP online on or before *February 27th, 2027* here: 
+🔗 {link}
+*(Kindly note that this code can only be used once)*
+
+✨ *A Gentle Reminder:* As much as we love little ones, this will be an adult-only celebration. Thank you so much for understanding!`,
+
+  familyVip: `*HONOURED WEDDING & CELEBRATION INVITATION 💍✨*
+We are overjoyed to invite you as our valued family & VIP guest to celebrate our special day with us!
+
+✨ *Events Include:* Traditional Marriage & Nuptial Ceremony, Grand Reception & Banquet.
+
+📌 *YOUR EXCLUSIVE RSVP CODE* 📌
+To help us finalize our guest list, please use your unique code 👉 *{code}* 👈 to RSVP online on or before *February 27th, 2027* here: 
+🔗 {link}
+*(Kindly note that this code can only be used once)*
+
+✨ *A Gentle Reminder:* As much as we love little ones, this will be an adult-only celebration. Thank you so much for understanding!`
+};
 
 export interface InvitationPostersConfig {
   generalUrl: string;
   familyVipUrl: string;
   generalUpdatedAt?: string;
   familyVipUpdatedAt?: string;
+  generalMessage?: string;
+  familyVipMessage?: string;
+  generalMessageUpdatedAt?: string;
+  familyVipMessageUpdatedAt?: string;
+}
+
+export function formatInviteMessage(
+  template: string | undefined,
+  code: string,
+  websiteUrl: string,
+  _creatorRole?: string,
+  tier: 'general' | 'familyVip' = 'general',
+  coupleTitle: string = 'Busonma & Bunigom',
+  displayDate: string = 'Saturday, March 27, 2027'
+): string {
+  if (template && template.trim()) {
+    let msg = template;
+    if (msg.includes('{code}')) {
+      msg = msg.replace(/\{code\}/g, code);
+    } else if (msg.includes('[CODE]')) {
+      msg = msg.replace(/\[CODE\]/g, code);
+    } else {
+      msg = `${msg.trim()}\n\n📌 *YOUR EXCLUSIVE RSVP CODE: 👉 ${code} 👈*\n🔗 RSVP here: ${websiteUrl}\n*(Kindly note that this code can only be used once)*`;
+    }
+
+    msg = msg.replace(/\{link\}|\{website\}|\{url\}/gi, websiteUrl);
+    return msg;
+  }
+
+  const codeSection = `📌 *YOUR EXCLUSIVE RSVP CODE* 📌
+To help us finalize our guest list, please use your unique code 👉 *${code}* 👈 to RSVP online on or before *February 27th, 2027* here: 
+🔗 ${websiteUrl}
+*(Kindly note that this code can only be used once)*
+✨ *A Gentle Reminder:* As much as we love little ones, this will be an adult-only celebration. Thank you so much for understanding!`;
+
+  if (tier === 'familyVip') {
+    return `*HONOURED WEDDING & CELEBRATION INVITATION 💍✨*\nWe are overjoyed to invite you as our valued family & VIP guest to celebrate our special day with us for the wedding of *${coupleTitle}*!\n\n✨ *Events Include:* Traditional Marriage Ceremony, Grand Reception & Banquet.\n\n${codeSection}`;
+  }
+
+  return `*WEDDING INVITATION 💍*\nWe are absolutely overjoyed to invite you to celebrate with us as we tie the knot on *${displayDate}* for *${coupleTitle}*!\n${codeSection}`;
 }
 
 const INVITATION_POSTERS_KEY = 'mm_invitation_posters';
 
 export const DEFAULT_POSTERS: InvitationPostersConfig = {
-  generalUrl: '/invitation.png?v=2',
-  familyVipUrl: '/Main IV.png?v=2',
-  generalUpdatedAt: 'Default Asset',
-  familyVipUpdatedAt: 'Default Asset'
+  generalUrl: '',
+  familyVipUrl: '',
+  generalUpdatedAt: undefined,
+  familyVipUpdatedAt: undefined,
+  generalMessage: DEFAULT_INVITATION_MESSAGES.general,
+  familyVipMessage: DEFAULT_INVITATION_MESSAGES.familyVip,
+  generalMessageUpdatedAt: 'Default Template',
+  familyVipMessageUpdatedAt: 'Default Template'
 };
 
 export function getLocalInvitationPosters(): InvitationPostersConfig {
@@ -1140,11 +1208,20 @@ export function getLocalInvitationPosters(): InvitationPostersConfig {
     const raw = localStorage.getItem(INVITATION_POSTERS_KEY);
     if (!raw) return DEFAULT_POSTERS;
     const parsed = JSON.parse(raw);
+    const isLegacy = parsed.generalUrl?.includes('invitation.png') || parsed.familyVipUrl?.includes('Main IV.png');
+    if (isLegacy) {
+      localStorage.removeItem(INVITATION_POSTERS_KEY);
+      return DEFAULT_POSTERS;
+    }
     return {
-      generalUrl: parsed.generalUrl || DEFAULT_POSTERS.generalUrl,
-      familyVipUrl: parsed.familyVipUrl || DEFAULT_POSTERS.familyVipUrl,
-      generalUpdatedAt: parsed.generalUpdatedAt || DEFAULT_POSTERS.generalUpdatedAt,
-      familyVipUpdatedAt: parsed.familyVipUpdatedAt || DEFAULT_POSTERS.familyVipUpdatedAt
+      generalUrl: parsed.generalUrl || '',
+      familyVipUrl: parsed.familyVipUrl || '',
+      generalUpdatedAt: parsed.generalUpdatedAt,
+      familyVipUpdatedAt: parsed.familyVipUpdatedAt,
+      generalMessage: parsed.generalMessage || DEFAULT_POSTERS.generalMessage,
+      familyVipMessage: parsed.familyVipMessage || DEFAULT_POSTERS.familyVipMessage,
+      generalMessageUpdatedAt: parsed.generalMessageUpdatedAt || DEFAULT_POSTERS.generalMessageUpdatedAt,
+      familyVipMessageUpdatedAt: parsed.familyVipMessageUpdatedAt || DEFAULT_POSTERS.familyVipMessageUpdatedAt
     };
   } catch {
     return DEFAULT_POSTERS;
@@ -1162,11 +1239,20 @@ export async function getStoredInvitationPosters(): Promise<InvitationPostersCon
         });
         if (res.rows.length > 0 && res.rows[0].description) {
           const parsed = JSON.parse(String(res.rows[0].description));
+          const isLegacy = parsed.generalUrl?.includes('invitation.png') || parsed.familyVipUrl?.includes('Main IV.png');
+          if (isLegacy) {
+            localStorage.removeItem(INVITATION_POSTERS_KEY);
+            return DEFAULT_POSTERS;
+          }
           const config: InvitationPostersConfig = {
-            generalUrl: parsed.generalUrl || DEFAULT_POSTERS.generalUrl,
-            familyVipUrl: parsed.familyVipUrl || DEFAULT_POSTERS.familyVipUrl,
-            generalUpdatedAt: parsed.generalUpdatedAt || DEFAULT_POSTERS.generalUpdatedAt,
-            familyVipUpdatedAt: parsed.familyVipUpdatedAt || DEFAULT_POSTERS.familyVipUpdatedAt
+            generalUrl: parsed.generalUrl || '',
+            familyVipUrl: parsed.familyVipUrl || '',
+            generalUpdatedAt: parsed.generalUpdatedAt,
+            familyVipUpdatedAt: parsed.familyVipUpdatedAt,
+            generalMessage: parsed.generalMessage || DEFAULT_POSTERS.generalMessage,
+            familyVipMessage: parsed.familyVipMessage || DEFAULT_POSTERS.familyVipMessage,
+            generalMessageUpdatedAt: parsed.generalMessageUpdatedAt || DEFAULT_POSTERS.generalMessageUpdatedAt,
+            familyVipMessageUpdatedAt: parsed.familyVipMessageUpdatedAt || DEFAULT_POSTERS.familyVipMessageUpdatedAt
           };
           try {
             localStorage.setItem(INVITATION_POSTERS_KEY, JSON.stringify(config));
