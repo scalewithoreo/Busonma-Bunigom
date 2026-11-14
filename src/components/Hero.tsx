@@ -18,7 +18,7 @@ export const Hero: FC<HeroProps> = () => {
         <img decoding="sync"
           src={wedding.couple.heroImage}
           alt={wedding.couple.title}
-          className="w-full h-full object-cover scale-100 transition-transform duration-1000 ease-out object-[44%_center] sm:object-[46%_center] md:object-center"
+          className={`w-full h-full object-cover scale-100 transition-transform duration-1000 ease-out ${wedding.couple.heroObjectPosition || 'object-center'}`}
         />
         {/* Layered Cinematic Vignette: Clean contrast for text while keeping the couple clearly visible and radiant */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/25 to-brand-espresso/75 pointer-events-none" />
