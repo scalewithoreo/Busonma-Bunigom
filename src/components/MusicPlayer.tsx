@@ -9,8 +9,8 @@ export const MusicPlayer: FC = () => {
   const [isPlaying, setIsPlaying] = useState(audioManager.isPlaying);
   const [isMuted, setIsMuted] = useState(audioManager.isMuted);
 
-  const songTitle = wedding.audio?.title || 'Rebel';
-  const songArtist = wedding.audio?.artist || 'anendlessocean';
+  const songTitle = wedding.audio?.title || 'Wedding Song';
+  const songArtist = wedding.audio?.artist || '';
 
   useEffect(() => {
     audioManager.init(wedding.audio?.src);

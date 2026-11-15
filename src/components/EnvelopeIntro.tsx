@@ -21,6 +21,8 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
   const [isMuted, setIsMuted] = useState(audioManager.isMuted);
 
   useEffect(() => {
+    audioManager.init(wedding.audio?.src);
+
     // Lock scroll while envelope covers the viewport
     if (stage !== 'dismissed') {
       document.body.style.overflow = 'hidden';
@@ -139,7 +141,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({ onComplete, onOpen
           ) : (
             <>
               <Volume2 className="w-3.5 h-3.5 text-brand-gold animate-pulse" />
-              <span className="opacity-95 font-medium">{wedding.audio?.title || 'Rebel'} &bull; Tap to Mute</span>
+              <span className="opacity-95 font-medium">{wedding.audio?.title || 'Wedding Song'} &bull; Tap to Mute</span>
             </>
           )}
         </button>
