@@ -1,10 +1,10 @@
 import { useState, useEffect, FC, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload, RotateCcw, XCircle, Image as ImageIcon, UploadCloud, Eye, Share2, Sparkles, Save, Smartphone } from 'lucide-react';
+import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload, RotateCcw, XCircle, Image as ImageIcon, UploadCloud, Eye, Share2, Sparkles, Save, Smartphone, Search } from 'lucide-react';
 import { 
   getStoredRsvps, deleteRsvp,
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
-  getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, InviteCode,
+  getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, assignInviteCode, exportInviteCodesCsv, InviteCode,
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
   getStoredReminders, deleteReservation, markReservationFulfilled,
   getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, DEFAULT_INVITATION_MESSAGES, formatInviteMessage
@@ -30,6 +30,10 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [isUploadingPoster, setIsUploadingPoster] = useState<'general' | 'familyVip' | null>(null);
   const [previewPosterUrl, setPreviewPosterUrl] = useState<string | null>(null);
   const [sharingCode, setSharingCode] = useState<string | null>(null);
+  const [sharingRecipientName, setSharingRecipientName] = useState<string>('');
+  const [editingRecipientCodeId, setEditingRecipientCodeId] = useState<string | null>(null);
+  const [editingRecipientValue, setEditingRecipientValue] = useState<string>('');
+  const [codeSearchQuery, setCodeSearchQuery] = useState<string>('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [generalMsgDraft, setGeneralMsgDraft] = useState(invitationPosters.generalMessage || DEFAULT_INVITATION_MESSAGES.general);
   const [familyVipMsgDraft, setFamilyVipMsgDraft] = useState(invitationPosters.familyVipMessage || DEFAULT_INVITATION_MESSAGES.familyVip);
@@ -206,8 +210,16 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
     } else if (codeStatusFilter === 'used') {
       result = result.filter(c => c.is_used);
     }
+    if (codeSearchQuery.trim()) {
+      const q = codeSearchQuery.trim().toLowerCase();
+      result = result.filter(c => 
+        c.code.toLowerCase().includes(q) ||
+        (c.assigned_to && c.assigned_to.toLowerCase().includes(q)) ||
+        (c.used_by && c.used_by.toLowerCase().includes(q))
+      );
+    }
     return result;
-  }, [codes, creatorFilter, role, codeStatusFilter]);
+  }, [codes, creatorFilter, role, codeStatusFilter, codeSearchQuery]);
 
   const handleGenerateCode = async () => {
     let amount = parseInt(bulkGenAmount, 10);
@@ -289,7 +301,21 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
 
   const handleShareCode = (code: string) => {
+    const target = codes.find(c => c.code === code);
+    setSharingRecipientName(target?.assigned_to || '');
     setSharingCode(code);
+  };
+
+  const handleSaveRecipientOnly = async (codeId: string, recipientName: string) => {
+    try {
+      await assignInviteCode(codeId, recipientName);
+      setCodes(prev => prev.map(c => c.id === codeId ? { ...c, assigned_to: recipientName.trim() || undefined } : c));
+      setEditingRecipientCodeId(null);
+      onNotify('Recipient Updated', recipientName.trim() ? `Assigned code to ${recipientName.trim()}` : 'Recipient cleared.');
+      if (sharingCode) setSharingCode(null);
+    } catch (e) {
+      onNotify('Error', 'Failed to update recipient name.');
+    }
   };
 
   const executeShare = async (code: string, tier: 'general' | 'familyVip') => {
@@ -300,10 +326,15 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
     const markShared = async () => {
       setCopiedCode(code);
-      if (targetCode && !targetCode.is_shared) {
+      const recipient = sharingRecipientName.trim();
+      if (targetCode) {
         try {
-          await markInviteCodeAsShared(targetCode.id);
-          setCodes(prev => prev.map(c => c.id === targetCode.id ? { ...c, is_shared: true } : c));
+          await markInviteCodeAsShared(targetCode.id, recipient || undefined);
+          setCodes(prev => prev.map(c => c.id === targetCode.id ? { 
+            ...c, 
+            is_shared: true,
+            assigned_to: recipient || c.assigned_to 
+          } : c));
         } catch (e) {
           console.error('Failed to save shared status to DB', e);
         }
@@ -1007,11 +1038,10 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
                             return [
                               { id: 'all', label: 'All' },
-                              { id: 'miracle', label: 'Miracle' },
-                              { id: 'malvin', label: 'Malvin' },
-                              { id: 'groomsfamily', label: "Malvin's Family" },
-                              { id: 'bridesfamily', label: "Miracle's Family" },
-                              { id: 'custom1964', label: 'Coordinator' }
+                              ...wedding.admin.roles.map(r => ({
+                                id: r.role,
+                                label: r.label.split('(')[0].trim()
+                              }))
                             ].map((f) => {
                               const count = getCreatorRsvpCount(f.id);
                               return (
@@ -1216,7 +1246,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                   <div className="p-6 border-b border-brand-sand/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
                     <h3 className="font-serif text-2xl text-brand-espresso">Gift Payments</h3>
                     <button
-                      onClick={exportGiftPledgesCsv}
+                      onClick={() => exportGiftPledgesCsv(wedding.slug)}
                       className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight text-xs font-sans uppercase tracking-wider rounded-xl hover:bg-brand-charcoal transition-colors font-bold"
                     >
                       <Download className="w-4 h-4" /> Export CSV
@@ -1367,7 +1397,8 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                               const formatData = (data: typeof codes) => data.map(c => ({
                                 'Code': c.code,
                                 'Status': c.is_used ? 'Used' : c.is_shared ? 'Shared' : 'Available',
-                                'Used By': c.used_by || '',
+                                'Sent To (Assigned)': c.assigned_to || '',
+                                'Used By (RSVP)': c.used_by || '',
                                 'Created At': new Date(c.created_at).toLocaleString()
                               }));
 
@@ -1399,54 +1430,82 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                               onNotify('Export Failed', 'There was an error generating the Excel file.');
                             }
                           }}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight text-xs font-sans uppercase tracking-wider rounded-xl hover:bg-brand-charcoal transition-colors font-bold"
+                          className="flex items-center gap-2 px-4 py-2.5 bg-brand-espresso text-brand-goldLight text-xs font-sans uppercase tracking-wider rounded-xl hover:bg-brand-charcoal transition-colors font-bold"
                         >
                           <Download className="w-4 h-4" /> Export Excel
                         </button>
-                      </div>
-                    </div>
-
-                    {/* Status Filter Tabs */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0 -mx-1 px-1 pt-2 border-t border-brand-sand/20">
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-1">
-                        <Filter className="w-3.5 h-3.5" /> Status
-                      </div>
-                      {[
-                        { id: 'all', label: `All (${codeStats.total})` },
-                        { id: 'available', label: `Available (${codeStats.available})` },
-                        { id: 'shared', label: `Shared / Awaiting RSVP (${codeStats.shared})` },
-                        { id: 'used', label: `Used (${codeStats.used})` }
-                      ].map((s) => (
                         <button
-                          key={s.id}
-                          onClick={() => {
-                            setCodeStatusFilter(s.id as any);
-                            setSelectedCodes(new Set());
-                          }}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all border ${
-                            codeStatusFilter === s.id
-                              ? 'bg-brand-espresso text-brand-goldLight border-brand-espresso shadow-sm'
-                              : 'bg-white text-brand-muted border-brand-sand/50 hover:bg-brand-sand/30'
-                          }`}
+                          onClick={() => exportInviteCodesCsv(isMaster && creatorFilter !== 'all' ? creatorFilter : (!isMaster ? role : undefined), wedding.slug)}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-brand-sand/60 text-brand-espresso text-xs font-sans uppercase tracking-wider rounded-xl hover:bg-brand-sand/30 transition-colors font-bold"
                         >
-                          {s.label}
+                          <Download className="w-4 h-4 text-brand-goldDark" /> Export CSV
                         </button>
-                      ))}
+                      </div>
                     </div>
 
-                    {/* Creator Filters for Miracle / Malvin */}
+                    {/* Filter and Search Bar */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-2 border-t border-brand-sand/20">
+                      {/* Status Filter Tabs */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0 -mx-1 px-1">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-1 shrink-0">
+                          <Filter className="w-3.5 h-3.5" /> Status
+                        </div>
+                        {[
+                          { id: 'all', label: `All (${codeStats.total})` },
+                          { id: 'available', label: `Available (${codeStats.available})` },
+                          { id: 'shared', label: `Shared (${codeStats.shared})` },
+                          { id: 'used', label: `Used (${codeStats.used})` }
+                        ].map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => {
+                              setCodeStatusFilter(s.id as any);
+                              setSelectedCodes(new Set());
+                            }}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all border shrink-0 whitespace-nowrap ${
+                              codeStatusFilter === s.id
+                                ? 'bg-brand-espresso text-brand-goldLight border-brand-espresso shadow-sm'
+                                : 'bg-white text-brand-muted border-brand-sand/50 hover:bg-brand-sand/30'
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Search Bar for Code or Recipient / Used By */}
+                      <div className="relative w-full md:w-64 shrink-0">
+                        <input
+                          type="text"
+                          placeholder="Search code or guest..."
+                          value={codeSearchQuery}
+                          onChange={(e) => setCodeSearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-7 py-1.5 rounded-xl border border-brand-sand/60 bg-brand-cream/10 text-xs font-sans text-brand-espresso placeholder:text-brand-muted/60 focus:outline-none focus:border-brand-goldDark"
+                        />
+                        <Search className="w-3.5 h-3.5 text-brand-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        {codeSearchQuery && (
+                          <button
+                            onClick={() => setCodeSearchQuery('')}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-espresso"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Creator Filters for Active Wedding Roles */}
                     {isMaster && (
                       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0 -mx-1 px-1 border-t border-brand-sand/20 pt-2">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-1">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-1 shrink-0">
                           <Users className="w-3.5 h-3.5" /> Creator
                         </div>
                         {[
                           { id: 'all', label: 'All Creators' },
-                          { id: 'miracle', label: 'Miracle (1111)' },
-                          { id: 'malvin', label: 'Malvin (2222)' },
-                          { id: 'groomsfamily', label: "Malvin's Family (3333)" },
-                          { id: 'bridesfamily', label: "Miracle's Family (4444)" },
-                          { id: 'custom1964', label: 'Coordinator (1964)' }
+                          ...wedding.admin.roles.map(r => ({
+                            id: r.role,
+                            label: `${r.label.split('(')[0].trim()} (${r.defaultPin})`
+                          }))
                         ].map((f) => (
                           <button
                             key={f.id}
@@ -1482,7 +1541,8 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                           <th className="p-6 font-semibold w-16 text-center text-brand-muted">#</th>
                           <th className="p-6 font-semibold">Code</th>
                           <th className="p-6 font-semibold">Status</th>
-                          <th className="p-6 font-semibold">Used By</th>
+                          <th className="p-6 font-semibold">Sent To (Guest)</th>
+                          <th className="p-6 font-semibold">Used By (RSVP)</th>
                           <th className="p-6 font-semibold">Created</th>
                           <th className="p-6 font-semibold text-right">Action</th>
                         </tr>
@@ -1490,7 +1550,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                       <tbody className="text-sm font-sans text-brand-espresso">
                         {filteredCodes.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="p-12 text-center text-brand-muted text-base">
+                            <td colSpan={8} className="p-12 text-center text-brand-muted text-base">
                               No invite codes found for this filter.
                             </td>
                           </tr>
@@ -1541,6 +1601,69 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                                     <Check className="w-3.5 h-3.5 text-emerald-600" />
                                     Available
                                   </span>
+                                )}
+                              </td>
+                              <td className="p-4 sm:p-6">
+                                {editingRecipientCodeId === c.id ? (
+                                  <div className="flex items-center gap-1.5 min-w-[170px]" onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                      type="text"
+                                      autoFocus
+                                      value={editingRecipientValue}
+                                      onChange={(e) => setEditingRecipientValue(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          handleSaveRecipientOnly(c.id, editingRecipientValue);
+                                        } else if (e.key === 'Escape') {
+                                          setEditingRecipientCodeId(null);
+                                        }
+                                      }}
+                                      placeholder="Recipient name..."
+                                      className="px-2.5 py-1 text-xs rounded-lg border border-brand-goldDark focus:outline-none bg-white text-brand-espresso w-full font-sans shadow-sm"
+                                    />
+                                    <button
+                                      onClick={() => handleSaveRecipientOnly(c.id, editingRecipientValue)}
+                                      className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shrink-0"
+                                      title="Save recipient"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingRecipientCodeId(null)}
+                                      className="p-1.5 rounded-lg bg-brand-sand/40 hover:bg-brand-sand text-brand-muted transition-colors shrink-0"
+                                      title="Cancel"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ) : c.assigned_to ? (
+                                  <div className="flex items-center gap-1.5 group max-w-[200px]">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-sand/30 text-brand-espresso border border-brand-sand/60 truncate" title={c.assigned_to}>
+                                      <Users className="w-3 h-3 text-brand-goldDark shrink-0" />
+                                      <span className="truncate">{c.assigned_to}</span>
+                                    </span>
+                                    <button
+                                      onClick={() => {
+                                        setEditingRecipientCodeId(c.id);
+                                        setEditingRecipientValue(c.assigned_to || '');
+                                      }}
+                                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-brand-sand/40 rounded-lg text-brand-muted hover:text-brand-espresso transition-all shrink-0"
+                                      title="Edit recipient name"
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setEditingRecipientCodeId(c.id);
+                                      setEditingRecipientValue('');
+                                    }}
+                                    className="text-xs text-brand-muted/70 hover:text-brand-goldDark flex items-center gap-1 border border-dashed border-brand-sand/80 hover:border-brand-goldDark px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
+                                    title="Track who this code was given or sent to"
+                                  >
+                                    <Plus className="w-3 h-3" /> Add Guest
+                                  </button>
                                 )}
                               </td>
                               <td className="p-6 font-semibold text-base text-brand-espresso">
@@ -2626,8 +2749,39 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                   </button>
                 </div>
 
-                <p className="text-xs text-brand-muted mt-3 mb-5 font-sans leading-relaxed">
-                  Which invitation card would you like to attach for this guest?
+                <div className="mt-4 mb-5 bg-brand-cream/40 p-3.5 rounded-2xl border border-brand-sand/60">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-brand-espresso flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-brand-goldDark" />
+                      Recipient / Guest Name
+                    </label>
+                    {sharingRecipientName.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const target = codes.find(c => c.code === sharingCode);
+                          if (target) handleSaveRecipientOnly(target.id, sharingRecipientName);
+                        }}
+                        className="text-[10px] text-brand-goldDark hover:underline font-bold"
+                      >
+                        Save Only
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. Uncle John, Chiamaka Obi (Optional)"
+                    value={sharingRecipientName}
+                    onChange={(e) => setSharingRecipientName(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-brand-sand bg-white text-brand-espresso placeholder:text-brand-muted/60 focus:outline-none focus:border-brand-goldDark font-sans shadow-inner"
+                  />
+                  <p className="text-[10px] text-brand-muted mt-1 font-sans">
+                    Track who this code was given to in your guest list.
+                  </p>
+                </div>
+
+                <p className="text-xs text-brand-muted mb-3 font-sans leading-relaxed">
+                  Choose which card to share:
                 </p>
 
                 <div className="space-y-3">

@@ -286,7 +286,7 @@ export function clearUserActiveRsvp(): void {
   } catch {}
 }
 
-export async function exportRsvpsCsv(): Promise<void> {
+export async function exportRsvpsCsv(prefix: string = 'Wedding'): Promise<void> {
   const rsvps = await getStoredRsvps();
   if (rsvps.length === 0) {
     alert('No RSVPs to export.');
@@ -308,7 +308,7 @@ export async function exportRsvpsCsv(): Promise<void> {
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `Miracle_Malvin_Wedding_RSVPs_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute('download', `${prefix}_RSVPs_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -481,7 +481,7 @@ export async function deleteGiftPledge(id: string): Promise<void> {
   }
 }
 
-export async function exportGiftPledgesCsv(): Promise<void> {
+export async function exportGiftPledgesCsv(prefix: string = 'Wedding'): Promise<void> {
   const pledges = await getStoredGiftPledgesAdmin();
   if (pledges.length === 0) {
     alert('No item gift payments recorded yet.');
@@ -505,7 +505,7 @@ export async function exportGiftPledgesCsv(): Promise<void> {
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `Miracle_Malvin_Wedding_GiftPledges_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute('download', `${prefix}_GiftPledges_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -833,6 +833,7 @@ export interface InviteCode {
   code: string;
   is_used: boolean;
   is_shared?: boolean;
+  assigned_to?: string;
   used_by?: string;
   created_by?: string;
   created_at: string;
@@ -864,9 +865,9 @@ export async function generateInviteCode(createdBy: string = 'malvin'): Promise<
       const client = getTursoClient();
       if (client) {
         await client.execute({
-          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at)
-                VALUES (?, ?, '', ?, 1, 0, ?)`,
-          args: [newCode.id, newCode.code, newCode.created_by || 'malvin', newCode.created_at]
+          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at, is_shared, assigned_to)
+                VALUES (?, ?, '', ?, 1, 0, ?, 0, NULL)`,
+          args: [newCode.id, newCode.code, newCode.created_by || 'admin', newCode.created_at]
         });
       }
     } catch (err) {
@@ -911,9 +912,9 @@ export async function bulkGenerateInviteCodes(count: number, createdBy: string =
       const client = getTursoClient();
       if (client) {
         const statements = newCodes.map(c => ({
-          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at)
-                VALUES (?, ?, '', ?, 1, 0, ?)`,
-          args: [c.id, c.code, c.created_by || 'malvin', c.created_at]
+          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at, is_shared, assigned_to)
+                VALUES (?, ?, '', ?, 1, 0, ?, 0, NULL)`,
+          args: [c.id, c.code, c.created_by || 'admin', c.created_at]
         }));
         await client.batch(statements);
       }
@@ -947,26 +948,85 @@ export async function deleteInviteCodes(ids: string[]): Promise<void> {
   }
 }
 
-export async function markInviteCodeAsShared(id: string): Promise<void> {
+export async function markInviteCodeAsShared(id: string, assignedTo?: string): Promise<void> {
   const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
-  setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { ...c, is_shared: true } : c));
+  setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { 
+    ...c, 
+    is_shared: true,
+    assigned_to: assignedTo !== undefined ? (assignedTo.trim() || undefined) : c.assigned_to 
+  } : c));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        if (assignedTo !== undefined) {
+          await client.execute({
+            sql: 'UPDATE invite_codes SET is_shared = 1, assigned_to = ? WHERE id = ?',
+            args: [assignedTo.trim() || null, id]
+          });
+        } else {
+          await client.execute({
+            sql: 'UPDATE invite_codes SET is_shared = 1 WHERE id = ?',
+            args: [id]
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to mark code as shared in cloud:', err);
+    }
+  }
 }
 
-export async function unmarkInviteCodeAsShared(id: string): Promise<void> {
+export async function assignInviteCode(id: string, assignedTo: string): Promise<void> {
+  const cleanAssigned = assignedTo.trim();
   const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
-  setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { ...c, is_shared: false } : c));
-}
-
-export async function resetInviteCode(id: string): Promise<void> {
-  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
-  setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { ...c, is_used: false, is_shared: false, used_by: undefined } : c));
+  setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { ...c, assigned_to: cleanAssigned || undefined } : c));
 
   if (isTursoConfigured()) {
     try {
       const client = getTursoClient();
       if (client) {
         await client.execute({
-          sql: "UPDATE invite_codes SET is_used = 0, guest_name = '' WHERE id = ?",
+          sql: 'UPDATE invite_codes SET assigned_to = ? WHERE id = ?',
+          args: [cleanAssigned || null, id]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to assign invite code in cloud:', err);
+    }
+  }
+}
+
+export async function unmarkInviteCodeAsShared(id: string): Promise<void> {
+  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+  setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { ...c, is_shared: false } : c));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: 'UPDATE invite_codes SET is_shared = 0 WHERE id = ?',
+          args: [id]
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to unmark code as shared in cloud:', err);
+    }
+  }
+}
+
+export async function resetInviteCode(id: string): Promise<void> {
+  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+  setLocalDb(MM_DB_CODES, currentCodes.map(c => c.id === id ? { ...c, is_used: false, is_shared: false, used_by: undefined, assigned_to: undefined } : c));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: "UPDATE invite_codes SET is_used = 0, is_shared = 0, guest_name = '', assigned_to = NULL WHERE id = ?",
           args: [id]
         });
       }
@@ -1007,9 +1067,9 @@ export async function reallocateInviteCode(id: string, createdBy: string = 'malv
       const client = getTursoClient();
       if (client) {
         await client.execute({
-          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at)
-                VALUES (?, ?, '', ?, 1, 0, ?)`,
-          args: [newCode.id, newCode.code, newCode.created_by || 'malvin', newCode.created_at]
+          sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at, is_shared, assigned_to)
+                VALUES (?, ?, '', ?, 1, 0, ?, 0, NULL)`,
+          args: [newCode.id, newCode.code, newCode.created_by || 'admin', newCode.created_at]
         });
       }
     } catch (err) {
@@ -1025,6 +1085,21 @@ export async function bulkMakeCodesAvailable(ids: string[]): Promise<void> {
   const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
   const idSet = new Set(ids);
   setLocalDb(MM_DB_CODES, currentCodes.map(c => idSet.has(c.id) ? { ...c, is_shared: false } : c));
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        const placeholders = ids.map(() => '?').join(',');
+        await client.execute({
+          sql: `UPDATE invite_codes SET is_shared = 0 WHERE id IN (${placeholders})`,
+          args: ids
+        });
+      }
+    } catch (err) {
+      console.warn('[turso] Failed to bulk unmark codes as shared in cloud:', err);
+    }
+  }
 }
 
 export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[]> {
@@ -1037,12 +1112,14 @@ export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[
           id: String(row.id),
           code: String(row.code),
           is_used: Boolean(row.is_used),
-          created_by: row.category ? String(row.category) : 'malvin',
+          is_shared: Boolean(row.is_shared),
+          assigned_to: row.assigned_to ? String(row.assigned_to) : undefined,
+          created_by: row.category ? String(row.category) : 'admin',
           used_by: row.guest_name ? String(row.guest_name) : undefined,
           created_at: String(row.created_at || new Date().toISOString())
         }));
         setLocalDb(MM_DB_CODES, codes);
-        if (filterByRole && !['miracle', 'malvin'].includes(filterByRole)) {
+        if (filterByRole && !['all', 'master', 'miracle', 'malvin', 'busonma', 'bunigom'].includes(filterByRole)) {
           return codes.filter(c => c.created_by === filterByRole);
         }
         return codes;
@@ -1053,7 +1130,7 @@ export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[
   }
 
   const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
-  if (filterByRole && !['miracle', 'malvin'].includes(filterByRole)) {
+  if (filterByRole && !['all', 'master', 'miracle', 'malvin', 'busonma', 'bunigom'].includes(filterByRole)) {
     return currentCodes.filter(c => c.created_by === filterByRole);
   }
   return currentCodes;
@@ -1086,17 +1163,18 @@ export async function markCodeAsUsed(code: string, usedBy: string): Promise<void
   }
 }
 
-export async function exportInviteCodesCsv(filterByRole?: string): Promise<void> {
+export async function exportInviteCodesCsv(filterByRole?: string, prefix: string = 'Wedding'): Promise<void> {
   const codes = await getInviteCodes(filterByRole);
   if (codes.length === 0) {
     alert('No invite codes to export.');
     return;
   }
 
-  const headers = ['Code', 'Status', 'Used By', 'Created By', 'Created At'];
+  const headers = ['Code', 'Status', 'Sent To (Assigned)', 'Used By (RSVP)', 'Created By', 'Created At'];
   const rows = codes.map(c => [
     c.code,
-    c.is_used ? 'Used' : 'Available',
+    c.is_used ? 'Used' : (c.is_shared ? 'Shared' : 'Available'),
+    sanitizeCsvCell(c.assigned_to || ''),
     sanitizeCsvCell(c.used_by || ''),
     c.created_by || '',
     new Date(c.created_at).toLocaleString()
@@ -1111,7 +1189,7 @@ export async function exportInviteCodesCsv(filterByRole?: string): Promise<void>
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `Miracle_Malvin_Invite_Codes_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute('download', `${prefix}_Invite_Codes_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

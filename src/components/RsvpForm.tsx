@@ -66,10 +66,20 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
 
     setIsSubmitting(true);
 
-    // 1. Verify the invite code in Supabase
+    // 1. Verify the invite code
     const inviteCodeObj = await verifyInviteCode(passcode.trim());
     if (!inviteCodeObj) {
-      setErrorMessage('Invalid or already used invite code. Please check your invitation or contact the couple.');
+      setErrorMessage('Invalid invite code. Please check your invitation or contact the couple.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (inviteCodeObj.is_used) {
+      setErrorMessage(
+        `This invite code has already been redeemed${
+          inviteCodeObj.used_by ? ` by ${inviteCodeObj.used_by}` : ''
+        }. Please contact the couple if you believe this is an error.`
+      );
       setIsSubmitting(false);
       return;
     }
