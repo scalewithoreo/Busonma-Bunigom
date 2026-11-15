@@ -18,7 +18,7 @@ export const miracleMalvinConfig: WeddingConfig = {
     locationText: 'Lagos, Nigeria',
     dateTeaser: 'January 2027',
     logoImage: '/assets/miracle-malvin/logo-mm.png?v=2027',
-    heroImage: '/assets/miracle-malvin/hero-image-new.jpg?v=2027',
+    heroImage: '/assets/miracle-malvin/hero-image-new.jpg?v=2028',
     heroObjectPosition: 'object-center',
     rsvpAvatarImage: '/assets/miracle-malvin/rsvp-avatar.jpg?v=2027',
     wishlistImage: '/assets/miracle-malvin/wishlist.jpg?v=2027',

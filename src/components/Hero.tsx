@@ -21,8 +21,7 @@ export const Hero: FC<HeroProps> = () => {
           className={`w-full h-full object-cover scale-100 transition-transform duration-1000 ease-out ${wedding.couple.heroObjectPosition || 'object-center'}`}
         />
         {/* Layered Cinematic Vignette: Clean contrast for text while keeping the couple clearly visible and radiant */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/25 to-brand-espresso/75 pointer-events-none" />
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/15 to-black/55 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-brand-espresso/80 pointer-events-none" />
       </div>
 
       {/* Hero Content */}
