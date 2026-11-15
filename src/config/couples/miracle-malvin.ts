@@ -36,7 +36,7 @@ export const miracleMalvinConfig: WeddingConfig = {
       directionsUrl: 'https://maps.google.com/?q=Apata+School,+Lagos,+Nigeria',
     },
     reception: {
-      name: 'Grand Nuptial Reception',
+      name: 'Reception',
       venueName: 'Anglican Church Event Centre',
       address: 'Lagos, Nigeria',
       mapQuery: 'Anglican+Church,+Lagos,+Nigeria',
@@ -157,7 +157,7 @@ export const miracleMalvinConfig: WeddingConfig = {
     },
     {
       time: '11:00 AM (Sat, Jan 9)',
-      title: 'Grand Nuptial Reception',
+      title: 'Reception',
       subtitle: 'Feast, Toasts & Celebrations',
       description: 'Grand entrance of the newlyweds, first dance, celebratory feast, toasts, cake cutting, and joyous dancing into the evening at the Anglican Church Event Centre.',
       icon: 'utensils',
@@ -183,11 +183,11 @@ export const miracleMalvinConfig: WeddingConfig = {
     },
     {
       question: 'What are the wedding dates and venues?',
-      answer: 'Our White Wedding / Solemnization takes place on Thursday, January 7, 2027 at 10:00 AM at Apata School / Court. Our Grand Reception follows on Saturday, January 9, 2027 starting at 11:00 AM at the Anglican Church Event Centre in Lagos.',
+      answer: 'Our White Wedding / Solemnization takes place on Thursday, January 7, 2027 at 10:00 AM at Apata School / Court. Our Reception follows on Saturday, January 9, 2027 starting at 11:00 AM at the Anglican Church Event Centre in Lagos.',
     },
     {
       question: 'Is there a traditional wedding ceremony?',
-      answer: 'Our traditional wedding is being kept simple, private, and intimate within the immediate family. The formal invitations are for our White Wedding and Grand Nuptial Reception.',
+      answer: 'Our traditional wedding is being kept simple, private, and intimate within the immediate family. The formal invitations are for our White Wedding and Reception.',
     },
     {
       question: 'What’s the colour code / dress theme?',
