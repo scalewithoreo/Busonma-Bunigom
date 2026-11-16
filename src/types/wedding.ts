@@ -38,6 +38,7 @@ export interface EventScheduleItem {
 export interface EventInfo {
   date: string; // ISO date for countdown timer
   displayDate: string; // e.g. "Saturday, December 12, 2026"
+  saveTheDateHeading?: string;
   venueImage?: string;
   saveTheDateImage?: string;
   church: EventScheduleItem;

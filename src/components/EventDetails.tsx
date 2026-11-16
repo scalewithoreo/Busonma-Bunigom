@@ -48,7 +48,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
             transition={{ delay: 0.1 }}
             className="font-serif text-4xl sm:text-6xl text-brand-espresso font-normal"
           >
-            This Day
+            {wedding.event.saveTheDateHeading || (wedding.event.displayDate.includes('&') ? 'These Days' : 'This Day')}
           </motion.h2>
           {/* Date Reveal with Theater Curtain & Confetti */}
           <div className="mt-6 relative inline-block">

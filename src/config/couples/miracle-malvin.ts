@@ -27,6 +27,7 @@ export const miracleMalvinConfig: WeddingConfig = {
   event: {
     date: '2027-01-07T10:00:00+01:00',
     displayDate: 'Thursday, January 7 & Saturday, January 9, 2027',
+    saveTheDateHeading: 'These Days',
     confettiColors: ['#B91C1C', '#991B1B', '#121212', '#ffffff', '#F5EDE4'],
     church: {
       name: 'Solemnization & White Wedding',
