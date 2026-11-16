@@ -56,8 +56,45 @@ export const Colours: FC = () => {
         </div>
 
         {/* Color Palette Display */}
-        {theme.paletteLayout === 'grid' ? (
-          /* High Contrast Editorial Grid (e.g. Miracle & Malvin) */
+        {theme.paletteLayout === 'bands' ? (
+          /* Stacked Silk Bands (e.g. Ore & Dara presentation) */
+          <div className="flex flex-col w-full h-[540px] sm:h-[640px] mb-16 rounded-3xl overflow-hidden shadow-2xl max-w-5xl mx-auto border border-black/10">
+            {theme.paletteBands.map((band) => (
+              <div
+                key={band.name}
+                className="w-full flex-1 relative flex items-center justify-center bg-cover bg-center group overflow-hidden"
+                style={{
+                  backgroundImage: band.bgImage ? `url('${band.bgImage}')` : undefined,
+                  backgroundColor: band.hex,
+                }}
+              >
+                <div className="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors duration-500"></div>
+                <div className="relative z-10 text-center px-4">
+                  <motion.h3 
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="text-white/95 font-serif text-3xl sm:text-4xl md:text-5xl tracking-widest drop-shadow-lg uppercase"
+                  >
+                    {band.name}
+                  </motion.h3>
+                  {band.subtitle && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.15 }}
+                      className="text-white/80 font-sans text-xs sm:text-sm tracking-[0.25em] uppercase mt-2 drop-shadow font-medium"
+                    >
+                      {band.subtitle}
+                    </motion.p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : theme.paletteLayout === 'grid' ? (
+          /* High Contrast Editorial Grid */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16 max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl">
             {theme.paletteBands.map((band) => (
               <div
@@ -75,30 +112,6 @@ export const Colours: FC = () => {
                   <h3 className="font-serif text-2xl sm:text-3xl text-white">{band.name}</h3>
                   <p className="text-xs text-neutral-300 mt-1 font-mono">{band.subtitle}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : theme.paletteBands.length === 2 ? (
-          /* Stacked Silk Bands (2 items e.g. Ore & Dara) */
-          <div className="flex flex-col w-full h-[500px] sm:h-[600px] mb-16 rounded-3xl overflow-hidden shadow-2xl max-w-5xl mx-auto">
-            {theme.paletteBands.map((band) => (
-              <div
-                key={band.name}
-                className="w-full flex-1 relative flex items-center justify-center bg-cover bg-center"
-                style={{
-                  backgroundImage: band.bgImage ? `url('${band.bgImage}')` : undefined,
-                  backgroundColor: band.hex,
-                }}
-              >
-                <div className="absolute inset-0 bg-black/15"></div>
-                <motion.h3 
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="relative z-10 text-white/95 font-serif text-4xl sm:text-5xl md:text-6xl tracking-widest drop-shadow-lg"
-                >
-                  {band.name}
-                </motion.h3>
               </div>
             ))}
           </div>
