@@ -210,16 +210,16 @@ export async function sendReservationConfirmationEmail(params: {
     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;">
       <tr>
         <td style="background-color: #ffffff; border: 1px solid #e7e0d3; border-radius: 14px; padding: 18px; margin-bottom: 12px; display: block;">
-          <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c;">Zenith Bank</p>
-          <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold; color: #1c1917; font-family: monospace; letter-spacing: 1px;">2209775057</p>
-          <p style="margin: 0; font-size: 13px; color: #44403c;">Malvin</p>
+          <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c;">Access Bank</p>
+          <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold; color: #1c1917; font-family: monospace; letter-spacing: 1px;">1613405495</p>
+          <p style="margin: 0; font-size: 13px; color: #44403c;">Malvin Uzor Uju</p>
         </td>
       </tr>
       <tr>
         <td style="background-color: #ffffff; border: 1px solid #e7e0d3; border-radius: 14px; padding: 18px; display: block; margin-top: 10px;">
-          <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c;">Providus Bank</p>
-          <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold; color: #1c1917; font-family: monospace; letter-spacing: 1px;">6506945948</p>
-          <p style="margin: 0; font-size: 13px; color: #44403c;">Miracle</p>
+          <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c;">Access Bank</p>
+          <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold; color: #1c1917; font-family: monospace; letter-spacing: 1px;">0798609795</p>
+          <p style="margin: 0; font-size: 13px; color: #44403c;">Miracle Princess Chibudike</p>
         </td>
       </tr>
     </table>
@@ -276,16 +276,16 @@ export async function sendReservationReminderEmail(params: {
     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;">
       <tr>
         <td style="background-color: #ffffff; border: 1px solid #e7e0d3; border-radius: 14px; padding: 18px; margin-bottom: 12px; display: block;">
-          <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c;">Zenith Bank</p>
-          <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold; color: #1c1917; font-family: monospace; letter-spacing: 1px;">2209775057</p>
-          <p style="margin: 0; font-size: 13px; color: #44403c;">Malvin</p>
+          <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c;">Access Bank</p>
+          <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold; color: #1c1917; font-family: monospace; letter-spacing: 1px;">1613405495</p>
+          <p style="margin: 0; font-size: 13px; color: #44403c;">Malvin Uzor Uju</p>
         </td>
       </tr>
       <tr>
         <td style="background-color: #ffffff; border: 1px solid #e7e0d3; border-radius: 14px; padding: 18px; display: block; margin-top: 10px;">
-          <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c;">Providus Bank</p>
-          <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold; color: #1c1917; font-family: monospace; letter-spacing: 1px;">6506945948</p>
-          <p style="margin: 0; font-size: 13px; color: #44403c;">Miracle</p>
+          <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716c;">Access Bank</p>
+          <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: bold; color: #1c1917; font-family: monospace; letter-spacing: 1px;">0798609795</p>
+          <p style="margin: 0; font-size: 13px; color: #44403c;">Miracle Princess Chibudike</p>
         </td>
       </tr>
     </table>

@@ -225,14 +225,14 @@ export const miracleMalvinConfig: WeddingConfig = {
   ],
   bankAccounts: [
     {
-      accountName: 'Malvin',
-      bankName: 'Zenith Bank',
-      accountNumber: '2209775057',
+      accountName: 'Malvin Uzor Uju',
+      bankName: 'Access Bank',
+      accountNumber: '1613405495',
     },
     {
-      accountName: 'Miracle',
-      bankName: 'Providus Bank',
-      accountNumber: '6506945948',
+      accountName: 'Miracle Princess Chibudike',
+      bankName: 'Access Bank',
+      accountNumber: '0798609795',
     },
   ],
   admin: {
