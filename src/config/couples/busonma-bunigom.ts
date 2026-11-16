@@ -178,31 +178,67 @@ export const busonmaBunigomConfig: WeddingConfig = {
   ],
   qa: [
     {
-      question: "What’s the RSVP deadline?",
-      answer: 'We kindly request that you RSVP on or before February 27th, 2027 to help us finalize our preparations.',
+      question: '1. What should I wear?',
+      answer: "We're planning a beautiful celebration, and we'd love for everyone to look and feel their best! Specific dress codes, traditional wedding colours and asoebi details will be shared with the relevant guests as arrangements are finalised. For now, think wedding-appropriate, comfortable and celebration-ready. If you're unsure what to wear, please contact the person who invited you.",
     },
     {
-      question: 'Can I bring a plus-one or additional guest?',
-      answer: 'Our venue capacity is strictly limited. Plus-ones are strictly by invitation only, and each unique code is allocated to a specific guest.',
+      question: '2. Do I need to RSVP?',
+      answer: 'Yes, please! It helps us plan an overall great experience. Kindly RSVP on or before February 27th, 2027.',
     },
     {
-      question: 'Can I bring my children?',
+      question: '3. Can I bring a plus-one?',
+      answer: "Please attend according to the names and guest allocation on your invitation. If you'd like to clarify your invitation, contact the person who invited you.",
+    },
+    {
+      question: '4. Can I bring my children?',
       answer: 'While we love your little ones, this is strictly an adults-only celebration. We appreciate you making arrangements ahead of time so you can relax and celebrate with us!',
     },
     {
-      question: 'Where will the wedding be held and what is the schedule?',
-      answer:
-        'The wedding is a single-day event holding on Saturday, March 27, 2027 at the Admiralty Conference Centre, Nigerian Naval Dockyard Limited, Ahmadu Bello Way, Victoria Island, Lagos. Arrival and seating commence at 1:00 PM WAT.',
+      question: '5. What time should I arrive?',
+      answer: 'The traditional wedding is scheduled to begin at 1:00 PM (with doors opening from 10:00 AM). We recommend arriving early enough to park, find your seat and settle in before the event commences.',
     },
     {
-      question: 'What is the dress code?',
-      answer:
-        'The dress code is Luxury Traditional Attire. Our colours of the day are Burgundy (#7B1E2B), Olive Green (#6B6F3A), Cream (#F7F2E6), and Champagne Gold (#E6C98A).',
+      question: '6. Where exactly is the traditional wedding?',
+      answer: 'Admiralty Conference Centre, Nigerian Naval Dockyard Limited, Ahmadu Bello Way, Victoria Island, Lagos. Please use the venue confirmed directions on our website when planning your journey.',
     },
     {
-      question: 'How do I send a gift to the couple?',
-      answer:
-        'Your presence at our celebration is our greatest blessing. For those who wish to honor us with a cash gift or contribute to our registry, our details are provided in the Wishlist & Registry section.',
+      question: '7. Will there be parking?',
+      answer: 'Yes. Ample parking arrangements and dedicated security for the parking area will be available within the venue premises.',
+    },
+    {
+      question: '8. I am travelling from abroad. When should I arrive?',
+      answer: 'We recommend arriving at least a day or two before the traditional wedding if possible. Guests attending Sunday thanksgiving should factor that into their travel plans as well.',
+    },
+    {
+      question: '9. Can I book accommodation through the wedding website?',
+      answer: 'The website provides accommodation suggestions and a guest discount code (BB2ONE). Please contact the properties directly or use our designated accommodation agent for assistance with short stays.',
+    },
+    {
+      question: '10. What if I can no longer attend after RSVPing?',
+      answer: 'Life happens! Please let us know as soon as possible so we can update our arrangements.',
+    },
+    {
+      question: "11. What if I can't attend at all?",
+      answer: "We'll miss you, but we'll appreciate your prayers and well wishes from wherever you are. You can leave us a message through the RSVP page.",
+    },
+    {
+      question: '12. What can I gift the couple?',
+      answer: "Your presence is our greatest gift! We have also put together a wishlist of items we'd love for our new home. Please visit the Gift Registry section on the website if you'd like to bless our union.",
+    },
+    {
+      question: "13. Can I send a gift even if I can't attend?",
+      answer: 'Absolutely. Your thoughtfulness means a lot to us! Please use the registry details or contact our designated coordinator for help with larger gifts and delivery arrangements.',
+    },
+    {
+      question: '14. Will there be a thanksgiving service?',
+      answer: 'Yes. We plan to attend a Sunday thanksgiving service in Lagos on Sunday, March 28, 2027. The venue and exact time will be communicated once confirmed.',
+    },
+    {
+      question: '15. Who can I contact if I need help?',
+      answer: 'For questions about your invitation, RSVP, accommodation or transport, please contact our wedding planner Dulcet or reach out directly to the bridal team.',
+      contacts: [
+        { name: 'Dulcet', phone: 'Wedding Planner / Coordinator' },
+      ],
     },
   ],
   bankAccounts: [
@@ -268,5 +304,122 @@ export const busonmaBunigomConfig: WeddingConfig = {
     title: 'Rebel',
     artist: 'anendlessocean',
     src: '/assets/busonma-bunigom/rebel.mp3',
+  },
+  travelAndStay: {
+    travel: {
+      title: 'Travelling to Celebrate With Us?',
+      subtitle: 'A curated guide for interstate and international guests flying in for our wedding ceremonies.',
+      lagosFlights: {
+        airport: 'Murtala Muhammed International Airport (LOS), Lagos',
+        notes: 'International guests attending the traditional wedding should generally plan to arrive at Lagos (LOS). Convenient direct flights and connections include:',
+        routes: [
+          { country: 'United Kingdom', airlines: 'British Airways, Virgin Atlantic, Air Peace, and connecting carriers' },
+          { country: 'United States', airlines: 'United Airlines, Delta Air Lines, and connecting carriers' },
+          { country: 'Canada', airlines: 'Air Canada and connecting carriers' },
+          { country: 'South Africa', airlines: 'Air Peace and connecting carriers' },
+          { country: 'Uganda', airlines: 'Uganda Airlines (direct routes now available to Nigeria)' },
+        ],
+      },
+      abujaFlights: {
+        airport: 'Nnamdi Azikiwe International Airport (ABV), Abuja',
+        notes: 'For guests joining us in Abuja for the Civil Wedding on Saturday, 20 March 2027. We recommend arranging your airport pickup in advance.',
+      },
+      transport: {
+        description: 'Need a ride? We have designated trusted drivers and contacts who can assist with airport transfers and local movement throughout your stay.',
+        contacts: [
+          { name: 'Hassan', phone: 'Airport Transfer & Lagos Rides' },
+          { name: 'Abubakar', phone: 'Airport Transfer & Lagos Rides' },
+          { name: 'Maleek', phone: 'Airport Transfer & Local Rides' },
+        ],
+        rideApps: [
+          { name: 'Bolt', url: 'https://bolt.eu', note: 'Fast & convenient on-demand rides in Lagos and Abuja' },
+          { name: 'inDrive', url: 'https://indrive.com', note: 'Peer-to-peer negotiated ride app across Nigeria' },
+        ],
+      },
+      visa: {
+        title: 'Nigerian Visa Processing',
+        options: [
+          {
+            title: 'Option 1: Agency Assistance (Recommended)',
+            cost: '$300 Total ($140 service fee + $160 visa fee)',
+            time: '24 – 72 Hours',
+            description: '100% guarantee with direct assistance from immigration liaison officers for a smooth, hassle-free approval.',
+            badge: 'Recommended',
+          },
+          {
+            title: 'Option 2: Direct Official eVisa Portal',
+            cost: '$160 Government Fee',
+            time: '48+ Hours',
+            description: 'Apply independently via the official immigration website. Note that technical platform delays may occasionally occur.',
+            badge: 'Self-Service',
+          },
+        ],
+        requirements: [
+          'Ensure your passport is valid for at least 6 months beyond your travel dates.',
+          'Secure your flight tickets and hotel/accommodation reservation prior to applying.',
+          'Submit your application well in advance of your departure date via evisa.immigration.gov.ng.',
+        ],
+        portalUrl: 'https://evisa.immigration.gov.ng',
+      },
+      healthAdvice: [
+        'A Yellow Fever vaccination certificate and anti-malaria medication are recommended for travel to Nigeria.',
+        'Plan to drink sealed bottled water only; avoid local tap water and untreated ice cubes.',
+      ],
+    },
+    accommodations: {
+      title: 'Where to Stay',
+      subtitle: 'Curated hotels and serviced apartment options for your comfort in Lagos and Abuja.',
+      discountCode: 'BB2ONE',
+      hotels: [
+        {
+          name: 'TimeOak Hotel & Spa, Ikate',
+          city: 'Lagos',
+          area: 'Ikate, Lekki',
+          type: 'Luxury Hotel & Spa',
+          description: 'A comfortable, premium option for guests seeking hotel-style accommodation during the wedding weekend in Lekki.',
+          discountCode: 'BB2ONE',
+        },
+        {
+          name: 'TimeOak Hotel, Lekki',
+          city: 'Lagos',
+          area: 'Lekki Phase 1',
+          type: 'Boutique Hotel',
+          description: 'A stylish, well-appointed hotel stay conveniently located for our wedding events in Lagos.',
+          discountCode: 'BB2ONE',
+        },
+        {
+          name: 'TimeOak Residence, Maitama',
+          city: 'Abuja',
+          area: 'Maitama',
+          type: 'Serviced Apartments',
+          description: 'An executive serviced apartment option for guests attending the Civil Wedding in Abuja.',
+          discountCode: 'BB2ONE',
+        },
+        {
+          name: 'TimeOak Signature Hotel & More, Utako',
+          city: 'Abuja',
+          area: 'Utako',
+          type: 'Hotel & Suites',
+          description: 'A comfortable hotel accommodation option for your stay during the Abuja ceremonies.',
+          discountCode: 'BB2ONE',
+        },
+      ],
+      apartments: [
+        {
+          title: 'Serviced Apartments & Short-Stays (Lagos)',
+          city: 'Lagos',
+          description: 'Ideal if you are travelling with family, friends, or simply prefer more space. Contact our designated Lagos accommodation agent to arrange Airbnb-style rentals.',
+        },
+        {
+          title: 'Short-Stay Rentals & Apartments (Abuja)',
+          city: 'Abuja',
+          description: 'Private furnished apartments in prime Abuja districts for families and groups attending the civil rites.',
+        },
+      ],
+      agents: [
+        { name: 'Lagos Accommodation Liaison', phone: 'Short-Stay & Hotel Bookings' },
+        { name: 'Abuja Accommodation Liaison', phone: 'Apartment & Residence Bookings' },
+      ],
+    },
   },
 };

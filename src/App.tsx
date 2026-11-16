@@ -9,6 +9,7 @@ import { Countdown } from './components/Countdown';
 import { EventDetails } from './components/EventDetails';
 import { Programme } from './components/Programme';
 import { Colours } from './components/Colours';
+import { TravelAccommodations } from './components/TravelAccommodations';
 import { GiftWishlist } from './components/GiftWishlist';
 import { Gallery } from './components/Gallery';
 import { QandA } from './components/QandA';
@@ -126,6 +127,7 @@ export function App() {
             <EventDetails onNotify={addToast} />
             <Programme />
             <Colours />
+            <TravelAccommodations onNotify={addToast} />
           </>
         )}
         

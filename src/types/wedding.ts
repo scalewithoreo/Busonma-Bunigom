@@ -183,6 +183,69 @@ export interface GalleryItem {
   featured?: boolean;
 }
 
+export interface TravelRoute {
+  country: string;
+  airlines: string;
+}
+
+export interface TransportContact {
+  name: string;
+  phone: string;
+}
+
+export interface HotelOption {
+  name: string;
+  city: string;
+  area: string;
+  description: string;
+  type: string;
+  discountCode?: string;
+  whatsapp?: string;
+}
+
+export interface ApartmentOption {
+  title: string;
+  city: string;
+  description: string;
+  contactWhatsapp?: string;
+}
+
+export interface TravelAccommodationConfig {
+  travel: {
+    title: string;
+    subtitle: string;
+    lagosFlights: {
+      airport: string;
+      notes: string;
+      routes: TravelRoute[];
+    };
+    abujaFlights: {
+      airport: string;
+      notes: string;
+    };
+    transport: {
+      description: string;
+      contacts: TransportContact[];
+      rideApps: { name: string; url: string; note: string }[];
+    };
+    visa: {
+      title: string;
+      options: { title: string; cost: string; time: string; description: string; badge?: string }[];
+      requirements: string[];
+      portalUrl: string;
+    };
+    healthAdvice: string[];
+  };
+  accommodations: {
+    title: string;
+    subtitle: string;
+    discountCode: string;
+    hotels: HotelOption[];
+    apartments: ApartmentOption[];
+    agents: TransportContact[];
+  };
+}
+
 export interface WeddingConfig {
   id: string;
   slug: string;
@@ -198,4 +261,5 @@ export interface WeddingConfig {
   gallery: GalleryItem[];
   database: DatabaseConfig;
   audio?: AudioConfig;
+  travelAndStay?: TravelAccommodationConfig;
 }

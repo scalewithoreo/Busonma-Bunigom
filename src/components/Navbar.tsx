@@ -1,5 +1,5 @@
 import { useState, useEffect, FC } from 'react';
-import { Menu, X, Heart, Users, Image as ImageIcon, Palette, ShoppingBag, HelpCircle, VolumeX } from 'lucide-react';
+import { Menu, X, Heart, Users, Image as ImageIcon, Palette, ShoppingBag, HelpCircle, VolumeX, Plane } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { audioManager } from '../utils/audio';
 import { useWedding } from '../context/WeddingContext';
@@ -45,6 +45,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
     { name: 'Welcome', href: '/#welcome', icon: Heart },
     ...(!isPublicMode ? [{ name: 'Programme', href: '/#programme', icon: Heart }] : []),
     ...(!isPublicMode ? [{ name: 'Colours', href: '/#colours', icon: Palette }] : []),
+    ...(!isPublicMode && wedding.travelAndStay ? [{ name: 'Travel & Stay', href: '/#travel', icon: Plane }] : []),
     { name: 'Wishlist', href: '/wishlist', icon: ShoppingBag },
     ...(!isPublicMode ? [{ name: 'Q & A', href: '/#qa', icon: HelpCircle }] : []),
     ...(!isPublicMode ? [{ name: 'RSVP', href: '/#rsvp', icon: Users }] : []),
