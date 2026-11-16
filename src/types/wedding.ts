@@ -31,8 +31,18 @@ export interface EventScheduleItem {
   name: string;
   venueName: string;
   address: string;
+  date?: string;
+  time?: string;
   mapQuery: string;
   directionsUrl: string;
+  calendar?: {
+    title: string;
+    description: string;
+    location: string;
+    startDate: string;
+    endDate: string;
+    downloadFilename?: string;
+  };
 }
 
 export interface EventInfo {

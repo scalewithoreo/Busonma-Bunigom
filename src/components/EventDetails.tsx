@@ -11,9 +11,37 @@ interface EventDetailsProps {
 
 export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
   const { wedding } = useWedding();
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [activeCalendar, setActiveCalendar] = useState<'church' | 'reception' | 'unified' | null>(null);
 
-  const calendarData = {
+  const hasSeparateCalendars = Boolean(
+    wedding.event.church.calendar &&
+    wedding.event.reception.calendar &&
+    wedding.event.church.venueName !== wedding.event.reception.venueName
+  );
+
+  const churchCalendarData = wedding.event.church.calendar
+    ? {
+        title: wedding.event.church.calendar.title,
+        description: wedding.event.church.calendar.description,
+        location: wedding.event.church.calendar.location,
+        startDate: wedding.event.church.calendar.startDate,
+        endDate: wedding.event.church.calendar.endDate,
+        downloadFilename: wedding.event.church.calendar.downloadFilename || `${wedding.slug}-solemnization.ics`,
+      }
+    : null;
+
+  const receptionCalendarData = wedding.event.reception.calendar
+    ? {
+        title: wedding.event.reception.calendar.title,
+        description: wedding.event.reception.calendar.description,
+        location: wedding.event.reception.calendar.location,
+        startDate: wedding.event.reception.calendar.startDate,
+        endDate: wedding.event.reception.calendar.endDate,
+        downloadFilename: wedding.event.reception.calendar.downloadFilename || `${wedding.slug}-reception.ics`,
+      }
+    : null;
+
+  const unifiedCalendarData = {
     title: wedding.event.calendar.title,
     description: wedding.event.calendar.description,
     location: wedding.event.calendar.location,
@@ -22,10 +50,20 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
     downloadFilename: `${wedding.slug}-wedding.ics`,
   };
 
-  const handleDownloadIcs = () => {
-    downloadIcsFile(calendarData);
-    setCalendarOpen(false);
-    onNotify('Calendar File Downloaded', 'Open the downloaded .ics file to add to Apple Calendar or Outlook.');
+  const handleDownloadSpecificIcs = (
+    data: {
+      title: string;
+      description: string;
+      location: string;
+      startDate: string;
+      endDate: string;
+      downloadFilename?: string;
+    },
+    eventLabel: string
+  ) => {
+    downloadIcsFile(data);
+    setActiveCalendar(null);
+    onNotify('Calendar File Downloaded', `Open the downloaded .ics file to add ${eventLabel} to Apple Calendar or Outlook.`);
   };
 
   return (
@@ -124,50 +162,160 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                    We are so excited to celebrate our special day with you. Add the wedding to your calendar to stay updated!
                 </p>
                 {/* Add to Calendar Action */}
-                <div className="relative w-full max-w-sm text-left">
-                  <button
-                    onClick={() => setCalendarOpen(!calendarOpen)}
-                    className="w-full py-4 px-6 rounded-2xl bg-brand-espresso hover:bg-brand-charcoal text-brand-cream flex items-center justify-between transition-all duration-300 shadow-md"
-                  >
-                    <span className="flex items-center gap-3 font-sans text-[17px] tracking-wider uppercase font-medium">
-                      <CalendarPlus className="w-5 h-5 text-brand-gold" />
-                      Add Wedding to Calendar
-                    </span>
-                    <ChevronDown className={`w-5 h-5 text-brand-sand transition-transform duration-300 ${calendarOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {calendarOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl p-3 shadow-2xl z-20 flex flex-col gap-1 animate-fade-in">
-                      <a
-                        href={getGoogleCalendarUrl(calendarData)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setCalendarOpen(false)}
-                        className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors"
-                      >
-                        <span>Google Calendar</span>
-                        <ExternalLink className="w-4 h-4 text-brand-muted" />
-                      </a>
-                      <a
-                        href={getOutlookCalendarUrl(calendarData)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setCalendarOpen(false)}
-                        className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors"
-                      >
-                        <span>Outlook Calendar</span>
-                        <ExternalLink className="w-4 h-4 text-brand-muted" />
-                      </a>
+                {hasSeparateCalendars && churchCalendarData && receptionCalendarData ? (
+                  <div className="w-full max-w-sm flex flex-col gap-3">
+                    {/* Event 1 Calendar Button */}
+                    <div className="relative w-full text-left">
                       <button
-                        onClick={handleDownloadIcs}
-                        className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors text-left"
+                        onClick={() => setActiveCalendar(activeCalendar === 'church' ? null : 'church')}
+                        className="w-full py-3 px-5 rounded-2xl bg-brand-espresso/90 hover:bg-brand-charcoal text-brand-cream flex items-center justify-between transition-all duration-300 shadow-md border border-brand-gold/30 hover:border-brand-gold"
                       >
-                        <span>Apple Calendar / iCal (.ics)</span>
-                        <Check className="w-4 h-4 text-brand-gold" />
+                        <div className="flex items-center gap-3 text-left">
+                          <CalendarPlus className="w-5 h-5 text-brand-gold shrink-0" />
+                          <div>
+                            <span className="block text-[11px] uppercase tracking-wider text-brand-gold font-semibold">
+                              {wedding.event.church.name}
+                            </span>
+                            <span className="block text-sm font-sans text-brand-cream">
+                              {wedding.event.church.date || 'Thursday, Jan 7, 2027'}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronDown className={`w-4 h-4 text-brand-sand transition-transform duration-300 ${activeCalendar === 'church' ? 'rotate-180' : ''}`} />
                       </button>
+
+                      {activeCalendar === 'church' && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl p-3 shadow-2xl z-30 flex flex-col gap-1 animate-fade-in border border-brand-sand/20">
+                          <a
+                            href={getGoogleCalendarUrl(churchCalendarData)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setActiveCalendar(null)}
+                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-brand-cream text-brand-espresso text-sm font-sans transition-colors"
+                          >
+                            <span>Google Calendar ({wedding.event.church.date ? wedding.event.church.date.split(',')[0] : 'Jan 7'})</span>
+                            <ExternalLink className="w-4 h-4 text-brand-muted" />
+                          </a>
+                          <a
+                            href={getOutlookCalendarUrl(churchCalendarData)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setActiveCalendar(null)}
+                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-brand-cream text-brand-espresso text-sm font-sans transition-colors"
+                          >
+                            <span>Outlook Calendar ({wedding.event.church.date ? wedding.event.church.date.split(',')[0] : 'Jan 7'})</span>
+                            <ExternalLink className="w-4 h-4 text-brand-muted" />
+                          </a>
+                          <button
+                            onClick={() => handleDownloadSpecificIcs(churchCalendarData, wedding.event.church.name)}
+                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-brand-cream text-brand-espresso text-sm font-sans transition-colors text-left"
+                          >
+                            <span>Apple Calendar / iCal (.ics)</span>
+                            <Check className="w-4 h-4 text-brand-gold" />
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+
+                    {/* Event 2 Calendar Button */}
+                    <div className="relative w-full text-left">
+                      <button
+                        onClick={() => setActiveCalendar(activeCalendar === 'reception' ? null : 'reception')}
+                        className="w-full py-3 px-5 rounded-2xl bg-brand-espresso/90 hover:bg-brand-charcoal text-brand-cream flex items-center justify-between transition-all duration-300 shadow-md border border-brand-gold/30 hover:border-brand-gold"
+                      >
+                        <div className="flex items-center gap-3 text-left">
+                          <CalendarPlus className="w-5 h-5 text-brand-gold shrink-0" />
+                          <div>
+                            <span className="block text-[11px] uppercase tracking-wider text-brand-gold font-semibold">
+                              {wedding.event.reception.name}
+                            </span>
+                            <span className="block text-sm font-sans text-brand-cream">
+                              {wedding.event.reception.date || 'Saturday, Jan 9, 2027'}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronDown className={`w-4 h-4 text-brand-sand transition-transform duration-300 ${activeCalendar === 'reception' ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {activeCalendar === 'reception' && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl p-3 shadow-2xl z-30 flex flex-col gap-1 animate-fade-in border border-brand-sand/20">
+                          <a
+                            href={getGoogleCalendarUrl(receptionCalendarData)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setActiveCalendar(null)}
+                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-brand-cream text-brand-espresso text-sm font-sans transition-colors"
+                          >
+                            <span>Google Calendar ({wedding.event.reception.date ? wedding.event.reception.date.split(',')[0] : 'Jan 9'})</span>
+                            <ExternalLink className="w-4 h-4 text-brand-muted" />
+                          </a>
+                          <a
+                            href={getOutlookCalendarUrl(receptionCalendarData)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setActiveCalendar(null)}
+                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-brand-cream text-brand-espresso text-sm font-sans transition-colors"
+                          >
+                            <span>Outlook Calendar ({wedding.event.reception.date ? wedding.event.reception.date.split(',')[0] : 'Jan 9'})</span>
+                            <ExternalLink className="w-4 h-4 text-brand-muted" />
+                          </a>
+                          <button
+                            onClick={() => handleDownloadSpecificIcs(receptionCalendarData, wedding.event.reception.name)}
+                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-brand-cream text-brand-espresso text-sm font-sans transition-colors text-left"
+                          >
+                            <span>Apple Calendar / iCal (.ics)</span>
+                            <Check className="w-4 h-4 text-brand-gold" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full max-w-sm text-left">
+                    <button
+                      onClick={() => setActiveCalendar(activeCalendar === 'unified' ? null : 'unified')}
+                      className="w-full py-4 px-6 rounded-2xl bg-brand-espresso hover:bg-brand-charcoal text-brand-cream flex items-center justify-between transition-all duration-300 shadow-md"
+                    >
+                      <span className="flex items-center gap-3 font-sans text-[17px] tracking-wider uppercase font-medium">
+                        <CalendarPlus className="w-5 h-5 text-brand-gold" />
+                        Add Wedding to Calendar
+                      </span>
+                      <ChevronDown className={`w-5 h-5 text-brand-sand transition-transform duration-300 ${activeCalendar === 'unified' ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {activeCalendar === 'unified' && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl p-3 shadow-2xl z-20 flex flex-col gap-1 animate-fade-in">
+                        <a
+                          href={getGoogleCalendarUrl(unifiedCalendarData)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setActiveCalendar(null)}
+                          className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors"
+                        >
+                          <span>Google Calendar</span>
+                          <ExternalLink className="w-4 h-4 text-brand-muted" />
+                        </a>
+                        <a
+                          href={getOutlookCalendarUrl(unifiedCalendarData)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setActiveCalendar(null)}
+                          className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors"
+                        >
+                          <span>Outlook Calendar</span>
+                          <ExternalLink className="w-4 h-4 text-brand-muted" />
+                        </a>
+                        <button
+                          onClick={() => handleDownloadSpecificIcs(unifiedCalendarData, 'Wedding')}
+                          className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-cream text-brand-espresso text-[17px] font-sans transition-colors text-left"
+                        >
+                          <span>Apple Calendar / iCal (.ics)</span>
+                          <Check className="w-4 h-4 text-brand-gold" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -223,20 +371,40 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 </div>
               ) : (
                 /* Split Venues (Church + Reception) */
-                <div>
-                  <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
-                    {wedding.event.church.name}
-                  </h3>
-                  <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm mt-1 mb-6">
-                    {wedding.event.church.address}
-                  </p>
-                  
-                  <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
-                    {wedding.event.reception.name}
-                  </h3>
-                  <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm mt-1">
-                    {wedding.event.reception.address}
-                  </p>
+                <div className="space-y-6">
+                  {/* Church / Solemnization */}
+                  <div className="border-l-2 border-brand-primary pl-4 py-1">
+                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-brand-gold font-semibold block mb-1">
+                      {wedding.event.church.date || 'Thursday, January 7, 2027'} {wedding.event.church.time ? `• ${wedding.event.church.time}` : ''}
+                    </span>
+                    <span className="text-xs uppercase tracking-wider text-brand-cream/70 font-sans font-medium block">
+                      {wedding.event.church.name}
+                    </span>
+                    <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md mt-1">
+                      {wedding.event.church.venueName}
+                    </h3>
+                    <p className="text-brand-sand text-[15px] font-sans leading-relaxed drop-shadow-sm mt-1.5 flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-brand-gold shrink-0 inline" />
+                      <span>{wedding.event.church.address}</span>
+                    </p>
+                  </div>
+
+                  {/* Reception */}
+                  <div className="border-l-2 border-brand-primary pl-4 py-1">
+                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-brand-gold font-semibold block mb-1">
+                      {wedding.event.reception.date || 'Saturday, January 9, 2027'} {wedding.event.reception.time ? `• ${wedding.event.reception.time}` : ''}
+                    </span>
+                    <span className="text-xs uppercase tracking-wider text-brand-cream/70 font-sans font-medium block">
+                      {wedding.event.reception.name}
+                    </span>
+                    <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md mt-1">
+                      {wedding.event.reception.venueName}
+                    </h3>
+                    <p className="text-brand-sand text-[15px] font-sans leading-relaxed drop-shadow-sm mt-1.5 flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-brand-gold shrink-0 inline" />
+                      <span>{wedding.event.reception.address}</span>
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -260,7 +428,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                     rel="noopener noreferrer"
                     className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-white/10 hover:bg-white/20 text-brand-cream text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 backdrop-blur-sm"
                   >
-                    <span>Church Directions (Maps)</span>
+                    <span>{wedding.event.church.name.includes('Solemnization') ? 'Solemnization Directions (Maps)' : 'Church Directions (Maps)'}</span>
                     <ExternalLink className="w-4 h-4" />
                   </a>
                   <a
