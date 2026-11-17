@@ -17,6 +17,8 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [attendance, setAttendance] = useState<'yes' | 'no' | ''>('');
+  const [selectedDate, setSelectedDate] = useState<string>('Both Dates (Jan 7 & Jan 9)');
+  const [attendingDates, setAttendingDates] = useState<string[]>(['2027-01-07', '2027-01-09']);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -41,6 +43,8 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
       setLastName(existing.lastName || '');
       setEmail(existing.email || '');
       setAttendance(existing.attendance);
+      if (existing.selectedDate) setSelectedDate(existing.selectedDate);
+      if (existing.attendingDates) setAttendingDates(existing.attendingDates);
       setMessage(existing.message || '');
     }
   }, []);
@@ -61,6 +65,11 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
 
     if (!attendance) {
       setErrorMessage('Please select whether you will attend.');
+      return;
+    }
+
+    if (attendance === 'yes' && wedding.id === 'miracle-malvin' && !selectedDate) {
+      setErrorMessage('Please choose which celebration date(s) you will attend.');
       return;
     }
 
@@ -91,6 +100,8 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
         lastName: lastName.trim(),
         email: email.trim() || undefined,
         attendance: attendance as 'yes' | 'no',
+        selectedDate: attendance === 'yes' ? selectedDate : undefined,
+        attendingDates: attendance === 'yes' ? attendingDates : undefined,
         message: message.trim() || undefined,
       });
 
@@ -125,6 +136,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
           lastName: lastName.trim(),
           email: email.trim() || undefined,
           attendance: attendance === 'yes' ? 'Attending' : 'Declined',
+          selectedDate: attendance === 'yes' ? selectedDate : undefined,
           message: message.trim() || undefined,
           code: passcode.trim(),
           creator: creatorLabel,
@@ -188,7 +200,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
             className="mt-6 inline-block border-t border-brand-gold/30 pt-4"
           >
             <p className="font-sans text-brand-muted text-[17px] sm:text-lg">
-              Kindly RSVP by <span className="font-semibold text-brand-espresso">October 31st, 2026</span>
+              Kindly RSVP by <span className="font-semibold text-brand-espresso">{wedding.event.rsvpDeadline || (wedding.id === 'miracle-malvin' ? 'January 10th, 2027' : 'October 31st, 2026')}</span>
             </p>
           </motion.div>
         </div>
@@ -247,6 +259,12 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                     {submittedData.attendance === 'yes' ? 'Attending 🎉' : 'Regretfully Declined'}
                   </span>
                 </div>
+                {submittedData.selectedDate && submittedData.attendance === 'yes' && (
+                  <div className="flex justify-between py-1 border-b border-brand-sand/40">
+                    <span className="text-brand-muted">Celebration Date:</span>
+                    <span className="font-semibold text-brand-espresso text-right text-sm sm:text-base">{submittedData.selectedDate}</span>
+                  </div>
+                )}
                 {submittedData.email && (
                   <div className="flex justify-between py-1 border-b border-brand-sand/40">
                     <span className="text-brand-muted">Email:</span>
@@ -387,6 +405,84 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                 </div>
               </div>
 
+              {/* Date Availability Selection (for Miracle and Malvin) */}
+              {wedding.id === 'miracle-malvin' && attendance === 'yes' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-3 pt-2"
+                >
+                  <label className="block text-xs uppercase tracking-widest font-sans font-bold text-brand-espresso mb-1">
+                    Which celebration date(s) will you attend? <span className="text-brand-goldDark">*</span>
+                  </label>
+                  <p className="text-xs text-brand-muted font-sans mb-3">
+                    Please indicate your availability so we can prepare your seating and reception details:
+                  </p>
+                  
+                  <div className="grid grid-cols-1 gap-3">
+                    {[
+                      {
+                        id: 'both',
+                        value: 'Both Dates (Jan 7 & Jan 9)',
+                        dates: ['2027-01-07', '2027-01-09'],
+                        title: 'Both Celebrations (Jan 7 & Jan 9)',
+                        subtitle: 'Attending Solemnization / Court (Jan 7) & Wedding Reception (Jan 9)',
+                        badge: 'Recommended'
+                      },
+                      {
+                        id: 'solemnization',
+                        value: 'Thursday, Jan 7, 2027 (Solemnization & Court)',
+                        dates: ['2027-01-07'],
+                        title: 'Thursday, January 7, 2027 Only',
+                        subtitle: 'Solemnization & Court (10:00 AM at Apata School / Court)'
+                      },
+                      {
+                        id: 'reception',
+                        value: 'Saturday, Jan 9, 2027 (Wedding Reception)',
+                        dates: ['2027-01-09'],
+                        title: 'Saturday, January 9, 2027 Only',
+                        subtitle: 'Wedding Reception (11:00 AM at Anglican Church Event Centre)'
+                      }
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDate(opt.value);
+                          setAttendingDates(opt.dates);
+                        }}
+                        className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center justify-between ${
+                          selectedDate === opt.value
+                            ? 'border-brand-gold bg-brand-gold/15 text-brand-espresso shadow-sm'
+                            : 'border-brand-sand bg-white/80 text-brand-muted hover:border-brand-gold/40'
+                        }`}
+                      >
+                        <div className="pr-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-sans font-bold text-[15px] sm:text-base text-brand-espresso">
+                              {opt.title}
+                            </span>
+                            {opt.badge && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-gold/20 text-brand-goldDark">
+                                {opt.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-brand-muted mt-0.5">{opt.subtitle}</p>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          selectedDate === opt.value ? 'border-brand-gold bg-brand-gold' : 'border-brand-sand'
+                        }`}>
+                          {selectedDate === opt.value && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
               {/* Message for the couple */}
               <div>
                 <label htmlFor="message" className="block text-xs uppercase tracking-widest font-sans font-bold text-brand-espresso mb-2">
@@ -405,7 +501,11 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
               {/* Submit Button & Error Message */}
               <div className="space-y-4 pt-4">
                 <p className="text-center text-sm font-sans text-brand-muted pb-2 border-b border-brand-sand/50 mb-2">
-                  Please note that this is strictly an <span className="font-semibold text-brand-espresso">adult-only</span> event (No children).
+                  {wedding.id === 'miracle-malvin' ? (
+                    <span>Children and families are welcome to celebrate with us!</span>
+                  ) : (
+                    <span>Please note that this is strictly an <span className="font-semibold text-brand-espresso">adult-only</span> event (No children).</span>
+                  )}
                 </p>
                 <button
                   type="submit"

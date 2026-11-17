@@ -4,6 +4,8 @@ export interface RsvpSubmission {
   lastName: string;
   email?: string;
   attendance: 'yes' | 'no';
+  selectedDate?: string;
+  attendingDates?: string[];
   relation?: string;
   message?: string;
   submittedAt: string;

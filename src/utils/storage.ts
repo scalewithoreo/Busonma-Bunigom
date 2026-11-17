@@ -132,6 +132,8 @@ export async function getStoredRsvps(): Promise<RsvpSubmission[]> {
           lastName: String(row.last_name || ''),
           email: row.email ? String(row.email) : undefined,
           attendance: row.attendance === 'no' ? 'no' : 'yes',
+          selectedDate: row.selected_date ? String(row.selected_date) : undefined,
+          attendingDates: row.attending_dates ? (String(row.attending_dates).startsWith('[') ? JSON.parse(String(row.attending_dates)) : [String(row.attending_dates)]) : undefined,
           relation: row.relation ? String(row.relation) : undefined,
           message: row.message ? String(row.message) : undefined,
           submittedAt: String(row.created_at || new Date().toISOString())
@@ -187,6 +189,8 @@ export async function saveRsvp(submission: Omit<RsvpSubmission, 'id' | 'submitte
     lastName: submission.lastName,
     email: submission.email,
     attendance: submission.attendance,
+    selectedDate: submission.selectedDate,
+    attendingDates: submission.attendingDates,
     relation: submission.relation,
     message: submission.message,
     submittedAt: new Date().toISOString()
@@ -206,14 +210,16 @@ export async function saveRsvp(submission: Omit<RsvpSubmission, 'id' | 'submitte
       const client = getTursoClient();
       if (client) {
         await client.execute({
-          sql: `INSERT INTO rsvps (id, first_name, last_name, email, attendance, relation, message, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          sql: `INSERT INTO rsvps (id, first_name, last_name, email, attendance, selected_date, attending_dates, relation, message, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: [
             newRsvp.id,
             newRsvp.firstName,
             newRsvp.lastName,
             newRsvp.email || null,
             newRsvp.attendance,
+            newRsvp.selectedDate || null,
+            newRsvp.attendingDates ? JSON.stringify(newRsvp.attendingDates) : (newRsvp.selectedDate || null),
             newRsvp.relation || null,
             newRsvp.message || null,
             newRsvp.submittedAt
@@ -293,12 +299,13 @@ export async function exportRsvpsCsv(prefix: string = 'Wedding'): Promise<void> 
     return;
   }
 
-  const headers = ['First Name', 'Last Name', 'Email', 'Attendance', 'Relationship', 'Message', 'Submitted At'];
+  const headers = ['First Name', 'Last Name', 'Email', 'Attendance', 'Selected Date(s)', 'Relationship', 'Message', 'Submitted At'];
   const rows = rsvps.map(r => [
     `"${sanitizeCsvCell(r.firstName).replace(/"/g, '""')}"`,
     `"${sanitizeCsvCell(r.lastName).replace(/"/g, '""')}"`,
     `"${sanitizeCsvCell(r.email || '').replace(/"/g, '""')}"`,
     `"${r.attendance}"`,
+    `"${sanitizeCsvCell(r.selectedDate || (r.attendingDates ? r.attendingDates.join(' & ') : (r.attendance === 'yes' ? 'Both Dates' : 'N/A'))).replace(/"/g, '""')}"`,
     `"${sanitizeCsvCell(r.relation || '').replace(/"/g, '""')}"`,
     `"${sanitizeCsvCell(r.message || '').replace(/"/g, '""')}"`,
     `"${new Date(r.submittedAt).toLocaleString()}"`,

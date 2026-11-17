@@ -1091,6 +1091,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                             'Last Name': r.lastName,
                             'Email': r.email || '',
                             'Attendance': r.attendance === 'yes' ? 'Attending' : 'Declined',
+                            'Selected Date': r.selectedDate || (r.attendingDates ? r.attendingDates.join(' & ') : (r.attendance === 'yes' ? 'Both Dates' : 'N/A')),
                             'Message': r.message || '',
                             'Submitted At': new Date(r.submittedAt).toLocaleString()
                           }));
@@ -1163,11 +1164,18 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                                 {rsvp.firstName} {rsvp.lastName}
                               </td>
                               <td className="p-6">
-                                <span className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
-                                  rsvp.attendance === 'yes' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                                }`}>
-                                  {rsvp.attendance === 'yes' ? 'Attending' : 'Declined'}
-                                </span>
+                                <div className="flex flex-col items-start gap-1.5">
+                                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                                    rsvp.attendance === 'yes' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                  }`}>
+                                    {rsvp.attendance === 'yes' ? 'Attending' : 'Declined'}
+                                  </span>
+                                  {rsvp.attendance === 'yes' && (
+                                    <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-brand-gold/15 text-brand-espresso border border-brand-gold/30">
+                                      {rsvp.selectedDate || 'Both Dates (Jan 7 & 9)'}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-6 min-w-[250px]">
                                 {rsvp.email && (
