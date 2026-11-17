@@ -20,9 +20,10 @@ interface AdminDashboardProps {
   onClose: () => void;
   onNotify: (title: string, message?: string) => void;
   role?: AdminRole;
+  onOpenResetPin?: () => void;
 }
 
-export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify, role }) => {
+export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify, role, onOpenResetPin }) => {
   const { wedding, isMasterAdmin } = useWedding();
   const isMaster = isMasterAdmin(role);
   const [activeTab, setActiveTab] = useState<'rsvps' | 'codes' | 'gifts' | 'wishlist' | 'reservations' | 'invitations'>('rsvps');
@@ -849,7 +850,17 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
             Admin Dashboard
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {isMaster && onOpenResetPin && (
+            <button
+              onClick={onOpenResetPin}
+              className="flex items-center gap-2 px-3.5 py-2 bg-brand-gold/15 border border-brand-gold/30 rounded-xl text-brand-goldLight hover:bg-brand-gold/25 transition-colors text-xs font-semibold tracking-wider"
+              title="Change or reset admin PINs (Master Admin Only)"
+            >
+              <KeyRound className="w-4 h-4 text-brand-gold" />
+              <span>Change / Reset Admin PIN</span>
+            </button>
+          )}
           <button
             onClick={onClose}
             className="flex items-center gap-2 px-4 py-2 bg-brand-cream/10 rounded-xl text-brand-cream hover:bg-brand-primary hover:text-white transition-colors text-sm font-semibold tracking-wider uppercase"

@@ -1,8 +1,7 @@
 export type { AdminRole } from '../config/adminConfig';
 import React, { useState, useEffect, FC } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { KeyRound, ShieldAlert, ArrowLeft, Settings, X, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { KeyRound, ShieldAlert, X, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { AdminModal } from '../components/AdminModal';
 import { 
   AdminRole, 
@@ -27,7 +26,6 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
   const [authenticatedRole, setAuthenticatedRole] = useState<AdminRole | null>(null);
   const [lockoutRemaining, setLockoutRemaining] = useState<number>(0);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const navigate = useNavigate();
 
   // Reset Modal Form State
   const [targetRole, setTargetRole] = useState<AdminRole>(() => wedding.admin.roles[0]?.role || 'master');
@@ -173,25 +171,152 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
     }, 1200);
   };
 
+  const resetModalContent = (
+    <AnimatePresence>
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-brand-cream rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-brand-gold/30 text-left relative"
+          >
+            <button
+              onClick={() => setIsResetModalOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-black/5 text-brand-muted hover:text-brand-espresso transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-brand-gold/20 flex items-center justify-center text-brand-goldDark">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="font-serif text-xl sm:text-2xl text-brand-espresso">Reset / Change PIN</h2>
+                <p className="text-xs text-brand-muted font-sans">Set a new 4-digit code for any admin role</p>
+              </div>
+            </div>
+
+            {resetError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-sans flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <p>{resetError}</p>
+              </div>
+            )}
+
+            {resetSuccess && (
+              <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs font-sans flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <p>{resetSuccess}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleResetPinSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
+                  Select Admin Profile
+                </label>
+                <select
+                  value={targetRole}
+                  onChange={(e) => setTargetRole(e.target.value as AdminRole)}
+                  className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-sans text-sm focus:border-brand-gold outline-none"
+                >
+                  {wedding.admin.roles.map(r => (
+                    <option key={r.role} value={r.role}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
+                  Current PIN (or Emergency Override: 0000)
+                </label>
+                <input
+                  type="password"
+                  maxLength={4}
+                  value={currentOrMasterPin}
+                  onChange={(e) => setCurrentOrMasterPin(e.target.value.replace(/\D/g, ''))}
+                  placeholder="Enter current 4-digit code"
+                  className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
+                    New 4-Digit PIN
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    value={newPin}
+                    onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 5555"
+                    className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
+                    Confirm PIN
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    value={confirmNewPin}
+                    onChange={(e) => setConfirmNewPin(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 5555"
+                    className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col gap-2">
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-xl bg-brand-espresso text-brand-cream text-xs font-sans font-bold tracking-widest uppercase hover:bg-brand-charcoal transition-all shadow-md"
+                >
+                  Save New PIN
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRestoreDefaults}
+                  className="w-full py-2.5 rounded-xl border border-brand-sand/60 text-brand-muted hover:text-brand-espresso text-xs font-sans font-medium tracking-wider uppercase transition-colors"
+                >
+                  Restore All Defaults
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+
   if (authenticatedRole) {
     return (
-      <AdminModal
-        isOpen={true}
-        onClose={() => {
-          localStorage.removeItem('admin_pin_hash');
-          setAuthenticatedRole(null);
-          setPin('');
-        }}
-        onNotify={onNotify}
-        role={authenticatedRole}
-      />
+      <>
+        <AdminModal
+          isOpen={true}
+          onClose={() => {
+            localStorage.removeItem('admin_pin_hash');
+            setAuthenticatedRole(null);
+            setPin('');
+          }}
+          onNotify={onNotify}
+          role={authenticatedRole}
+          onOpenResetPin={() => setIsResetModalOpen(true)}
+        />
+        {resetModalContent}
+      </>
     );
   }
-
-  const masterDefaultsText = wedding.admin.roles
-    .filter(r => r.isMaster)
-    .map(r => `${r.label.split(' ')[0]} (${r.defaultPin})`)
-    .join(' • ') + ' • Emergency (0000)';
 
   return (
     <div className="min-h-screen bg-brand-espresso flex items-center justify-center p-4 relative">
@@ -252,158 +377,8 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
           >
             Unlock Dashboard
           </button>
-
-          {/* Quick PIN Info & Reset Action */}
-          <div className="pt-2 flex flex-col items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsResetModalOpen(true)}
-              className="text-xs font-sans text-brand-goldDark hover:text-brand-espresso font-semibold tracking-wider flex items-center gap-1.5 transition-colors py-1"
-            >
-              <Settings className="w-3.5 h-3.5" /> Change / Reset Admin PIN
-            </button>
-
-            <div className="text-[11px] font-mono text-brand-muted/80 bg-brand-sand/20 rounded-lg px-2.5 py-1.5 w-full text-center">
-              Defaults: {masterDefaultsText}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="w-full py-2.5 rounded-xl text-brand-muted text-xs font-sans font-medium tracking-wider uppercase hover:text-brand-espresso transition-colors flex items-center justify-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" /> Return to Website
-          </button>
         </div>
       </motion.form>
-
-      {/* PIN Reset / Change Modal */}
-      <AnimatePresence>
-        {isResetModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-brand-cream rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-brand-gold/30 text-left relative"
-            >
-              <button
-                onClick={() => setIsResetModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-full hover:bg-black/5 text-brand-muted hover:text-brand-espresso transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-gold/20 flex items-center justify-center text-brand-goldDark">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="font-serif text-xl sm:text-2xl text-brand-espresso">Reset / Change PIN</h2>
-                  <p className="text-xs text-brand-muted font-sans">Set a new 4-digit code for any admin role</p>
-                </div>
-              </div>
-
-              {resetError && (
-                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-sans flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <p>{resetError}</p>
-                </div>
-              )}
-
-              {resetSuccess && (
-                <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs font-sans flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <p>{resetSuccess}</p>
-                </div>
-              )}
-
-              <form onSubmit={handleResetPinSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
-                    Select Admin Profile
-                  </label>
-                  <select
-                    value={targetRole}
-                    onChange={(e) => setTargetRole(e.target.value as AdminRole)}
-                    className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-sans text-sm focus:border-brand-gold outline-none"
-                  >
-                    {wedding.admin.roles.map(r => (
-                      <option key={r.role} value={r.role}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
-                    Current PIN (or Emergency Override: 0000)
-                  </label>
-                  <input
-                    type="password"
-                    maxLength={4}
-                    value={currentOrMasterPin}
-                    onChange={(e) => setCurrentOrMasterPin(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Enter current 4-digit code"
-                    className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
-                      New 4-Digit PIN
-                    </label>
-                    <input
-                      type="password"
-                      maxLength={4}
-                      value={newPin}
-                      onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
-                      placeholder="e.g. 5555"
-                      className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
-                      Confirm PIN
-                    </label>
-                    <input
-                      type="password"
-                      maxLength={4}
-                      value={confirmNewPin}
-                      onChange={(e) => setConfirmNewPin(e.target.value.replace(/\D/g, ''))}
-                      placeholder="e.g. 5555"
-                      className="w-full px-4 py-3 rounded-xl border border-brand-sand bg-white text-brand-espresso font-mono tracking-widest text-sm focus:border-brand-gold outline-none"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-2 flex flex-col gap-2">
-                  <button
-                    type="submit"
-                    className="w-full py-3.5 rounded-xl bg-brand-espresso text-brand-cream text-xs font-sans font-bold tracking-widest uppercase hover:bg-brand-charcoal transition-all shadow-md"
-                  >
-                    Save New PIN
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleRestoreDefaults}
-                    className="w-full py-2.5 rounded-xl border border-brand-sand/60 text-brand-muted hover:text-brand-espresso text-xs font-sans font-medium tracking-wider uppercase transition-colors"
-                  >
-                    Restore All Defaults
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
