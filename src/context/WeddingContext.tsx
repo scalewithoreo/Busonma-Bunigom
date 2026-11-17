@@ -71,6 +71,35 @@ function hexToRgb(hex: string): string {
   return `${r} ${g} ${b}`;
 }
 
+function updateMetaTags(wedding: WeddingConfig) {
+  if (typeof document === 'undefined') return;
+
+  const title = `${wedding.couple.title} — Wedding Celebration`;
+  const description = `${wedding.event.displayDate}. Celebrating the union of ${wedding.couple.formalNames.bride} and ${wedding.couple.formalNames.groom} in ${wedding.couple.locationText}.`;
+  const ogImage = wedding.id === 'miracle-malvin' ? '/assets/miracle-malvin/og-share.jpg' : wedding.couple.heroImage;
+
+  document.title = title;
+
+  const setMeta = (nameOrProp: string, value: string, isProp = false) => {
+    const attr = isProp ? 'property' : 'name';
+    let el = document.querySelector(`meta[${attr}="${nameOrProp}"]`);
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute(attr, nameOrProp);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', value);
+  };
+
+  setMeta('description', description);
+  setMeta('og:title', title, true);
+  setMeta('og:description', description, true);
+  setMeta('og:image', ogImage, true);
+  setMeta('twitter:title', title);
+  setMeta('twitter:description', description);
+  setMeta('twitter:image', ogImage);
+}
+
 function applyThemeVariables(colors: ThemeColors, title: string) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
@@ -132,6 +161,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   useEffect(() => {
     applyThemeVariables(wedding.theme.colors, wedding.couple.title);
+    updateMetaTags(wedding);
   }, [wedding]);
 
   const setCoupleId = (id: string) => {
