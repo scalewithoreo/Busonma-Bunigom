@@ -76,7 +76,7 @@ function updateMetaTags(wedding: WeddingConfig) {
 
   const title = `${wedding.couple.title} — Wedding Celebration`;
   const description = `${wedding.event.displayDate}. Celebrating the union of ${wedding.couple.formalNames.bride} and ${wedding.couple.formalNames.groom} in ${wedding.couple.locationText}.`;
-  const ogImage = wedding.id === 'miracle-malvin' ? '/assets/miracle-malvin/og-share.jpg' : wedding.couple.heroImage;
+  const ogImage = wedding.id === 'miracle-malvin' ? 'https://miracle-malvin.vercel.app/assets/miracle-malvin/og-hero.jpg' : wedding.couple.heroImage;
 
   document.title = title;
 
