@@ -295,7 +295,10 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   };
 
     const getInviteMessage = (code: string, creatorRole: string, tier: 'general' | 'familyVip' = 'general') => {
-      const websiteUrl = window.location.origin;
+      const baseOrigin = window.location.origin;
+      const websiteUrl = wedding.id === 'miracle-malvin' && tier === 'general'
+        ? `${baseOrigin}/ceremony`
+        : baseOrigin;
       const template = tier === 'familyVip' ? invitationPosters.familyVipMessage : invitationPosters.generalMessage;
       return formatInviteMessage(template, code, websiteUrl, creatorRole, tier, wedding.couple.title, wedding.event.displayDate);
     };
@@ -2823,14 +2826,16 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h4 className="font-serif text-base font-semibold text-brand-espresso group-hover:text-brand-goldDark transition-colors">
-                          General Invitation Card
+                          {wedding.id === 'miracle-malvin' ? 'White Wedding & Solemnization Only' : 'General Invitation Card'}
                         </h4>
                         <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
-                          Standard
+                          {wedding.id === 'miracle-malvin' ? 'Ceremony Only' : 'Standard'}
                         </span>
                       </div>
                       <p className="text-xs text-brand-muted mt-1 leading-snug">
-                        Solemnization & Main Reception. Perfect for general guests.
+                        {wedding.id === 'miracle-malvin'
+                          ? 'Thursday, Jan 7 at Anglican Church of the Pentecost Okota. Links directly to /ceremony.'
+                          : 'Solemnization & Main Reception. Perfect for general guests.'}
                       </p>
                       <div className="mt-2 text-xs font-semibold text-brand-goldDark flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                         <Share2 className="w-3.5 h-3.5" /> Share this card
@@ -2857,15 +2862,17 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h4 className="font-serif text-base font-semibold text-brand-espresso group-hover:text-brand-goldDark transition-colors flex items-center gap-1.5">
-                          Family & VIP Card
+                          {wedding.id === 'miracle-malvin' ? 'Full Wedding Celebration' : 'Family & VIP Card'}
                           <Sparkles className="w-3.5 h-3.5 text-brand-goldDark" />
                         </h4>
                         <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-brand-gold/20 text-brand-goldDark font-semibold shrink-0">
-                          VIP
+                          {wedding.id === 'miracle-malvin' ? 'All Details (VIP)' : 'VIP'}
                         </span>
                       </div>
                       <p className="text-xs text-brand-muted mt-1 leading-snug">
-                        Includes Engagement / Traditional ceremony & exclusive Afterparty details.
+                        {wedding.id === 'miracle-malvin'
+                          ? 'Both White Wedding (Jan 7) & Reception (Jan 9 at Apata School). Links to full website.'
+                          : 'Includes Engagement / Traditional ceremony & exclusive Afterparty details.'}
                       </p>
                       <div className="mt-2 text-xs font-semibold text-brand-goldDark flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                         <Share2 className="w-3.5 h-3.5" /> Share this card

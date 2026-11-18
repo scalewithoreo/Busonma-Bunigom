@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, FC, ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { WeddingConfig, AdminRoleConfig, ThemeColors, ThemePresetId } from '../types/wedding';
 import { COUPLE_CONFIGS, ALL_COUPLES, resolveCoupleId, DEFAULT_COUPLE_ID } from '../config/couples';
 import { THEME_PRESETS, ALL_THEME_PRESETS, ThemePreset } from '../config/themePresets';
@@ -13,6 +14,9 @@ interface WeddingContextValue {
   availablePresets: ThemePreset[];
   isMasterAdmin: (role?: string) => boolean;
   getRoleConfig: (role?: string) => AdminRoleConfig | undefined;
+  guestView: 'full' | 'ceremony';
+  setGuestView: (view: 'full' | 'ceremony') => void;
+  isCeremonyOnly: boolean;
 }
 
 const WeddingContext = createContext<WeddingContextValue | null>(null);
@@ -132,6 +136,28 @@ function applyThemeVariables(colors: ThemeColors, title: string) {
 
 export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [activeCoupleId, setActiveCoupleId] = useState<string>(detectInitialCoupleId);
+  const location = useLocation();
+
+  const isCeremonyPath = useMemo(() => {
+    try {
+      const path = location.pathname.toLowerCase();
+      if (path === '/ceremony' || path === '/white-wedding' || path.startsWith('/ceremony/') || path.startsWith('/white-wedding/')) {
+        return true;
+      }
+      const params = new URLSearchParams(location.search);
+      const view = params.get('view') || params.get('event') || params.get('tier');
+      if (view && (view.toLowerCase() === 'ceremony' || view.toLowerCase() === 'white-wedding')) {
+        return true;
+      }
+    } catch (e) {
+      // Ignore URL parse errors
+    }
+    return false;
+  }, [location.pathname, location.search]);
+
+  const [overrideGuestView, setOverrideGuestView] = useState<'full' | 'ceremony' | null>(null);
+  const guestView: 'full' | 'ceremony' = overrideGuestView || (isCeremonyPath ? 'ceremony' : 'full');
+  const isCeremonyOnly = (activeCoupleId === 'miracle-malvin') && (guestView === 'ceremony');
 
   const rawWedding = useMemo(() => {
     return COUPLE_CONFIGS[activeCoupleId] || COUPLE_CONFIGS[DEFAULT_COUPLE_ID];
@@ -146,10 +172,10 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setActivePresetId(rawWedding.theme.preset || 'botanical-sage');
   }, [rawWedding]);
 
-  // Merge active preset with wedding colors
+  // Merge active preset with wedding colors and ceremony view filtering
   const wedding: WeddingConfig = useMemo(() => {
     const preset = THEME_PRESETS[activePresetId] || THEME_PRESETS['botanical-sage'];
-    return {
+    const base: WeddingConfig = {
       ...rawWedding,
       theme: {
         ...rawWedding.theme,
@@ -157,7 +183,42 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         colors: preset.colors,
       },
     };
-  }, [rawWedding, activePresetId]);
+
+    if (!isCeremonyOnly) return base;
+
+    return {
+      ...base,
+      couple: {
+        ...base.couple,
+        dateTeaser: 'January 7, 2027',
+      },
+      event: {
+        ...base.event,
+        displayDate: 'Thursday, January 7, 2027',
+        shortDisplayDate: 'Jan 7, 2027',
+        saveTheDateHeading: 'This Day',
+        calendar: {
+          title: 'Miracle & Malvin — Solemnization & White Wedding',
+          description: 'Holy Matrimony and Nuptial Vows of Miracle & Malvin at Anglican Church of the Pentecost Okota, Lagos.',
+          location: 'Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos, Nigeria',
+          startDate: '20270107T100000Z',
+          endDate: '20270107T140000Z',
+          downloadFilename: 'miracle-malvin-solemnization.ics',
+        },
+      },
+      programme: base.programme.filter(p => p.icon === 'church' || p.title.toLowerCase().includes('solemnization') || p.title.toLowerCase().includes('white wedding')),
+      qa: base.qa.map(q => {
+        if (q.question.includes('dates and venues')) {
+          return {
+            ...q,
+            question: 'What is the wedding date and venue?',
+            answer: 'Our Solemnization & White Wedding takes place on Thursday, January 7, 2027 at 11:00 AM at Anglican Church of the Pentecost Okota, located at 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos, Nigeria.',
+          };
+        }
+        return q;
+      }),
+    };
+  }, [rawWedding, activePresetId, isCeremonyOnly]);
 
   useEffect(() => {
     applyThemeVariables(wedding.theme.colors, wedding.couple.title);
@@ -175,6 +236,10 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } catch (e) {
       // Ignore URL state errors
     }
+  };
+
+  const setGuestView = (view: 'full' | 'ceremony') => {
+    setOverrideGuestView(view);
   };
 
   const setPresetId = (id: ThemePresetId) => {
@@ -209,6 +274,9 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         availablePresets: ALL_THEME_PRESETS,
         isMasterAdmin,
         getRoleConfig,
+        guestView,
+        setGuestView,
+        isCeremonyOnly,
       }}
     >
       {children}

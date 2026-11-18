@@ -10,10 +10,10 @@ interface EventDetailsProps {
 }
 
 export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
-  const { wedding } = useWedding();
+  const { wedding, isCeremonyOnly } = useWedding();
   const [activeCalendar, setActiveCalendar] = useState<'church' | 'reception' | 'unified' | null>(null);
 
-  const hasSeparateCalendars = Boolean(
+  const hasSeparateCalendars = !isCeremonyOnly && Boolean(
     wedding.event.church.calendar &&
     wedding.event.reception.calendar &&
     wedding.event.church.venueName !== wedding.event.reception.venueName
@@ -349,7 +349,31 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 <span>Venue & Location</span>
               </div>
 
-              {wedding.event.church.venueName === wedding.event.reception.venueName ? (
+              {isCeremonyOnly ? (
+                /* White Wedding & Solemnization Only (Exclusive Church Ceremony View) */
+                <div className="space-y-4">
+                  <div className="border-l-2 border-brand-gold pl-4 py-1">
+                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-brand-gold font-semibold block mb-1">
+                      {wedding.event.church.date || 'Thursday, January 7, 2027'} {wedding.event.church.time ? `• ${wedding.event.church.time}` : ''}
+                    </span>
+                    <span className="text-xs uppercase tracking-wider text-brand-cream/70 font-sans font-medium block">
+                      {wedding.event.church.name}
+                    </span>
+                    <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md mt-1">
+                      {wedding.event.church.venueName}
+                    </h3>
+                    <p className="text-brand-sand text-[15px] font-sans leading-relaxed drop-shadow-sm mt-1.5 flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-brand-gold shrink-0 inline" />
+                      <span>{wedding.event.church.address}</span>
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-white/10 text-brand-sand text-xs font-sans tracking-wider uppercase border border-white/10">
+                      Dress Code: Formal / Contemporary Attire
+                    </span>
+                  </div>
+                </div>
+              ) : wedding.event.church.venueName === wedding.event.reception.venueName ? (
                 /* Unified Single Day Celebration Venue (e.g. Busonma & Bunigom at Admiralty Conference Centre) */
                 <div className="space-y-4">
                   <div>
@@ -410,7 +434,17 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
             </div>
 
             <div className="relative z-10 mt-8 pt-6 border-t border-white/10 flex flex-col gap-3">
-              {wedding.event.church.venueName === wedding.event.reception.venueName ? (
+              {isCeremonyOnly ? (
+                <a
+                  href={wedding.event.church.directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-brand-primary hover:bg-brand-primaryDark text-white text-xs font-sans font-semibold tracking-widest uppercase transition-all duration-300 shadow-lg hover:scale-105"
+                >
+                  <span>Solemnization Directions (Google Maps)</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              ) : wedding.event.church.venueName === wedding.event.reception.venueName ? (
                 <a
                   href={wedding.event.church.directionsUrl}
                   target="_blank"

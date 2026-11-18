@@ -197,6 +197,8 @@ export function App() {
       
       <Routes>
         <Route path="/" element={homeView} />
+        <Route path="/ceremony" element={homeView} />
+        <Route path="/white-wedding" element={homeView} />
         <Route path="/wishlist" element={wishlistView} />
         <Route path="/admin" element={<AdminPage onNotify={addToast} />} />
         <Route path="/admin-01" element={<AdminPage onNotify={addToast} />} />

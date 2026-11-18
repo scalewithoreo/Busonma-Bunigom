@@ -40,20 +40,25 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
   }, []);
 
   const isPublicMode = import.meta.env.VITE_SITE_MODE === 'public';
+  const basePath = location.pathname.startsWith('/ceremony')
+    ? '/ceremony'
+    : (location.pathname.startsWith('/white-wedding') ? '/white-wedding' : '');
 
   const navLinks = [
-    { name: 'Welcome', href: '/#welcome', icon: Heart },
-    ...(!isPublicMode ? [{ name: 'Programme', href: '/#programme', icon: Heart }] : []),
-    ...(!isPublicMode ? [{ name: 'Colours', href: '/#colours', icon: Palette }] : []),
-    ...(!isPublicMode && wedding.travelAndStay ? [{ name: 'Travel & Stay', href: '/#travel', icon: Plane }] : []),
+    { name: 'Welcome', href: `${basePath}/#welcome`.replace('//#', '/#'), icon: Heart },
+    ...(!isPublicMode ? [{ name: 'Programme', href: `${basePath}/#programme`.replace('//#', '/#'), icon: Heart }] : []),
+    ...(!isPublicMode ? [{ name: 'Colours', href: `${basePath}/#colours`.replace('//#', '/#'), icon: Palette }] : []),
+    ...(!isPublicMode && wedding.travelAndStay ? [{ name: 'Travel & Stay', href: `${basePath}/#travel`.replace('//#', '/#'), icon: Plane }] : []),
     { name: 'Wishlist', href: '/wishlist', icon: ShoppingBag },
-    ...(!isPublicMode ? [{ name: 'Q & A', href: '/#qa', icon: HelpCircle }] : []),
-    ...(!isPublicMode ? [{ name: 'RSVP', href: '/#rsvp', icon: Users }] : []),
-    { name: 'Gallery', href: '/#gallery', icon: ImageIcon },
+    ...(!isPublicMode ? [{ name: 'Q & A', href: `${basePath}/#qa`.replace('//#', '/#'), icon: HelpCircle }] : []),
+    ...(!isPublicMode ? [{ name: 'RSVP', href: `${basePath}/#rsvp`.replace('//#', '/#'), icon: Users }] : []),
+    { name: 'Gallery', href: `${basePath}/#gallery`.replace('//#', '/#'), icon: ImageIcon },
   ];
 
+  const isHomePage = location.pathname === '/' || location.pathname === '/ceremony' || location.pathname === '/white-wedding';
+
   useEffect(() => {
-    if (location.pathname !== '/') {
+    if (!isHomePage) {
       setActiveSection('');
       return;
     }
@@ -70,8 +75,9 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
     );
 
     navLinks.forEach((link) => {
-      if (link.href.startsWith('/#')) {
-        const id = link.href.replace('/#', '');
+      const match = link.href.match(/#([^#]+)$/);
+      if (match) {
+        const id = match[1];
         const element = document.getElementById(id);
         if (element) {
           observer.observe(element);
@@ -80,7 +86,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
     });
 
     return () => observer.disconnect();
-  }, [location.pathname]);
+  }, [location.pathname, isHomePage, basePath]);
 
   const handleNavClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
@@ -128,7 +134,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <Link
-            to="/"
+            to={basePath || '/'}
             className="flex items-center group transition-transform duration-300 hover:scale-105"
           >
             <img decoding="sync" 

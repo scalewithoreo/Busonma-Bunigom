@@ -11,19 +11,30 @@ interface RsvpFormProps {
 }
 
 export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
-  const { wedding } = useWedding();
+  const { wedding, isCeremonyOnly } = useWedding();
   const [passcode, setPasscode] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [attendance, setAttendance] = useState<'yes' | 'no' | ''>('');
-  const [selectedDate, setSelectedDate] = useState<string>('Both Dates (Jan 7 & Jan 9)');
-  const [attendingDates, setAttendingDates] = useState<string[]>(['2027-01-07', '2027-01-09']);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    isCeremonyOnly ? 'Thursday, Jan 7, 2027 (Solemnization & White Wedding)' : 'Both Dates (Jan 7 & Jan 9)'
+  );
+  const [attendingDates, setAttendingDates] = useState<string[]>(
+    isCeremonyOnly ? ['2027-01-07'] : ['2027-01-07', '2027-01-09']
+  );
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [submittedData, setSubmittedData] = useState<RsvpSubmission | null>(null);
   const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isCeremonyOnly) {
+      setSelectedDate('Thursday, Jan 7, 2027 (Solemnization & White Wedding)');
+      setAttendingDates(['2027-01-07']);
+    }
+  }, [isCeremonyOnly]);
 
   useEffect(() => {
     if (errorMessage) {
@@ -414,72 +425,94 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                   transition={{ duration: 0.3 }}
                   className="space-y-3 pt-2"
                 >
-                  <label className="block text-xs uppercase tracking-widest font-sans font-bold text-brand-espresso mb-1">
-                    Which celebration date(s) will you attend? <span className="text-brand-goldDark">*</span>
-                  </label>
-                  <p className="text-xs text-brand-muted font-sans mb-3">
-                    Please indicate your availability so we can prepare your seating and reception details:
-                  </p>
-                  
-                  <div className="grid grid-cols-1 gap-3">
-                    {[
-                      {
-                        id: 'both',
-                        value: 'Both Dates (Jan 7 & Jan 9)',
-                        dates: ['2027-01-07', '2027-01-09'],
-                        title: 'Both Celebrations (Jan 7 & Jan 9)',
-                        subtitle: 'Attending Solemnization / Court (Jan 7) & Wedding Reception (Jan 9)',
-                        badge: 'Recommended'
-                      },
-                      {
-                        id: 'solemnization',
-                        value: 'Thursday, Jan 7, 2027 (Solemnization & Court)',
-                        dates: ['2027-01-07'],
-                        title: 'Thursday, January 7, 2027 Only',
-                        subtitle: 'Solemnization & Court (10:00 AM at Apata School / Court)'
-                      },
-                      {
-                        id: 'reception',
-                        value: 'Saturday, Jan 9, 2027 (Wedding Reception)',
-                        dates: ['2027-01-09'],
-                        title: 'Saturday, January 9, 2027 Only',
-                        subtitle: 'Wedding Reception (11:00 AM at Anglican Church Event Centre)'
-                      }
-                    ].map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedDate(opt.value);
-                          setAttendingDates(opt.dates);
-                        }}
-                        className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center justify-between ${
-                          selectedDate === opt.value
-                            ? 'border-brand-gold bg-brand-gold/15 text-brand-espresso shadow-sm'
-                            : 'border-brand-sand bg-white/80 text-brand-muted hover:border-brand-gold/40'
-                        }`}
-                      >
-                        <div className="pr-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-sans font-bold text-[15px] sm:text-base text-brand-espresso">
-                              {opt.title}
-                            </span>
-                            {opt.badge && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-gold/20 text-brand-goldDark">
-                                {opt.badge}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-brand-muted mt-0.5">{opt.subtitle}</p>
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          selectedDate === opt.value ? 'border-brand-gold bg-brand-gold' : 'border-brand-sand'
-                        }`}>
-                          {selectedDate === opt.value && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  {isCeremonyOnly ? (
+                    /* White Wedding Only Info Card */
+                    <div className="bg-brand-gold/15 border border-brand-gold/40 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-sm">
+                      <CheckCircle2 className="w-5 h-5 text-brand-gold shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[11px] uppercase tracking-wider text-brand-goldDark font-bold block mb-0.5">
+                          Solemnization &amp; White Wedding Ceremony
+                        </span>
+                        <h4 className="font-serif text-base text-brand-espresso font-semibold">
+                          Anglican Church of the Pentecost Okota
+                        </h4>
+                        <p className="text-xs text-brand-muted mt-1 leading-relaxed">
+                          Thursday, January 7, 2027 • 11:00 AM WAT<br />
+                          7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Full Celebration Multi-Date Selector */
+                    <>
+                      <label className="block text-xs uppercase tracking-widest font-sans font-bold text-brand-espresso mb-1">
+                        Which celebration date(s) will you attend? <span className="text-brand-goldDark">*</span>
+                      </label>
+                      <p className="text-xs text-brand-muted font-sans mb-3">
+                        Please indicate your availability so we can prepare your seating and reception details:
+                      </p>
+                      
+                      <div className="grid grid-cols-1 gap-3">
+                        {[
+                          {
+                            id: 'both',
+                            value: 'Both Dates (Jan 7 & Jan 9)',
+                            dates: ['2027-01-07', '2027-01-09'],
+                            title: 'Both Celebrations (Jan 7 & Jan 9)',
+                            subtitle: 'Solemnization (Jan 7 at Anglican Church) & Reception (Jan 9 at Apata School)',
+                            badge: 'Recommended'
+                          },
+                          {
+                            id: 'solemnization',
+                            value: 'Thursday, Jan 7, 2027 (Solemnization & White Wedding)',
+                            dates: ['2027-01-07'],
+                            title: 'Thursday, January 7, 2027 Only',
+                            subtitle: 'Solemnization & White Wedding (11:00 AM at Anglican Church of the Pentecost Okota)'
+                          },
+                          {
+                            id: 'reception',
+                            value: 'Saturday, Jan 9, 2027 (Wedding Reception)',
+                            dates: ['2027-01-09'],
+                            title: 'Saturday, January 9, 2027 Only',
+                            subtitle: 'Wedding Reception (11:00 AM at Apata School, Isolo)'
+                          }
+                        ].map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedDate(opt.value);
+                              setAttendingDates(opt.dates);
+                            }}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center justify-between ${
+                              selectedDate === opt.value
+                                ? 'border-brand-gold bg-brand-gold/15 text-brand-espresso shadow-sm'
+                                : 'border-brand-sand bg-white/80 text-brand-muted hover:border-brand-gold/40'
+                            }`}
+                          >
+                            <div className="pr-3">
+                              <div className="flex items-center gap-2">
+                                <span className="font-sans font-bold text-[15px] sm:text-base text-brand-espresso">
+                                  {opt.title}
+                                </span>
+                                {opt.badge && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-gold/20 text-brand-goldDark">
+                                    {opt.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-brand-muted mt-0.5">{opt.subtitle}</p>
+                            </div>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                              selectedDate === opt.value ? 'border-brand-gold bg-brand-gold' : 'border-brand-sand'
+                            }`}>
+                              {selectedDate === opt.value && <div className="w-2 h-2 rounded-full bg-white" />}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
 
