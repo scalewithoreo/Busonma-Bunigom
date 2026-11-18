@@ -11,17 +11,18 @@ interface RsvpFormProps {
 }
 
 export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
-  const { wedding, isCeremonyOnly } = useWedding();
+  const { wedding, isReceptionOnly, isCeremonyOnly } = useWedding();
+  const isSingleReception = isReceptionOnly || isCeremonyOnly;
   const [passcode, setPasscode] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [attendance, setAttendance] = useState<'yes' | 'no' | ''>('');
   const [selectedDate, setSelectedDate] = useState<string>(
-    isCeremonyOnly ? 'Thursday, Jan 7, 2027 (Solemnization & White Wedding)' : 'Both Dates (Jan 7 & Jan 9)'
+    isSingleReception ? 'Saturday, Jan 9, 2027 (Wedding Reception)' : 'Both Dates (Jan 7 & Jan 9)'
   );
   const [attendingDates, setAttendingDates] = useState<string[]>(
-    isCeremonyOnly ? ['2027-01-07'] : ['2027-01-07', '2027-01-09']
+    isSingleReception ? ['2027-01-09'] : ['2027-01-07', '2027-01-09']
   );
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,11 +31,11 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
   const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isCeremonyOnly) {
-      setSelectedDate('Thursday, Jan 7, 2027 (Solemnization & White Wedding)');
-      setAttendingDates(['2027-01-07']);
+    if (isSingleReception) {
+      setSelectedDate('Saturday, Jan 9, 2027 (Wedding Reception)');
+      setAttendingDates(['2027-01-09']);
     }
-  }, [isCeremonyOnly]);
+  }, [isSingleReception]);
 
   useEffect(() => {
     if (errorMessage) {
@@ -425,20 +426,20 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                   transition={{ duration: 0.3 }}
                   className="space-y-3 pt-2"
                 >
-                  {isCeremonyOnly ? (
-                    /* White Wedding Only Info Card */
+                  {isSingleReception ? (
+                    /* Wedding Reception Only Info Card */
                     <div className="bg-brand-gold/15 border border-brand-gold/40 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-sm">
                       <CheckCircle2 className="w-5 h-5 text-brand-gold shrink-0 mt-0.5" />
                       <div>
                         <span className="text-[11px] uppercase tracking-wider text-brand-goldDark font-bold block mb-0.5">
-                          Solemnization &amp; White Wedding Ceremony
+                          Wedding Reception Celebration
                         </span>
                         <h4 className="font-serif text-base text-brand-espresso font-semibold">
-                          Anglican Church of the Pentecost Okota
+                          Apata School, Isolo, Lagos
                         </h4>
                         <p className="text-xs text-brand-muted mt-1 leading-relaxed">
-                          Thursday, January 7, 2027 • 11:00 AM WAT<br />
-                          7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos
+                          Saturday, January 9, 2027 • 11:00 AM WAT<br />
+                          Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos, Nigeria
                         </p>
                       </div>
                     </div>

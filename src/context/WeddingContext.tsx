@@ -14,8 +14,9 @@ interface WeddingContextValue {
   availablePresets: ThemePreset[];
   isMasterAdmin: (role?: string) => boolean;
   getRoleConfig: (role?: string) => AdminRoleConfig | undefined;
-  guestView: 'full' | 'ceremony';
-  setGuestView: (view: 'full' | 'ceremony') => void;
+  guestView: 'full' | 'reception';
+  setGuestView: (view: 'full' | 'reception') => void;
+  isReceptionOnly: boolean;
   isCeremonyOnly: boolean;
 }
 
@@ -138,15 +139,15 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [activeCoupleId, setActiveCoupleId] = useState<string>(detectInitialCoupleId);
   const location = useLocation();
 
-  const isCeremonyPath = useMemo(() => {
+  const isReceptionPath = useMemo(() => {
     try {
       const path = location.pathname.toLowerCase();
-      if (path === '/ceremony' || path === '/white-wedding' || path.startsWith('/ceremony/') || path.startsWith('/white-wedding/')) {
+      if (path === '/reception' || path.startsWith('/reception/') || path === '/ceremony' || path.startsWith('/ceremony/')) {
         return true;
       }
       const params = new URLSearchParams(location.search);
       const view = params.get('view') || params.get('event') || params.get('tier');
-      if (view && (view.toLowerCase() === 'ceremony' || view.toLowerCase() === 'white-wedding')) {
+      if (view && (view.toLowerCase() === 'reception' || view.toLowerCase() === 'ceremony')) {
         return true;
       }
     } catch (e) {
@@ -155,9 +156,10 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     return false;
   }, [location.pathname, location.search]);
 
-  const [overrideGuestView, setOverrideGuestView] = useState<'full' | 'ceremony' | null>(null);
-  const guestView: 'full' | 'ceremony' = overrideGuestView || (isCeremonyPath ? 'ceremony' : 'full');
-  const isCeremonyOnly = (activeCoupleId === 'miracle-malvin') && (guestView === 'ceremony');
+  const [overrideGuestView, setOverrideGuestView] = useState<'full' | 'reception' | null>(null);
+  const guestView: 'full' | 'reception' = overrideGuestView || (isReceptionPath ? 'reception' : 'full');
+  const isReceptionOnly = (activeCoupleId === 'miracle-malvin') && (guestView === 'reception');
+  const isCeremonyOnly = isReceptionOnly;
 
   const rawWedding = useMemo(() => {
     return COUPLE_CONFIGS[activeCoupleId] || COUPLE_CONFIGS[DEFAULT_COUPLE_ID];
@@ -172,7 +174,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setActivePresetId(rawWedding.theme.preset || 'botanical-sage');
   }, [rawWedding]);
 
-  // Merge active preset with wedding colors and ceremony view filtering
+  // Merge active preset with wedding colors and reception view filtering
   const wedding: WeddingConfig = useMemo(() => {
     const preset = THEME_PRESETS[activePresetId] || THEME_PRESETS['botanical-sage'];
     const base: WeddingConfig = {
@@ -184,41 +186,41 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
       },
     };
 
-    if (!isCeremonyOnly) return base;
+    if (!isReceptionOnly) return base;
 
     return {
       ...base,
       couple: {
         ...base.couple,
-        dateTeaser: 'January 7, 2027',
+        dateTeaser: 'January 9, 2027',
       },
       event: {
         ...base.event,
-        displayDate: 'Thursday, January 7, 2027',
-        shortDisplayDate: 'Jan 7, 2027',
-        saveTheDateHeading: 'This Day',
+        displayDate: 'Saturday, January 9, 2027',
+        shortDisplayDate: 'Jan 9, 2027',
+        saveTheDateHeading: 'Wedding Reception',
         calendar: {
-          title: 'Miracle & Malvin — Solemnization & White Wedding',
-          description: 'Holy Matrimony and Nuptial Vows of Miracle & Malvin at Anglican Church of the Pentecost Okota, Lagos.',
-          location: 'Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos, Nigeria',
-          startDate: '20270107T100000Z',
-          endDate: '20270107T140000Z',
-          downloadFilename: 'miracle-malvin-solemnization.ics',
+          title: 'Miracle & Malvin — Wedding Reception',
+          description: 'Grand Wedding Reception celebration of Miracle Princess Chibudike & Malvin Uzor Uju at Apata School, Isolo, Lagos.',
+          location: 'Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos, Nigeria',
+          startDate: '20270109T100000Z',
+          endDate: '20270109T170000Z',
+          downloadFilename: 'miracle-malvin-reception.ics',
         },
       },
-      programme: base.programme.filter(p => p.icon === 'church' || p.title.toLowerCase().includes('solemnization') || p.title.toLowerCase().includes('white wedding')),
+      programme: base.programme.filter(p => p.icon === 'utensils' || p.title.toLowerCase().includes('reception')),
       qa: base.qa.map(q => {
-        if (q.question.includes('dates and venues')) {
+        if (q.question.includes('dates and venues') || q.question.includes('date and venue')) {
           return {
             ...q,
-            question: 'What is the wedding date and venue?',
-            answer: 'Our Solemnization & White Wedding takes place on Thursday, January 7, 2027 at 11:00 AM at Anglican Church of the Pentecost Okota, located at 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos, Nigeria.',
+            question: 'What is the reception date and venue?',
+            answer: 'Our Wedding Reception takes place on Saturday, January 9, 2027 starting at 11:00 AM at Apata School (Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos, Nigeria).',
           };
         }
         return q;
       }),
     };
-  }, [rawWedding, activePresetId, isCeremonyOnly]);
+  }, [rawWedding, activePresetId, isReceptionOnly]);
 
   useEffect(() => {
     applyThemeVariables(wedding.theme.colors, wedding.couple.title);
@@ -238,7 +240,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  const setGuestView = (view: 'full' | 'ceremony') => {
+  const setGuestView = (view: 'full' | 'reception') => {
     setOverrideGuestView(view);
   };
 
@@ -276,6 +278,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         getRoleConfig,
         guestView,
         setGuestView,
+        isReceptionOnly,
         isCeremonyOnly,
       }}
     >

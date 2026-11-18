@@ -1,12 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/ceremony",
-      "destination": "/ceremony.html"
+      "source": "/reception",
+      "destination": "/reception.html"
     },
     {
-      "source": "/white-wedding",
-      "destination": "/ceremony.html"
+      "source": "/ceremony",
+      "destination": "/reception.html"
     },
     {
       "source": "/(.*)",

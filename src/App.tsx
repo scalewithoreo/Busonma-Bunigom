@@ -197,6 +197,7 @@ export function App() {
       
       <Routes>
         <Route path="/" element={homeView} />
+        <Route path="/reception" element={homeView} />
         <Route path="/ceremony" element={homeView} />
         <Route path="/white-wedding" element={homeView} />
         <Route path="/wishlist" element={wishlistView} />

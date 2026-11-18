@@ -1251,9 +1251,9 @@ export function formatInviteMessage(
   const isMiracle = coupleTitle.toLowerCase().includes('miracle');
   
   // Clean base URL and construct the appropriate tier target URL
-  const base = websiteUrl.replace(/\/ceremony.*$|\/white-wedding.*$/i, '').replace(/\/$/, '');
+  const base = websiteUrl.replace(/\/reception.*$|\/ceremony.*$|\/white-wedding.*$/i, '').replace(/\/$/, '');
   const targetLink = isMiracle && tier === 'general'
-    ? `${base}/ceremony?code=${code}`
+    ? `${base}/reception?code=${code}`
     : `${base}/?code=${code}`;
 
   if (template && template.trim()) {
@@ -1272,7 +1272,7 @@ export function formatInviteMessage(
 
   if (isMiracle) {
     if (tier === 'general') {
-      return `*SOLEMNIZATION & WHITE WEDDING INVITATION 💍✨*\nWe are overjoyed to invite you to celebrate with us as we exchange our nuptial vows for the wedding of *${coupleTitle}*!\n\n✨ *Event:* Solemnization & White Wedding\n🗓 *Date:* Thursday, January 7, 2027 at 11:00 AM WAT\n📍 *Venue:* Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos\n\n📌 *YOUR EXCLUSIVE RSVP CODE* 📌\nPlease use your unique code 👉 *${code}* 👈 to RSVP online on or before *January 10th, 2027* here:\n🔗 ${targetLink}\n*(Kindly note that this code can only be used once)*\n\nWe look forward to celebrating this sacred beginning with you!`;
+      return `*WEDDING RECEPTION INVITATION 💍✨*\nWe are overjoyed to invite you to celebrate with us at the Grand Wedding Reception for *${coupleTitle}*!\n\n✨ *Event:* Wedding Reception\n🗓 *Date:* Saturday, January 9, 2027 at 11:00 AM WAT\n📍 *Venue:* Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos, Nigeria\n\n📌 *YOUR EXCLUSIVE RSVP CODE* 📌\nPlease use your unique code 👉 *${code}* 👈 to RSVP online on or before *January 10th, 2027* here:\n🔗 ${targetLink}\n*(Kindly note that this code can only be used once)*\n\nWe look forward to celebrating our special day with you!`;
     }
 
     return `*HONOURED WEDDING & CELEBRATION INVITATION 💍✨*\nWe are overjoyed to invite you as our valued family & VIP guest to celebrate our complete wedding festivities for *${coupleTitle}*!\n\n✨ *Events Include:*\n1️⃣ *Solemnization & White Wedding:* Thursday, January 7, 2027 at 11:00 AM WAT\n📍 Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos\n\n2️⃣ *Grand Wedding Reception:* Saturday, January 9, 2027 at 11:00 AM WAT\n📍 Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos\n\n📌 *YOUR EXCLUSIVE RSVP CODE* 📌\nPlease use your unique code 👉 *${code}* 👈 to RSVP online on or before *January 10th, 2027* here:\n🔗 ${targetLink}\n*(Kindly note that this code can only be used once)*\n\nWe cannot wait to celebrate our love and joy with you!`;
