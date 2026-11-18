@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { useWedding } from '../context/WeddingContext';
 
 export const OurStory: FC = () => {
-  const { wedding } = useWedding();
+  const { wedding, isReceptionOnly } = useWedding();
   const story = wedding.story;
+
+  if (isReceptionOnly) return null;
 
   return (
     <section id="our-story" className="py-24 sm:py-32 px-4 sm:px-6 bg-brand-cream relative border-t border-brand-espresso/10">

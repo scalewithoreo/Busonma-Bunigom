@@ -26,7 +26,7 @@ import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 
 export function App() {
-  const { wedding } = useWedding();
+  const { wedding, isReceptionOnly } = useWedding();
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -119,7 +119,7 @@ export function App() {
       <main>
         <Hero onRsvpClick={scrollToRsvp} />
         <WarmWelcome />
-        <OurStory />
+        {!isReceptionOnly && <OurStory />}
         {!isPublicMode && <Countdown />}
         
         {!isPublicMode && (
