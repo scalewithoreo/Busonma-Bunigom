@@ -461,7 +461,6 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                             dates: ['2027-01-07', '2027-01-09'],
                             title: 'Both Celebrations (Jan 7 & Jan 9)',
                             subtitle: 'Solemnization (Jan 7 at Anglican Church) & Reception (Jan 9 at Apata School)',
-                            badge: 'Recommended'
                           },
                           {
                             id: 'solemnization',
@@ -492,16 +491,9 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                             }`}
                           >
                             <div className="pr-3">
-                              <div className="flex items-center gap-2">
-                                <span className="font-sans font-bold text-[15px] sm:text-base text-brand-espresso">
-                                  {opt.title}
-                                </span>
-                                {opt.badge && (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-gold/20 text-brand-goldDark">
-                                    {opt.badge}
-                                  </span>
-                                )}
-                              </div>
+                              <span className="font-sans font-bold text-[15px] sm:text-base text-brand-espresso block">
+                                {opt.title}
+                              </span>
                               <p className="text-xs text-brand-muted mt-0.5">{opt.subtitle}</p>
                             </div>
                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
