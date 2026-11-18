@@ -193,6 +193,13 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
     return {
       ...base,
+      story: {
+        ...base.story,
+        paragraphs: [
+          'Around February, Malvin asked Miracle for courtship. Taking her time and praying and waiting on GOD, Miracle made him wait six months before giving him an answer. In good humor, Malvin set a deadline: "If you don’t answer me by September 20th, I will stop asking!" It didn’t take until September. On August 5th, Miracle said a wholehearted YES, and the real adventure began.',
+          'A while later came the proposal, a surprise evening hangout with dearest friends that turned into an unforgettable celebration and group dinner. Together, we found the perfect balance of calm strength, joyful laughter, and deep purpose. Now, we are ready to build a lifetime of love and forever together.',
+        ],
+      },
       couple: {
         ...base.couple,
         dateTeaser: 'January 9, 2027',
