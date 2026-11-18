@@ -2,7 +2,13 @@ import { useState, useEffect, useRef, FC } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Send, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
-import { saveRsvp, getUserActiveRsvp, verifyInviteCode, markCodeAsUsed } from '../utils/storage';
+import { 
+  saveRsvp, 
+  getUserActiveRsvp, 
+  markCodeAsUsed, 
+  checkInviteCodeStatus, 
+  InviteCodeValidationResult 
+} from '../utils/storage';
 import { RsvpSubmission } from '../types';
 import { useWedding } from '../context/WeddingContext';
 
@@ -14,6 +20,8 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
   const { wedding, isReceptionOnly, isCeremonyOnly } = useWedding();
   const isSingleReception = isReceptionOnly || isCeremonyOnly;
   const [passcode, setPasscode] = useState('');
+  const [codeStatus, setCodeStatus] = useState<InviteCodeValidationResult | null>(null);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -27,6 +35,12 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [formError, setFormError] = useState<{
+    title: string;
+    message: string;
+    detail?: string;
+    type: 'already_used' | 'not_found' | 'incomplete' | 'general';
+  } | null>(null);
   const [submittedData, setSubmittedData] = useState<RsvpSubmission | null>(null);
   const errorRef = useRef<HTMLDivElement>(null);
 
@@ -37,14 +51,60 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
     }
   }, [isSingleReception]);
 
+  // Read ?code= or ?passcode= from URL if present
   useEffect(() => {
-    if (errorMessage) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlCode = params.get('code') || params.get('passcode') || params.get('invite');
+      if (urlCode && urlCode.trim()) {
+        const clean = urlCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+        if (clean) {
+          setPasscode(clean);
+        }
+      }
+    } catch {
+      // Ignore URL parsing errors
+    }
+  }, []);
+
+  // Real-time verification when user enters 5 digits
+  useEffect(() => {
+    const clean = passcode.trim();
+    if (clean.length === 5) {
+      let isMounted = true;
+      setIsValidatingCode(true);
+      checkInviteCodeStatus(clean, wedding.couple.title)
+        .then((res) => {
+          if (!isMounted) return;
+          setIsValidatingCode(false);
+          setCodeStatus(res);
+          // If code is valid, and assigned_to exists, and first/last name are empty, prefill names
+          if (res.isValid && res.assignedTo) {
+            const parts = res.assignedTo.trim().split(/\s+/);
+            setFirstName(prev => prev || parts[0] || '');
+            setLastName(prev => prev || parts.slice(1).join(' ') || '');
+          }
+        })
+        .catch(() => {
+          if (isMounted) setIsValidatingCode(false);
+        });
+      return () => {
+        isMounted = false;
+      };
+    } else {
+      setCodeStatus(null);
+      setIsValidatingCode(false);
+    }
+  }, [passcode, wedding.couple.title]);
+
+  useEffect(() => {
+    if (errorMessage || formError) {
       const timer = setTimeout(() => {
         errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [errorMessage]);
+  }, [errorMessage, formError]);
 
   useEffect(() => {
     // Check if user already submitted an RSVP in this session/browser
@@ -63,47 +123,92 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     setErrorMessage('');
 
     if (!firstName.trim() || !lastName.trim()) {
-      setErrorMessage('Please enter your first and last name.');
+      const err = {
+        title: 'Name Required',
+        message: 'Please enter your first and last name so we can record your RSVP.',
+        type: 'incomplete' as const,
+      };
+      setFormError(err);
+      setErrorMessage(err.message);
       return;
     }
 
     if (!passcode.trim() || passcode.trim().length !== 5) {
-      setErrorMessage('Please enter your valid 5-digit invite code.');
+      const err = {
+        title: 'Passcode Incomplete',
+        message: 'Please enter your complete 5-digit invitation passcode before submitting.',
+        detail: 'Every invitation is paired with an exclusive 5-digit passcode (e.g. 74921).',
+        type: 'incomplete' as const,
+      };
+      setFormError(err);
+      setErrorMessage(err.message);
       return;
     }
 
     if (!attendance) {
-      setErrorMessage('Please select whether you will attend.');
+      const err = {
+        title: 'Attendance Required',
+        message: 'Please select whether you will attend.',
+        type: 'incomplete' as const,
+      };
+      setFormError(err);
+      setErrorMessage(err.message);
       return;
     }
 
     if (attendance === 'yes' && wedding.id === 'miracle-malvin' && !selectedDate) {
-      setErrorMessage('Please choose which celebration date(s) you will attend.');
+      const err = {
+        title: 'Celebration Date Selection',
+        message: 'Please choose which celebration date(s) you will attend.',
+        type: 'incomplete' as const,
+      };
+      setFormError(err);
+      setErrorMessage(err.message);
       return;
     }
 
     setIsSubmitting(true);
 
-    // 1. Verify the invite code
-    const inviteCodeObj = await verifyInviteCode(passcode.trim());
-    if (!inviteCodeObj) {
-      setErrorMessage('Invalid invite code. Please check your invitation or contact the couple.');
+    // 1. Verify the invite code with detailed status
+    const validation = await checkInviteCodeStatus(passcode.trim(), wedding.couple.title);
+    if (!validation.isValid) {
+      if (validation.status === 'already_used') {
+        const err = {
+          title: 'Invitation Code Already Redeemed',
+          message: validation.message,
+          detail: validation.detail,
+          type: 'already_used' as const,
+        };
+        setFormError(err);
+        setErrorMessage(validation.message);
+      } else if (validation.status === 'not_found') {
+        const err = {
+          title: 'Invitation Code Not Recognized',
+          message: validation.message,
+          detail: validation.detail,
+          type: 'not_found' as const,
+        };
+        setFormError(err);
+        setErrorMessage(validation.message);
+      } else {
+        const err = {
+          title: 'Invalid Passcode',
+          message: validation.message,
+          detail: validation.detail,
+          type: 'incomplete' as const,
+        };
+        setFormError(err);
+        setErrorMessage(validation.message);
+      }
       setIsSubmitting(false);
       return;
     }
 
-    if (inviteCodeObj.is_used) {
-      setErrorMessage(
-        `This invite code has already been redeemed${
-          inviteCodeObj.used_by ? ` by ${inviteCodeObj.used_by}` : ''
-        }. Please contact the couple if you believe this is an error.`
-      );
-      setIsSubmitting(false);
-      return;
-    }
+    const inviteCodeObj = validation.codeObj!;
 
     try {
       // 2. Save the RSVP
@@ -310,10 +415,17 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
             >
 
               {/* 5-Digit Invite Code */}
-              <div className="p-5 rounded-2xl bg-white border border-brand-gold/30 shadow-sm">
-                <label htmlFor="passcode" className="block text-xs uppercase tracking-widest font-sans font-bold text-brand-espresso mb-2">
-                  5-Digit Invite Code <span className="text-brand-goldDark">*</span>
-                </label>
+              <div className="p-5 rounded-2xl bg-white border border-brand-gold/30 shadow-sm transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="passcode" className="block text-xs uppercase tracking-widest font-sans font-bold text-brand-espresso">
+                    5-Digit Invite Code <span className="text-brand-goldDark">*</span>
+                  </label>
+                  {isValidatingCode && (
+                    <span className="text-[11px] font-sans text-brand-muted animate-pulse flex items-center gap-1 font-medium">
+                      Verifying passcode...
+                    </span>
+                  )}
+                </div>
                 <div className="relative">
                   <input
                     id="passcode"
@@ -322,14 +434,85 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                     required
                     placeholder="e.g. 74921"
                     value={passcode}
-                    onChange={(e) => setPasscode(e.target.value.trim().toUpperCase())}
-                    className="w-full px-4 py-3.5 pl-12 rounded-xl bg-brand-cream/30 border border-brand-sand focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none text-brand-espresso font-mono text-xl tracking-[0.25em] font-bold uppercase transition-all"
+                    onChange={(e) => {
+                      const val = e.target.value.trim().toUpperCase().slice(0, 5);
+                      setPasscode(val);
+                      if (formError) setFormError(null);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    className={`w-full px-4 py-3.5 pl-12 rounded-xl bg-brand-cream/30 border outline-none font-mono text-xl tracking-[0.25em] font-bold uppercase transition-all ${
+                      codeStatus?.isValid
+                        ? 'border-emerald-500 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 text-emerald-950 bg-emerald-50/20'
+                        : codeStatus?.status === 'already_used'
+                        ? 'border-amber-500 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 text-amber-950 bg-amber-50/20'
+                        : codeStatus?.status === 'not_found'
+                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 text-red-950 bg-red-50/20'
+                        : 'border-brand-sand focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 text-brand-espresso'
+                    }`}
                   />
-                  <KeyRound className="w-5 h-5 text-brand-goldDark absolute left-4 top-1/2 -translate-y-1/2" />
+                  <KeyRound className={`w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${
+                    codeStatus?.isValid
+                      ? 'text-emerald-600'
+                      : codeStatus?.status === 'already_used'
+                      ? 'text-amber-600'
+                      : codeStatus?.status === 'not_found'
+                      ? 'text-red-500'
+                      : 'text-brand-goldDark'
+                  }`} />
                 </div>
-                <p className="text-xs text-brand-muted mt-2 font-sans">
-                  Please enter the unique 5-digit passcode provided with your invitation.
-                </p>
+
+                {/* Real-time Inline Status Feedback */}
+                {codeStatus && (
+                  <div className="mt-3">
+                    {codeStatus.isValid ? (
+                      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-sans">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <span className="font-bold block text-emerald-950">{codeStatus.message}</span>
+                          {codeStatus.assignedTo ? (
+                            <span className="text-[12px] text-emerald-800">
+                              Invitation reserved for <span className="font-semibold underline">{codeStatus.assignedTo}</span>.
+                            </span>
+                          ) : (
+                            <span className="text-[12px] text-emerald-800">You may proceed with your RSVP details below.</span>
+                          )}
+                        </div>
+                      </div>
+                    ) : codeStatus.status === 'already_used' ? (
+                      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-sans">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <span className="font-bold block text-amber-950">Code Already Redeemed</span>
+                          <span className="leading-relaxed block text-amber-900 mt-0.5">{codeStatus.message}</span>
+                          {codeStatus.detail && (
+                            <span className="text-[11px] text-amber-800/90 block mt-1 pt-1 border-t border-amber-200/60 leading-normal">
+                              {codeStatus.detail}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : codeStatus.status === 'not_found' ? (
+                      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-950 text-xs font-sans">
+                        <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <span className="font-bold block text-red-950">Code Not Recognized</span>
+                          <span className="leading-relaxed block text-red-900 mt-0.5">{codeStatus.message}</span>
+                          {codeStatus.detail && (
+                            <span className="text-[11px] text-red-800/90 block mt-1 pt-1 border-t border-red-200/60 leading-normal">
+                              {codeStatus.detail}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
+                {!codeStatus && (
+                  <p className="text-xs text-brand-muted mt-2 font-sans">
+                    Please enter the unique 5-digit passcode provided with your invitation.
+                  </p>
+                )}
               </div>
 
               {/* First Name & Last Name */}
@@ -550,7 +733,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
 
                 {/* Error Notification */}
                 <AnimatePresence>
-                  {errorMessage && (
+                  {(formError || errorMessage) && (
                     <motion.div
                       ref={errorRef}
                       initial={{ opacity: 0, y: -6, height: 0 }}
@@ -559,13 +742,40 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
                       transition={{ duration: 0.25, ease: 'easeOut' }}
                       className="overflow-hidden pt-1"
                     >
-                      <div className="p-4 sm:p-5 rounded-2xl bg-red-50/90 border border-red-200 text-red-600 flex items-center gap-3.5 shadow-sm">
-                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                          <AlertCircle className="w-4 h-4 text-red-600" />
+                      <div
+                        role="alert"
+                        className={`p-4 sm:p-5 rounded-2xl border shadow-sm transition-colors ${
+                          formError?.type === 'already_used'
+                            ? 'bg-amber-50/95 border-amber-300 text-amber-950'
+                            : formError?.type === 'not_found'
+                            ? 'bg-red-50/95 border-red-300 text-red-950'
+                            : 'bg-red-50/95 border-red-200 text-red-900'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3.5">
+                          <div
+                            className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+                              formError?.type === 'already_used'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            <AlertCircle className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <h4 className="text-xs sm:text-sm font-sans font-bold tracking-wider uppercase text-brand-espresso">
+                              {formError?.title || 'Notice'}
+                            </h4>
+                            <p className="text-sm sm:text-[15px] font-sans font-medium leading-relaxed">
+                              {formError?.message || errorMessage}
+                            </p>
+                            {formError?.detail && (
+                              <p className="text-xs sm:text-[13px] font-sans opacity-85 leading-relaxed pt-2 border-t border-black/5 mt-1.5">
+                                {formError.detail}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm sm:text-[15px] font-sans font-semibold text-red-600 leading-relaxed">
-                          {errorMessage}
-                        </p>
                       </div>
                     </motion.div>
                   )}

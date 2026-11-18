@@ -1221,17 +1221,103 @@ export async function syncLocalCodesToTurso(): Promise<{ synced: number; total: 
   return { synced: missing.length, total: cloudCodes.length };
 }
 
+export interface InviteCodeValidationResult {
+  isValid: boolean;
+  status: 'valid' | 'already_used' | 'not_found' | 'invalid_format' | 'empty';
+  codeObj: InviteCode | null;
+  message: string;
+  detail?: string;
+  usedBy?: string;
+  assignedTo?: string;
+}
+
 export async function verifyInviteCode(code: string): Promise<InviteCode | null> {
   const currentCodes = await getInviteCodes();
   const clean = code.trim().toUpperCase();
-  const found = currentCodes.find(c => c.code.trim().toUpperCase() === clean);
+  const digitsOnly = clean.replace(/[^0-9]/g, '');
+  const found = currentCodes.find(c => {
+    const cClean = c.code.trim().toUpperCase();
+    return cClean === clean || (digitsOnly.length === 5 && cClean === digitsOnly);
+  });
   return found || null;
 }
 
+export async function checkInviteCodeStatus(
+  code: string,
+  coupleTitle: string = 'Miracle & Malvin'
+): Promise<InviteCodeValidationResult> {
+  const clean = code.trim().toUpperCase();
+  if (!clean) {
+    return {
+      isValid: false,
+      status: 'empty',
+      codeObj: null,
+      message: 'Please enter your 5-digit invitation passcode.',
+      detail: 'Each invitation includes an exclusive 5-digit passcode (e.g. 74921).'
+    };
+  }
+
+  const digitsOnly = clean.replace(/[^0-9]/g, '');
+  if (clean.length < 5 && digitsOnly.length < 5) {
+    return {
+      isValid: false,
+      status: 'invalid_format',
+      codeObj: null,
+      message: 'Incomplete invitation passcode.',
+      detail: 'Passcodes must be exactly 5 digits long (e.g. 74921). Please check your invitation message.'
+    };
+  }
+
+  const codeObj = await verifyInviteCode(clean);
+  if (!codeObj) {
+    return {
+      isValid: false,
+      status: 'not_found',
+      codeObj: null,
+      message: `We couldn’t find invitation code “${clean}” on our guest list.`,
+      detail: `Please double-check the 5-digit passcode in your invitation message or card. If you believe this is an error, please reach out to ${coupleTitle}.`
+    };
+  }
+
+  if (codeObj.is_used) {
+    const usedBy = codeObj.used_by?.trim();
+    return {
+      isValid: false,
+      status: 'already_used',
+      codeObj,
+      usedBy,
+      message: usedBy
+        ? `This invitation code (${codeObj.code}) has already been used to RSVP by ${usedBy}.`
+        : `This invitation code (${codeObj.code}) has already been redeemed.`,
+      detail: `Each invitation passcode is strictly single-use. If you need to make changes to your RSVP or request another code, please contact ${coupleTitle} directly.`
+    };
+  }
+
+  return {
+    isValid: true,
+    status: 'valid',
+    codeObj,
+    assignedTo: codeObj.assigned_to?.trim(),
+    message: codeObj.assigned_to?.trim()
+      ? `Invitation code verified for ${codeObj.assigned_to.trim()}!`
+      : 'Invitation code verified!',
+    detail: 'Your invitation has been recognized. Please proceed with your response below.'
+  };
+}
+
 export async function markCodeAsUsed(code: string, usedBy: string): Promise<void> {
+  const clean = code.trim().toUpperCase();
+  const digitsOnly = clean.replace(/[^0-9]/g, '');
   const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+
+  const matched = currentCodes.find(c => {
+    const cClean = c.code.trim().toUpperCase();
+    return cClean === clean || (digitsOnly.length === 5 && cClean === digitsOnly);
+  });
+  const actualCode = matched ? matched.code : clean;
+
   setLocalDb(MM_DB_CODES, currentCodes.map(c => 
-    c.code.trim() === code.trim() ? { ...c, is_used: true, used_by: usedBy } : c
+    c.code.trim().toUpperCase() === actualCode.trim().toUpperCase() ? { ...c, is_used: true, used_by: usedBy } : c
   ));
 
   if (isTursoConfigured()) {
@@ -1240,7 +1326,7 @@ export async function markCodeAsUsed(code: string, usedBy: string): Promise<void
       if (client) {
         await client.execute({
           sql: 'UPDATE invite_codes SET is_used = 1, guest_name = ? WHERE code = ?',
-          args: [usedBy, code.trim()]
+          args: [usedBy, actualCode.trim()]
         });
       }
     } catch (err) {
