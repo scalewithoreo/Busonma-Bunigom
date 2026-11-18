@@ -40,9 +40,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
   }, []);
 
   const isPublicMode = import.meta.env.VITE_SITE_MODE === 'public';
-  const basePath = location.pathname.startsWith('/reception')
-    ? '/reception'
-    : (location.pathname.startsWith('/ceremony') ? '/reception' : (location.pathname.startsWith('/white-wedding') ? '/reception' : ''));
+  const basePath = location.pathname.startsWith('/main') ? '/main' : '';
 
   const navLinks = [
     { name: 'Welcome', href: `${basePath}/#welcome`.replace('//#', '/#'), icon: Heart },
@@ -55,7 +53,7 @@ export const Navbar: FC<NavbarProps> = ({ onOpenRsvp }) => {
     { name: 'Gallery', href: `${basePath}/#gallery`.replace('//#', '/#'), icon: ImageIcon },
   ];
 
-  const isHomePage = location.pathname === '/' || location.pathname === '/reception' || location.pathname === '/ceremony' || location.pathname === '/white-wedding';
+  const isHomePage = location.pathname === '/' || location.pathname === '/main' || location.pathname === '/reception' || location.pathname === '/ceremony' || location.pathname === '/white-wedding';
 
   useEffect(() => {
     if (!isHomePage) {

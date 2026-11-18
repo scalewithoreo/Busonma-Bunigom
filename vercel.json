@@ -1,12 +1,16 @@
 {
   "rewrites": [
     {
+      "source": "/main",
+      "destination": "/main.html"
+    },
+    {
       "source": "/reception",
-      "destination": "/reception.html"
+      "destination": "/index.html"
     },
     {
       "source": "/ceremony",
-      "destination": "/reception.html"
+      "destination": "/index.html"
     },
     {
       "source": "/(.*)",

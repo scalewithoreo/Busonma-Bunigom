@@ -9,7 +9,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        reception: resolve(__dirname, 'reception.html'),
+        fullCelebration: resolve(__dirname, 'main.html'),
       },
     },
   },

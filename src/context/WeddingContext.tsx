@@ -139,15 +139,15 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [activeCoupleId, setActiveCoupleId] = useState<string>(detectInitialCoupleId);
   const location = useLocation();
 
-  const isReceptionPath = useMemo(() => {
+  const isMainCelebrationPath = useMemo(() => {
     try {
       const path = location.pathname.toLowerCase();
-      if (path === '/reception' || path.startsWith('/reception/') || path === '/ceremony' || path.startsWith('/ceremony/')) {
+      if (path === '/main' || path.startsWith('/main/')) {
         return true;
       }
       const params = new URLSearchParams(location.search);
       const view = params.get('view') || params.get('event') || params.get('tier');
-      if (view && (view.toLowerCase() === 'reception' || view.toLowerCase() === 'ceremony')) {
+      if (view && (view.toLowerCase() === 'main' || view.toLowerCase() === 'full' || view.toLowerCase() === 'familyvip' || view.toLowerCase() === 'vip')) {
         return true;
       }
     } catch (e) {
@@ -157,7 +157,10 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, [location.pathname, location.search]);
 
   const [overrideGuestView, setOverrideGuestView] = useState<'full' | 'reception' | null>(null);
-  const guestView: 'full' | 'reception' = overrideGuestView || (isReceptionPath ? 'reception' : 'full');
+  // Default for Miracle & Malvin on the original domain '/' is reception only.
+  // The full celebration is accessed at '/main'.
+  const defaultGuestView: 'full' | 'reception' = isMainCelebrationPath ? 'full' : 'reception';
+  const guestView: 'full' | 'reception' = overrideGuestView || defaultGuestView;
   const isReceptionOnly = (activeCoupleId === 'miracle-malvin') && (guestView === 'reception');
   const isCeremonyOnly = isReceptionOnly;
 

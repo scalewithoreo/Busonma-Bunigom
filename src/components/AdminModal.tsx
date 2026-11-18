@@ -296,8 +296,8 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
     const getInviteMessage = (code: string, creatorRole: string, tier: 'general' | 'familyVip' = 'general') => {
       const baseOrigin = window.location.origin;
-      const websiteUrl = wedding.id === 'miracle-malvin' && tier === 'general'
-        ? `${baseOrigin}/reception`
+      const websiteUrl = wedding.id === 'miracle-malvin' && tier === 'familyVip'
+        ? `${baseOrigin}/main`
         : baseOrigin;
       const template = tier === 'familyVip' ? invitationPosters.familyVipMessage : invitationPosters.generalMessage;
       return formatInviteMessage(template, code, websiteUrl, creatorRole, tier, wedding.couple.title, wedding.event.displayDate);
@@ -2834,7 +2834,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                       </div>
                       <p className="text-xs text-brand-muted mt-1 leading-snug">
                         {wedding.id === 'miracle-malvin'
-                          ? 'Saturday, Jan 9 at Apata School Isolo. Links directly to /reception.'
+                          ? 'Saturday, Jan 9 at Apata School Isolo. Links directly to the original domain (/).'
                           : 'Solemnization & Main Reception. Perfect for general guests.'}
                       </p>
                       <div className="mt-2 text-xs font-semibold text-brand-goldDark flex items-center gap-1 group-hover:translate-x-1 transition-transform">
@@ -2871,7 +2871,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                       </div>
                       <p className="text-xs text-brand-muted mt-1 leading-snug">
                         {wedding.id === 'miracle-malvin'
-                          ? 'Both White Wedding (Jan 7) & Reception (Jan 9 at Apata School). Links to full website.'
+                          ? 'Both White Wedding (Jan 7) & Reception (Jan 9). Links directly to /main.'
                           : 'Includes Engagement / Traditional ceremony & exclusive Afterparty details.'}
                       </p>
                       <div className="mt-2 text-xs font-semibold text-brand-goldDark flex items-center gap-1 group-hover:translate-x-1 transition-transform">

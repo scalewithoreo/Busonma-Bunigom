@@ -1251,9 +1251,9 @@ export function formatInviteMessage(
   const isMiracle = coupleTitle.toLowerCase().includes('miracle');
   
   // Clean base URL and construct the appropriate tier target URL
-  const base = websiteUrl.replace(/\/reception.*$|\/ceremony.*$|\/white-wedding.*$/i, '').replace(/\/$/, '');
-  const targetLink = isMiracle && tier === 'general'
-    ? `${base}/reception?code=${code}`
+  const base = websiteUrl.replace(/\/main.*$|\/reception.*$|\/ceremony.*$|\/white-wedding.*$/i, '').replace(/\/$/, '');
+  const targetLink = isMiracle && tier === 'familyVip'
+    ? `${base}/main?code=${code}`
     : `${base}/?code=${code}`;
 
   if (template && template.trim()) {
