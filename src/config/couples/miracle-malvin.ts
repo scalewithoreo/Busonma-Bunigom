@@ -28,7 +28,7 @@ export const miracleMalvinConfig: WeddingConfig = {
     date: '2027-01-07T10:00:00+01:00',
     displayDate: 'Thursday, January 7 & Saturday, January 9, 2027',
     shortDisplayDate: 'Jan 7 & 9, 2027',
-    rsvpDeadline: 'January 10th, 2027',
+    rsvpDeadline: 'December 17th, 2026',
     saveTheDateHeading: 'These Days',
     saveTheDateImage: '/assets/miracle-malvin/mimi-4.png?v=2031',
     confettiColors: ['#581C87', '#75074B', '#F9A8D4', '#ffffff', '#F5EDE4'],
@@ -183,7 +183,7 @@ export const miracleMalvinConfig: WeddingConfig = {
   qa: [
     {
       question: "What’s the RSVP deadline?",
-      answer: 'We kindly request that you RSVP on or before January 10th, 2027 to ensure we have ample time to finalize guest lists, seating, and catering preparations.',
+      answer: 'We kindly request that you RSVP on or before December 17th, 2026 to ensure we have ample time to finalize guest lists, seating, and catering preparations.',
     },
     {
       question: 'Can I bring a guest (Plus-One)?',

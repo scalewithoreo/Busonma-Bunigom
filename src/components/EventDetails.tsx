@@ -334,8 +334,8 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
               <img 
                 loading="lazy" 
                 decoding="async" 
-                src={wedding.event.venueImage || '/assets/celebr8-center.jpg'} 
-                alt={wedding.event.church.venueName} 
+                src={wedding.event.venueImage || (isSingleView ? '/assets/miracle-malvin/reception-venue.jpg' : '/assets/celebr8-center.jpg')} 
+                alt={isSingleView ? wedding.event.reception.venueName : wedding.event.church.venueName} 
                 className="w-full h-full object-cover opacity-50 mix-blend-luminosity hover:scale-105 transition-transform duration-700" 
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-espresso via-brand-espresso/65 to-black/25" />

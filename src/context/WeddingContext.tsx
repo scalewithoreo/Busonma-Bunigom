@@ -206,6 +206,8 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
       },
       event: {
         ...base.event,
+        venueImage: '/assets/miracle-malvin/reception-venue.jpg',
+        rsvpDeadline: 'December 17th, 2026',
         displayDate: 'Saturday, January 9, 2027',
         shortDisplayDate: 'Jan 9, 2027',
         saveTheDateHeading: 'Wedding Reception',
