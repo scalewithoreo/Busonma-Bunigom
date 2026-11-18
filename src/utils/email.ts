@@ -62,7 +62,7 @@ function getEmailWrapper(content: string): string {
                       Miracle & Malvin
                     </h1>
                     <p style="margin: 12px 0 0 0; color: #c5a880; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;">
-                      Wednesday, January 27, 2027 &bull; Lagos, Nigeria
+                      January 2027 &bull; Lagos, Nigeria
                     </p>
                   </td>
                 </tr>
@@ -118,8 +118,8 @@ export async function sendRsvpConfirmationEmail(params: {
         <p style="margin: 0 0 6px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">
           Wedding Details
         </p>
-        <p style="margin: 0 0 8px 0; font-size: 15px; color: #1c1917;"><strong>Date:</strong> Wednesday, January 27, 2027</p>
-        <p style="margin: 0; font-size: 15px; color: #1c1917;"><strong>Location:</strong> Celebration Church Int'l (Celebr8 Centre HQ), Lagos</p>
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #1c1917;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 1:00 PM</p>
+        <p style="margin: 0; font-size: 15px; color: #1c1917;"><strong>Location:</strong> Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos</p>
       </div>
 
       <p style="margin: 0 0 25px 0; font-size: 15px; line-height: 1.6; color: #44403c;">

@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { dispatchEmail } from './_mailer.ts';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS setup
@@ -18,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { firstName, lastName, email, attendance, message, code, creator, websiteUrl } = req.body;
+  const { firstName, lastName, email, attendance, selectedDate, message, code, creator, websiteUrl } = req.body || {};
 
   try {
     // 1. Google Sheets Webhook (Hidden from browser)
@@ -32,6 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           lastName,
           email: email || '',
           attendance,
+          selectedDate: selectedDate || '',
           message: message || '',
           code,
           creator
@@ -39,16 +41,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }).catch(err => console.error('Webhook failed:', err));
     }
 
-    // 2. Email Sending (Hidden from browser)
-    const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
-    const SENDER_EMAIL = process.env.EMAIL_SENDER || process.env.VITE_EMAIL_SENDER || "Miracle & Malvin's Wedding <onboarding@resend.dev>";
-    
-    if (email && RESEND_API_KEY) {
-      const subject = attendance === 'Attending' 
+    // 2. Email Sending (Hidden from browser via ZeptoMail / Zoho CPaaS or Resend)
+    if (email) {
+      const isAttending = attendance === 'Attending';
+      const subject = isAttending
         ? "RSVP Confirmed: We can't wait to celebrate with you! 🥂" 
         : "RSVP Received: We will miss you! 🕊️";
         
       const registryUrl = websiteUrl ? `${websiteUrl}/#gifts` : '/#gifts';
+
+      // Celebration details block depending on guest selection
+      let eventDetailsHtml = '';
+      if (selectedDate === 'both') {
+        eventDetailsHtml = `
+          <div style="background-color: #faf8f2; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px 25px; margin-bottom: 25px;">
+            <p style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Wedding Celebration Details</p>
+            
+            <div style="margin-bottom: 14px;">
+              <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: bold; color: #1c1917;">1. Church Solemnization</p>
+              <p style="margin: 0; font-size: 13px; color: #44403c; line-height: 1.5;"><strong>Date & Time:</strong> Thursday, January 7, 2027 &bull; 11:00 AM</p>
+              <p style="margin: 2px 0 0 0; font-size: 13px; color: #78716c; line-height: 1.4;">Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos</p>
+            </div>
+
+            <div style="padding-top: 12px; border-top: 1px dashed #e7e0d3; margin-bottom: 12px;">
+              <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: bold; color: #1c1917;">2. Wedding Reception</p>
+              <p style="margin: 0; font-size: 13px; color: #44403c; line-height: 1.5;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 1:00 PM</p>
+              <p style="margin: 2px 0 0 0; font-size: 13px; color: #78716c; line-height: 1.4;">Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos</p>
+            </div>
+
+            <div style="padding-top: 10px; border-top: 1px solid #e7e0d3;">
+              <p style="margin: 0; font-size: 12px; color: #78716c; font-style: italic;">* Please note: Strictly an <strong>adult-only</strong> event (No children).</p>
+            </div>
+          </div>
+        `;
+      } else if (selectedDate === 'ceremony') {
+        eventDetailsHtml = `
+          <div style="background-color: #faf8f2; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px 25px; margin-bottom: 25px;">
+            <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Church Solemnization Details</p>
+            <p style="margin: 0 0 4px 0; font-size: 14px; color: #1c1917;"><strong>Date & Time:</strong> Thursday, January 7, 2027 &bull; 11:00 AM</p>
+            <p style="margin: 0 0 12px 0; font-size: 13px; color: #78716c; line-height: 1.4;">Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos</p>
+            <div style="padding-top: 10px; border-top: 1px solid #e7e0d3;">
+              <p style="margin: 0; font-size: 12px; color: #78716c; font-style: italic;">* Please note: Strictly an <strong>adult-only</strong> event (No children).</p>
+            </div>
+          </div>
+        `;
+      } else {
+        // Reception only (default)
+        eventDetailsHtml = `
+          <div style="background-color: #faf8f2; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px 25px; margin-bottom: 25px;">
+            <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Wedding Reception Details</p>
+            <p style="margin: 0 0 4px 0; font-size: 14px; color: #1c1917;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 1:00 PM</p>
+            <p style="margin: 0 0 12px 0; font-size: 13px; color: #78716c; line-height: 1.4;">Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos</p>
+            <div style="padding-top: 10px; border-top: 1px solid #e7e0d3;">
+              <p style="margin: 0; font-size: 12px; color: #78716c; font-style: italic;">* Please note: Strictly an <strong>adult-only</strong> event (No children).</p>
+            </div>
+          </div>
+        `;
+      }
       
       let emailHtml = `
         <!DOCTYPE html>
@@ -62,26 +111,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                       <td align="center" style="background-color: #1c1917; padding: 40px 30px; text-align: center;">
                         <p style="margin: 0 0 10px 0; color: #c5a880; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; font-weight: 600;">The Wedding Of</p>
                         <h1 style="margin: 0; color: #faf8f2; font-size: 32px; font-family: Georgia, serif; font-weight: normal; letter-spacing: 1px;">Miracle & Malvin</h1>
-                        <p style="margin: 12px 0 0 0; color: #c5a880; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;">Wednesday, January 27, 2027 &bull; Lagos, Nigeria</p>
+                        <p style="margin: 12px 0 0 0; color: #c5a880; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;">January 2027 &bull; Lagos, Nigeria</p>
                       </td>
                     </tr>
                     <tr>
                       <td style="padding: 40px 35px;">
       `;
 
-      if (attendance === 'Attending') {
+      if (isAttending) {
         emailHtml += `
                         <h2 style="margin: 0 0 15px 0; color: #1c1917; font-family: Georgia, serif; font-size: 24px; font-weight: normal;">Dearest ${firstName},</h2>
                         <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #44403c;">We are absolutely thrilled that you will be joining us to celebrate our wedding! Your RSVP has been successfully received.</p>
-                        <div style="background-color: #faf8f2; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px 25px; margin-bottom: 25px;">
-                          <p style="margin: 0 0 6px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Wedding Details</p>
-                          <p style="margin: 0 0 8px 0; font-size: 15px; color: #1c1917;"><strong>Date:</strong> Wednesday, January 27, 2027</p>
-                          <p style="margin: 0; font-size: 15px; color: #1c1917;"><strong>Location:</strong> Celebration Church Int'l (Celebr8 Centre HQ), Lagos</p>
-                          <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e7e0d3;">
-                            <p style="margin: 0; font-size: 13px; color: #78716c; font-style: italic;">* Please note that this is strictly an <strong>adult-only</strong> event (No children).</p>
-                          </div>
-                        </div>
-                        <p style="margin: 0 0 25px 0; font-size: 15px; line-height: 1.6; color: #44403c;">We will share more specific details regarding the venue and schedule closer to the big day. Thank you for your continued love and support!</p>
+                        ${eventDetailsHtml}
+                        <p style="margin: 0 0 25px 0; font-size: 15px; line-height: 1.6; color: #44403c;">We will share more specific details regarding the schedule closer to the big day. Thank you for your continued love and support!</p>
                         <div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid #e7e0d3;">
                           <p style="margin: 0 0 15px 0; font-size: 15px; line-height: 1.6; color: #44403c;">Your presence at our wedding is the greatest gift we could ask for! Should you wish to bless us with a gift, you are welcome to make a cash contribution or visit our online registry.</p>
                           <p style="margin: 0; text-align: center;"><a href="${registryUrl}" style="display: inline-block; padding: 12px 24px; background-color: #1c1917; color: #c5a880; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">Gift Registry</a></p>
@@ -116,19 +158,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         </html>
       `;
 
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: SENDER_EMAIL,
-          to: [email],
-          subject,
-          html: emailHtml
-        })
-      }).catch(err => console.error('Resend failed:', err));
+      // Dispatch via ZeptoMail or Resend
+      const result = await dispatchEmail({
+        to: email,
+        subject,
+        html: emailHtml
+      });
+      if (!result.success) {
+        console.warn('RSVP confirmation email delivery warning:', result.error);
+      }
     }
 
     return res.status(200).json({ success: true });
