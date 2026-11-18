@@ -156,10 +156,8 @@ export const miracleMalvinConfig: WeddingConfig = {
     image: '/assets/miracle-malvin/mimi-2.png?v=2030',
     imageAlt: 'Miracle and Malvin celebrating their love story',
     paragraphs: [
-      'Our journey began in 100 level as university classmates. For a long while, it was just polite smiles, quiet hallway greetings, and casual "hello"s. Then came a challenging organic chemistry course where Malvin had a natural gift for chemistry and Miracle needed assistance. What started as chemistry tutorial sessions quickly sparked a genuine, effortless connection (and no, we promised never to make cliché chemistry jokes!).',
-      'Through the twists of 2020 and the shared milestones of 300 level and our final year, our friendship deepened into an unshakable bond of trust, peace, and mutual support. Around February 2021, Malvin asked Miracle out. Taking her time, Miracle made him wait six months before giving him an answer. In good humor, Malvin set a deadline: "If you don’t answer me by September 20th, I will stop asking!"',
-      'It didn’t take until September. On August 5th, 2021, Miracle said a wholehearted YES, and the real adventure began.',
-      'Years later came the proposal, a surprise evening hangout with our dearest friends that turned into an unforgettable celebration and group dinner. Together, we found the perfect balance of calm strength, joyful laughter, and deep purpose. Now, we are ready to build a lifetime of love and forever together.',
+      'Around February, Malvin asked Miracle for courtship. Taking her time and praying and waiting on GOD, Miracle made him wait six months before giving him an answer. In good humor, Malvin set a deadline: "If you don’t answer me by September 20th, I will stop asking!" It didn’t take until September. On August 5th, Miracle said a wholehearted YES, and the real adventure began.',
+      'A while later came the proposal, a surprise evening hangout with dearest friends that turned into an unforgettable celebration and group dinner. Together, we found the perfect balance of calm strength, joyful laughter, and deep purpose. Now, we are ready to build a lifetime of love and forever together.',
     ],
     signoff: 'Miracle & Malvin',
   },
