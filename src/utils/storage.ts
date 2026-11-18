@@ -1110,12 +1110,14 @@ export async function bulkMakeCodesAvailable(ids: string[]): Promise<void> {
 }
 
 export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[]> {
+  const localCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+
   if (isTursoConfigured()) {
     try {
       const client = getTursoClient();
       if (client) {
         const res = await client.execute('SELECT * FROM invite_codes ORDER BY created_at DESC');
-        const codes: InviteCode[] = res.rows.map((row: any) => ({
+        const cloudCodes: InviteCode[] = res.rows.map((row: any) => ({
           id: String(row.id),
           code: String(row.code),
           is_used: Boolean(row.is_used),
@@ -1125,27 +1127,104 @@ export async function getInviteCodes(filterByRole?: string): Promise<InviteCode[
           used_by: row.guest_name ? String(row.guest_name) : undefined,
           created_at: String(row.created_at || new Date().toISOString())
         }));
-        setLocalDb(MM_DB_CODES, codes);
-        if (filterByRole && !['all', 'master', 'miracle', 'malvin', 'busonma', 'bunigom'].includes(filterByRole)) {
-          return codes.filter(c => c.created_by === filterByRole);
+
+        // Two-way sync: If local storage has codes that are missing in Turso cloud, automatically push them!
+        const cloudSet = new Set(cloudCodes.map(c => c.code.trim().toUpperCase()));
+        const missingInCloud = localCodes.filter(c => !cloudSet.has(c.code.trim().toUpperCase()));
+
+        if (missingInCloud.length > 0) {
+          try {
+            const statements = missingInCloud.map(c => ({
+              sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at, is_shared, assigned_to)
+                    VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`,
+              args: [
+                c.id || ('code_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+                c.code.trim(),
+                c.used_by || '',
+                c.created_by || 'admin',
+                c.is_used ? 1 : 0,
+                c.created_at || new Date().toISOString(),
+                c.is_shared ? 1 : 0,
+                c.assigned_to || null
+              ]
+            }));
+            await client.batch(statements);
+            cloudCodes.unshift(...missingInCloud);
+            console.log(`[turso] Successfully synced ${missingInCloud.length} local codes to cloud database.`);
+          } catch (syncErr) {
+            console.error('[turso] Auto-sync to cloud failed:', syncErr);
+          }
         }
-        return codes;
+
+        setLocalDb(MM_DB_CODES, cloudCodes);
+        if (filterByRole && !['all', 'master', 'miracle', 'malvin', 'busonma', 'bunigom'].includes(filterByRole)) {
+          return cloudCodes.filter(c => c.created_by === filterByRole);
+        }
+        return cloudCodes;
       }
     } catch (err) {
       console.warn('[turso] Failed to fetch invite codes from cloud:', err);
     }
   }
 
-  const currentCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
   if (filterByRole && !['all', 'master', 'miracle', 'malvin', 'busonma', 'bunigom'].includes(filterByRole)) {
-    return currentCodes.filter(c => c.created_by === filterByRole);
+    return localCodes.filter(c => c.created_by === filterByRole);
   }
-  return currentCodes;
+  return localCodes;
+}
+
+export async function syncLocalCodesToTurso(): Promise<{ synced: number; total: number }> {
+  const localCodes = getLocalDb<InviteCode[]>(MM_DB_CODES, []);
+  if (!isTursoConfigured()) {
+    return { synced: 0, total: localCodes.length };
+  }
+  const client = getTursoClient();
+  if (!client) {
+    return { synced: 0, total: localCodes.length };
+  }
+
+  const res = await client.execute('SELECT * FROM invite_codes ORDER BY created_at DESC');
+  const cloudCodes: InviteCode[] = res.rows.map((row: any) => ({
+    id: String(row.id),
+    code: String(row.code),
+    is_used: Boolean(row.is_used),
+    is_shared: Boolean(row.is_shared),
+    assigned_to: row.assigned_to ? String(row.assigned_to) : undefined,
+    created_by: row.category ? String(row.category) : 'admin',
+    used_by: row.guest_name ? String(row.guest_name) : undefined,
+    created_at: String(row.created_at || new Date().toISOString())
+  }));
+
+  const cloudSet = new Set(cloudCodes.map(c => c.code.trim().toUpperCase()));
+  const missing = localCodes.filter(c => !cloudSet.has(c.code.trim().toUpperCase()));
+
+  if (missing.length > 0) {
+    const statements = missing.map(c => ({
+      sql: `INSERT INTO invite_codes (id, code, guest_name, category, max_guests, is_used, created_at, is_shared, assigned_to)
+            VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`,
+      args: [
+        c.id || ('code_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+        c.code.trim(),
+        c.used_by || '',
+        c.created_by || 'admin',
+        c.is_used ? 1 : 0,
+        c.created_at || new Date().toISOString(),
+        c.is_shared ? 1 : 0,
+        c.assigned_to || null
+      ]
+    }));
+    await client.batch(statements);
+    cloudCodes.unshift(...missing);
+  }
+
+  setLocalDb(MM_DB_CODES, cloudCodes);
+  return { synced: missing.length, total: cloudCodes.length };
 }
 
 export async function verifyInviteCode(code: string): Promise<InviteCode | null> {
   const currentCodes = await getInviteCodes();
-  const found = currentCodes.find(c => c.code.trim() === code.trim());
+  const clean = code.trim().toUpperCase();
+  const found = currentCodes.find(c => c.code.trim().toUpperCase() === clean);
   return found || null;
 }
 

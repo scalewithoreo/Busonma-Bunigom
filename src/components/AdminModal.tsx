@@ -4,7 +4,7 @@ import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Che
 import { 
   getStoredRsvps, deleteRsvp,
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
-  getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, assignInviteCode, exportInviteCodesCsv, InviteCode,
+  getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, assignInviteCode, exportInviteCodesCsv, syncLocalCodesToTurso, InviteCode,
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
   getStoredReminders, deleteReservation, markReservationFulfilled,
   getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, DEFAULT_INVITATION_MESSAGES, formatInviteMessage
@@ -249,6 +249,25 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       alert('Failed to generate codes.');
     }
     setIsGenerating(false);
+  };
+
+  const [isSyncingCodes, setIsSyncingCodes] = useState(false);
+  const handleSyncCodes = async () => {
+    setIsSyncingCodes(true);
+    try {
+      const res = await syncLocalCodesToTurso();
+      const updatedCodes = await getInviteCodes(role);
+      setCodes(updatedCodes);
+      if (res.synced > 0) {
+        onNotify('Cloud Database Synced', `Pushed ${res.synced} local code(s) to cloud database! Total: ${res.total}`);
+      } else {
+        onNotify('Cloud Database in Sync', `All ${res.total} invite codes are synchronized with cloud database.`);
+      }
+    } catch (e) {
+      console.error(e);
+      onNotify('Sync Error', 'Failed to sync codes with cloud database.');
+    }
+    setIsSyncingCodes(false);
   };
 
   const handleDeleteSelectedCodes = () => {
@@ -1397,6 +1416,14 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 shrink-0">
+                        <button
+                          onClick={handleSyncCodes}
+                          disabled={isSyncingCodes}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-brand-gold/15 hover:bg-brand-gold/25 text-brand-goldDark text-xs font-sans uppercase tracking-wider rounded-xl transition-colors font-bold border border-brand-gold/30 disabled:opacity-50"
+                          title="Sync invite codes to Turso cloud database"
+                        >
+                          <UploadCloud className="w-4 h-4" /> {isSyncingCodes ? 'Syncing...' : 'Sync to Cloud'}
+                        </button>
                         {selectedCodes.size > 0 && (
                           <button
                             onClick={handleDeleteSelectedCodes}
