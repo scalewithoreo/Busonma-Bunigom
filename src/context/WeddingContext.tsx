@@ -196,7 +196,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
       story: {
         ...base.story,
         paragraphs: [
-          'Around February, Malvin asked Miracle for courtship. Taking her time and praying and waiting on GOD, Miracle made him wait six months before giving him an answer. In good humor, Malvin set a deadline: "If you don’t answer me by September 20th, I will stop asking!" It didn’t take until September. On August 5th, Miracle said a wholehearted YES, and the real adventure began.',
+          'It all started around February this year (2026), when Malvin asked Miracle for courtship. Taking her time and praying and waiting on GOD, Miracle made him wait six months before giving him an answer. In good humor, Malvin set a deadline: "If you don’t answer me by September 20th, I will stop asking!" It didn’t take until September. On August 5th, Miracle said a wholehearted YES, and the real adventure began.',
           'A while later came the proposal, a surprise evening hangout with dearest friends that turned into an unforgettable celebration and group dinner. Together, we found the perfect balance of calm strength, joyful laughter, and deep purpose. Now, we are ready to build a lifetime of love and forever together.',
         ],
       },
@@ -221,16 +221,18 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         },
       },
       programme: base.programme.filter(p => p.icon === 'utensils' || p.title.toLowerCase().includes('reception')),
-      qa: base.qa.map(q => {
-        if (q.question.includes('dates and venues') || q.question.includes('date and venue')) {
-          return {
-            ...q,
-            question: 'What is the reception date and venue?',
-            answer: 'Our Wedding Reception takes place on Saturday, January 9, 2027 starting at 11:00 AM at Apata School (Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos, Nigeria).',
-          };
-        }
-        return q;
-      }),
+      qa: base.qa
+        .filter(q => !q.question.toLowerCase().includes('traditional wedding'))
+        .map(q => {
+          if (q.question.includes('dates and venues') || q.question.includes('date and venue')) {
+            return {
+              ...q,
+              question: 'What is the reception date and venue?',
+              answer: 'Our Wedding Reception takes place on Saturday, January 9, 2027 starting at 11:00 AM at Apata School (Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos, Nigeria).',
+            };
+          }
+          return q;
+        }),
     };
   }, [rawWedding, activePresetId, isReceptionOnly]);
 

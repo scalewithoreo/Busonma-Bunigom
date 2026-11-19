@@ -81,23 +81,32 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
             ...INITIAL_WISHLIST_ITEMS.filter(init => !dbItems.some(db => db.name.toLowerCase() === init.name.toLowerCase()))
           ];
 
-      setItems(
-        baseItems.map((item) => {
-          const pledgeMatch = pledges.find((p) => p.itemId === item.id || p.itemName.toLowerCase() === item.name.toLowerCase());
-          const reservationMatch = activeReservations.find((r) => r.itemId === item.id || r.itemName.toLowerCase() === item.name.toLowerCase());
+      const mappedItems = baseItems.map((item) => {
+        const pledgeMatch = pledges.find((p) => p.itemId === item.id || p.itemName.toLowerCase() === item.name.toLowerCase());
+        const reservationMatch = activeReservations.find((r) => r.itemId === item.id || r.itemName.toLowerCase() === item.name.toLowerCase());
 
-          return {
-            ...item,
-            isFunded: item.price === 0 ? false : !!pledgeMatch,
-            fundedBy: item.price === 0 ? undefined : pledgeMatch?.giverName,
-            isReserved: item.price === 0 ? false : (!pledgeMatch && !!reservationMatch),
-            reservedUntil: item.price === 0 ? undefined : reservationMatch?.expiresAt,
-            reservedByEmail: item.price === 0 ? undefined : reservationMatch?.email,
-            reservedByName: item.price === 0 ? undefined : reservationMatch?.reservedByName,
-            isAnonymousReservation: item.price === 0 ? undefined : reservationMatch?.isAnonymous
-          };
-        })
-      );
+        return {
+          ...item,
+          isFunded: item.price === 0 ? false : !!pledgeMatch,
+          fundedBy: item.price === 0 ? undefined : pledgeMatch?.giverName,
+          isReserved: item.price === 0 ? false : (!pledgeMatch && !!reservationMatch),
+          reservedUntil: item.price === 0 ? undefined : reservationMatch?.expiresAt,
+          reservedByEmail: item.price === 0 ? undefined : reservationMatch?.email,
+          reservedByName: item.price === 0 ? undefined : reservationMatch?.reservedByName,
+          isAnonymousReservation: item.price === 0 ? undefined : reservationMatch?.isAnonymous
+        };
+      });
+
+      // Unconditionally sort Cash Gift to be the 1st item in the registry
+      const sortedItems = [...mappedItems].sort((a, b) => {
+        const aIsCash = a.id === 'wishlist-cash-gift' || a.name.toLowerCase().includes('cash gift') || a.price === 0;
+        const bIsCash = b.id === 'wishlist-cash-gift' || b.name.toLowerCase().includes('cash gift') || b.price === 0;
+        if (aIsCash && !bIsCash) return -1;
+        if (!aIsCash && bIsCash) return 1;
+        return 0;
+      });
+
+      setItems(sortedItems);
     };
     loadData();
   }, []);

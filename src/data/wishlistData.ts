@@ -2,6 +2,16 @@ import { WishlistItem } from '../types';
 
 export const INITIAL_WISHLIST_ITEMS: WishlistItem[] = [
   {
+    id: 'wishlist-cash-gift',
+    name: 'Cash Gift',
+    quantity: 1,
+    price: 0,
+    formattedPrice: '',
+    category: 'Milestone Gift',
+    image: '/assets/Cash.jpeg',
+    description: 'Bless the couple with a cash gift to help them start their new life together.',
+  },
+  {
     id: 'wishlist-ac',
     name: 'Hisense 1.5HP GenCool Dual Inverter Air Conditioner',
     quantity: 2,
@@ -321,15 +331,5 @@ export const INITIAL_WISHLIST_ITEMS: WishlistItem[] = [
     category: 'Living & Comfort',
     image: 'https://ng.jumia.is/unsafe/fit-in/680x680/filters:fill(white)/product/41/4335104/1.jpg',
     description: 'High back ergonomic mesh office chair with adjustable headrest and lumbar support for the home office.',
-  },
-  {
-    id: 'wishlist-cash-gift',
-    name: 'Cash Gift',
-    quantity: 1,
-    price: 0,
-    formattedPrice: '',
-    category: 'Milestone Gift',
-    image: '/assets/Cash.jpeg',
-    description: 'Bless the couple with a cash gift to help them start their new life together.',
   },
 ];
