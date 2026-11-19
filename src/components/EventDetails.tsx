@@ -338,23 +338,23 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 alt={isSingleView ? wedding.event.reception.venueName : wedding.event.church.venueName} 
                 className="w-full h-full object-cover opacity-50 mix-blend-luminosity hover:scale-105 transition-transform duration-700" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-espresso via-brand-espresso/65 to-black/25" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-brand-espresso/80 to-black/55" />
             </div>
 
             {/* Background texture watermark */}
             <div className="absolute -bottom-10 -right-10 w-64 h-64 rounded-full bg-brand-gold/5 blur-3xl pointer-events-none z-0" />
 
             <div className="relative z-10">
-              <div className="flex items-center gap-2 text-brand-gold text-xs uppercase tracking-[0.25em] font-sans font-semibold mb-4">
-                <MapPin className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-[#E6C687] text-xs uppercase tracking-[0.25em] font-sans font-bold mb-4 drop-shadow-sm">
+                <MapPin className="w-4 h-4 text-[#E6C687]" />
                 <span>Venue & Location</span>
               </div>
 
               {isSingleView ? (
                 /* Wedding Reception Only (Exclusive Reception View) */
                 <div className="space-y-4">
-                  <div className="border-l-2 border-brand-gold pl-4 py-1">
-                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-brand-gold font-semibold block mb-1">
+                  <div className="border-l-2 border-[#E6C687] pl-4 py-1">
+                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-[#E6C687] font-bold block mb-1.5 drop-shadow-sm">
                       {wedding.event.reception.date || 'Saturday, January 9, 2027'} {wedding.event.reception.time ? `• ${wedding.event.reception.time}` : ''}
                     </span>
                     <span className="text-xs uppercase tracking-wider text-brand-cream/70 font-sans font-medium block">
@@ -364,21 +364,16 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                       {wedding.event.reception.venueName}
                     </h3>
                     <p className="text-brand-sand text-[15px] font-sans leading-relaxed drop-shadow-sm mt-1.5 flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-brand-gold shrink-0 inline" />
+                      <MapPin className="w-4 h-4 text-[#E6C687] shrink-0 inline" />
                       <span>{wedding.event.reception.address}</span>
                     </p>
-                  </div>
-                  <div className="pt-2">
-                    <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-white/10 text-brand-sand text-xs font-sans tracking-wider uppercase border border-white/10">
-                      Dress Code: Formal / Contemporary Attire
-                    </span>
                   </div>
                 </div>
               ) : wedding.event.church.venueName === wedding.event.reception.venueName ? (
                 /* Unified Single Day Celebration Venue (e.g. Busonma & Bunigom at Admiralty Conference Centre) */
                 <div className="space-y-4">
                   <div>
-                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-brand-gold font-semibold block mb-1">
+                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-[#E6C687] font-bold block mb-1">
                       Ceremony &amp; Celebration &bull; 1:00 PM WAT
                     </span>
                     <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light leading-tight drop-shadow-md">
@@ -398,8 +393,8 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                 /* Split Venues (Church + Reception) */
                 <div className="space-y-6">
                   {/* Church / Solemnization */}
-                  <div className="border-l-2 border-brand-primary pl-4 py-1">
-                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-brand-gold font-semibold block mb-1">
+                  <div className="border-l-2 border-[#E6C687] pl-4 py-1">
+                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-[#E6C687] font-bold block mb-1">
                       {wedding.event.church.date || 'Thursday, January 7, 2027'} {wedding.event.church.time ? `• ${wedding.event.church.time}` : ''}
                     </span>
                     <span className="text-xs uppercase tracking-wider text-brand-cream/70 font-sans font-medium block">
@@ -409,14 +404,14 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                       {wedding.event.church.venueName}
                     </h3>
                     <p className="text-brand-sand text-[15px] font-sans leading-relaxed drop-shadow-sm mt-1.5 flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-brand-gold shrink-0 inline" />
+                      <MapPin className="w-4 h-4 text-[#E6C687] shrink-0 inline" />
                       <span>{wedding.event.church.address}</span>
                     </p>
                   </div>
 
                   {/* Reception */}
-                  <div className="border-l-2 border-brand-primary pl-4 py-1">
-                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-brand-gold font-semibold block mb-1">
+                  <div className="border-l-2 border-[#E6C687] pl-4 py-1">
+                    <span className="text-[11px] font-sans uppercase tracking-[0.2em] text-[#E6C687] font-bold block mb-1">
                       {wedding.event.reception.date || 'Saturday, January 9, 2027'} {wedding.event.reception.time ? `• ${wedding.event.reception.time}` : ''}
                     </span>
                     <span className="text-xs uppercase tracking-wider text-brand-cream/70 font-sans font-medium block">
@@ -426,7 +421,7 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                       {wedding.event.reception.venueName}
                     </h3>
                     <p className="text-brand-sand text-[15px] font-sans leading-relaxed drop-shadow-sm mt-1.5 flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-brand-gold shrink-0 inline" />
+                      <MapPin className="w-4 h-4 text-[#E6C687] shrink-0 inline" />
                       <span>{wedding.event.reception.address}</span>
                     </p>
                   </div>

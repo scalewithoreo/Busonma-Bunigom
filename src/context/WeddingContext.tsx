@@ -202,7 +202,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
       },
       couple: {
         ...base.couple,
-        dateTeaser: 'January 9, 2027',
+        dateTeaser: 'Jan 2027',
       },
       event: {
         ...base.event,

@@ -16,7 +16,7 @@ export const miracleMalvinConfig: WeddingConfig = {
     title: 'Miracle & Malvin',
     hashtag: '#MiracleAndMalvin2027',
     locationText: 'Lagos, Nigeria',
-    dateTeaser: 'January 2027',
+    dateTeaser: 'Jan 2027',
     logoImage: '/assets/miracle-malvin/logo-mm.png?v=2027',
     heroImage: '/assets/miracle-malvin/hero-mimi.png?v=2032',
     heroObjectPosition: 'object-center',
