@@ -62,6 +62,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [adminFormOpen, setAdminFormOpen] = useState(false);
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminAccessPoint, setNewAdminAccessPoint] = useState<'super' | 'family' | 'coordinator'>('family');
+  const [newAdminCodeLimit, setNewAdminCodeLimit] = useState<string>('50');
   const [newAdminPin, setNewAdminPin] = useState('');
   const [adminFormError, setAdminFormError] = useState('');
   const [revealedPins, setRevealedPins] = useState<Set<string>>(new Set());
@@ -95,12 +96,22 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       roleSlug = baseSlug + '_' + Date.now().toString(36).slice(-4);
     }
 
+    let codeLimitNum: number | undefined = undefined;
+    if (newAdminAccessPoint === 'family') {
+      codeLimitNum = parseInt(newAdminCodeLimit, 10);
+      if (isNaN(codeLimitNum) || codeLimitNum < 1) {
+        setAdminFormError('Please enter a valid positive number for the invite/couple cap (e.g. 20, 50).');
+        return;
+      }
+    }
+
     const roleConfig: AdminRoleConfig = {
       role: roleSlug,
       label: newAdminName.trim(),
       defaultPin: newAdminPin.trim(),
       isMaster: newAdminAccessPoint === 'super',
       accessPoint: newAdminAccessPoint,
+      codeLimit: codeLimitNum,
       relationFilter: newAdminName.trim(),
       createdAt: new Date().toISOString(),
     };
@@ -111,6 +122,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       setNewAdminName('');
       setNewAdminPin('');
       setNewAdminAccessPoint('family');
+      setNewAdminCodeLimit('50');
       setAdminFormOpen(false);
       onNotify('Admin Created', roleConfig.label + ' added with ' + (roleConfig.accessPoint ? roleConfig.accessPoint.toUpperCase() : 'ADMIN') + ' access (PIN: ' + roleConfig.defaultPin + ').');
     } catch (err) {
@@ -119,8 +131,13 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   };
 
   const handleDeleteAdminRole = (roleConfig: AdminRoleConfig) => {
-    if (roleConfig.role === 'miracle' || roleConfig.role === 'malvin') {
-      onNotify('Protected', 'Miracle and Malvin are the permanent creators and cannot be removed.');
+    const isPermanent = wedding.id === 'busonma-bunigom'
+      ? (roleConfig.role === 'busonma' || roleConfig.role === 'bunigom')
+      : (roleConfig.role === 'miracle' || roleConfig.role === 'malvin');
+
+    if (isPermanent) {
+      const names = wedding.id === 'busonma-bunigom' ? 'Bunigom and Busonma' : 'Miracle and Malvin';
+      onNotify('Protected', `${names} are the permanent creators and cannot be removed.`);
       return;
     }
 
@@ -185,9 +202,10 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [reservations, setReservations] = useState<GiftReminder[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const getRoleCodeLimit = () => {
-    if (isMaster) return Infinity;
-    if (role === 'custom1964') return 20;
-    return 100;
+    if (isSuperAdmin) return Infinity;
+    if (currentRoleConfig?.codeLimit) return currentRoleConfig.codeLimit;
+    if (isCoordinator) return 0;
+    return 50;
   };
   const roleCodeLimit = getRoleCodeLimit();
 
@@ -656,7 +674,8 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
   const handleReallocateRsvpCode = (rsvp: RsvpSubmission, matchingCode?: InviteCode) => {
     const guestName = `${rsvp.firstName} ${rsvp.lastName}`.trim();
-    const creator = matchingCode?.created_by || (creatorFilter !== 'all' ? creatorFilter : (role || 'malvin'));
+    const defaultAdmin = wedding.id === 'busonma-bunigom' ? 'busonma' : 'malvin';
+    const creator = matchingCode?.created_by || (creatorFilter !== 'all' ? creatorFilter : (role || defaultAdmin));
     const oldCodeStr = matchingCode ? `code ${matchingCode.code}` : `the invite code for ${guestName}`;
 
     setConfirmDialog({
@@ -1905,7 +1924,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                                   {(c.is_shared || c.is_used) ? (
                                     <>
                                       <button
-                                        onClick={() => handleReallocateCode(c.id, c.code, c.created_by || role || 'malvin')}
+                                        onClick={() => handleReallocateCode(c.id, c.code, c.created_by || role || (wedding.id === 'busonma-bunigom' ? 'busonma' : 'malvin'))}
                                         className="px-3 py-1.5 rounded-xl bg-brand-sand/40 hover:bg-amber-100 text-brand-espresso hover:text-amber-900 border border-brand-sand/60 text-xs font-sans font-bold flex items-center gap-1.5 transition-all shrink-0 shadow-sm"
                                         title="Re-allocate (Delete old code and generate a fresh replacement)"
                                       >
@@ -2999,129 +3018,186 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => {
-                        setAdminFormOpen(!adminFormOpen);
+                        setAdminFormOpen(true);
                         setAdminFormError('');
                       }}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-sans font-bold tracking-wider uppercase hover:bg-brand-charcoal transition-colors shadow-md"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-sans font-bold tracking-wider uppercase hover:bg-brand-charcoal transition-colors shadow-md cursor-pointer"
                     >
-                      {adminFormOpen ? <X className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                      <span>{adminFormOpen ? 'Close Form' : '+ Add New Admin'}</span>
+                      <UserPlus className="w-4 h-4" />
+                      <span>+ Add New Admin</span>
                     </button>
                   </div>
 
-                  {/* Add Admin Form */}
+                  {/* Create New Admin Modal Popup */}
                   <AnimatePresence>
                     {adminFormOpen && (
-                      <motion.form
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        onSubmit={handleCreateAdmin}
-                        className="p-6 sm:p-8 border-b border-brand-sand/40 bg-brand-cream/30 space-y-6"
+                      <div
+                        className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-brand-espresso/70 backdrop-blur-sm"
+                        onClick={() => setAdminFormOpen(false)}
+                        data-lenis-prevent="true"
                       >
-                        <div className="border-b border-brand-sand/30 pb-4">
-                          <h4 className="font-serif text-lg text-brand-espresso">Create New Admin Account</h4>
-                          <p className="text-xs text-brand-muted font-sans mt-0.5">
-                            Set their name, access point, and 4-digit PIN password. They will use this PIN on the /admin screen.
-                          </p>
-                        </div>
-
-                        {adminFormError && (
-                          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
-                            {adminFormError}
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          {/* Admin Name */}
-                          <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
-                              Admin Name / Title *
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="e.g. Groom's Family, Auntie Helen, Lead Coordinator"
-                              value={newAdminName}
-                              onChange={(e) => setNewAdminName(e.target.value)}
-                              className="w-full px-4 py-2.5 bg-white border border-brand-sand/60 rounded-xl text-sm font-sans text-brand-espresso placeholder:text-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
-                              required
-                            />
-                          </div>
-
-                          {/* Access Point Selection */}
-                          <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
-                              Access Point *
-                            </label>
-                            <select
-                              value={newAdminAccessPoint}
-                              onChange={(e) => setNewAdminAccessPoint(e.target.value as any)}
-                              className="w-full px-4 py-2.5 bg-white border border-brand-sand/60 rounded-xl text-sm font-sans text-brand-espresso focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-brand-sand/50 relative overflow-hidden flex flex-col max-h-[92vh]"
+                        >
+                          {/* Modal Header */}
+                          <div className="flex items-center justify-between border-b border-brand-sand/30 pb-4 mb-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-2xl bg-brand-gold/15 text-brand-goldDark flex items-center justify-center shrink-0">
+                                <UserPlus className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso">Create New Admin</h4>
+                                <p className="text-xs text-brand-muted font-sans mt-0.5">
+                                  Set credentials, access point, and invite quotas
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAdminFormOpen(false)}
+                              className="p-2 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/30 rounded-xl transition-colors cursor-pointer"
                             >
-                              <option value="family">Family Admin (Personal Guests & Invite Codes)</option>
-                              <option value="coordinator">Event Coordinator (Full Guest List Alone & Day-of Check-In)</option>
-                              <option value="super">Super Admin (Full Access to Everything)</option>
-                            </select>
+                              <X className="w-5 h-5" />
+                            </button>
                           </div>
 
-                          {/* 4-Digit PIN */}
-                          <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
-                              4-Digit PIN / Password *
-                            </label>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              maxLength={4}
-                              placeholder="e.g. 5555"
-                              value={newAdminPin}
-                              onChange={(e) => setNewAdminPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                              className="w-full px-4 py-2.5 bg-white border border-brand-sand/60 rounded-xl text-sm font-mono tracking-widest text-brand-espresso placeholder:text-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
-                              required
-                            />
-                            <p className="text-[11px] text-brand-muted mt-1 font-sans">
-                              Must be exactly 4 digits.
-                            </p>
-                          </div>
-                        </div>
+                          {/* Modal Form Scrollable Body */}
+                          <form onSubmit={handleCreateAdmin} className="space-y-4 overflow-y-auto pr-1">
+                            {adminFormError && (
+                              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
+                                {adminFormError}
+                              </div>
+                            )}
 
-                        {/* Access Point Explanation Note */}
-                        <div className="p-4 bg-brand-ivory rounded-2xl border border-brand-sand/40 text-xs text-brand-espresso/80 font-sans leading-relaxed">
-                          <span className="font-bold text-brand-espresso">Access Point Details: </span>
-                          {newAdminAccessPoint === 'family' && (
-                            <span>
-                              <strong>Family Admin:</strong> Restricts this user strictly to guests who RSVP'd using their assigned invite codes, and allows them to generate & share their own invite codes. All financial and gift details are hidden.
-                            </span>
-                          )}
-                          {newAdminAccessPoint === 'coordinator' && (
-                            <span>
-                              <strong>Event Coordinator:</strong> Gives full visibility into the entire wedding guest list with real-time arrival check-in buttons and Excel export. Financial gifts, invite codes, and admin settings are strictly restricted.
-                            </span>
-                          )}
-                          {newAdminAccessPoint === 'super' && (
-                            <span>
-                              <strong>Super Admin:</strong> Full permissions across the entire platform, including all guest lists, all invite codes, monetary gifts, wishlist, invitations, and admin roster management.
-                            </span>
-                          )}
-                        </div>
+                            {/* Admin Name */}
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
+                                Admin Name / Title *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Groom's Family, Auntie Helen, Lead Coordinator"
+                                value={newAdminName}
+                                onChange={(e) => setNewAdminName(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-brand-cream/30 border border-brand-sand/60 rounded-xl text-sm font-sans text-brand-espresso placeholder:text-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
+                                required
+                              />
+                            </div>
 
-                        <div className="flex items-center justify-end gap-3 pt-2">
-                          <button
-                            type="button"
-                            onClick={() => setAdminFormOpen(false)}
-                            className="px-5 py-2.5 rounded-xl text-brand-muted hover:text-brand-espresso text-xs font-sans font-bold uppercase tracking-wider hover:bg-brand-sand/30 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            className="px-6 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-sans font-bold uppercase tracking-wider hover:bg-brand-charcoal transition-colors shadow-md"
-                          >
-                            Save & Create Admin
-                          </button>
-                        </div>
-                      </motion.form>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {/* Access Point Selection */}
+                              <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
+                                  Access Point *
+                                </label>
+                                <select
+                                  value={newAdminAccessPoint}
+                                  onChange={(e) => setNewAdminAccessPoint(e.target.value as any)}
+                                  className="w-full px-4 py-2.5 bg-brand-cream/30 border border-brand-sand/60 rounded-xl text-sm font-sans text-brand-espresso focus:outline-none focus:ring-2 focus:ring-brand-gold/40 cursor-pointer"
+                                >
+                                  <option value="family">Family Admin (Personal Guests & Codes)</option>
+                                  <option value="coordinator">Event Coordinator (Full Guest List Alone)</option>
+                                  <option value="super">Super Admin (Full Access to Everything)</option>
+                                </select>
+                              </div>
+
+                              {/* 4-Digit PIN */}
+                              <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
+                                  4-Digit PIN / Password *
+                                </label>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  maxLength={4}
+                                  placeholder="e.g. 5555"
+                                  value={newAdminPin}
+                                  onChange={(e) => setNewAdminPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                  className="w-full px-4 py-2.5 bg-brand-cream/30 border border-brand-sand/60 rounded-xl text-sm font-mono tracking-widest text-brand-espresso placeholder:text-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
+                                  required
+                                />
+                                <p className="text-[11px] text-brand-muted mt-1 font-sans">
+                                  Must be exactly 4 digits.
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Capped Number of Couples / Codes (Family Admin Only) */}
+                            {newAdminAccessPoint === 'family' && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="bg-emerald-50/80 border border-emerald-300/80 rounded-2xl p-4 space-y-2"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-950 font-sans">
+                                    Invite Cap (Max Couples / Codes) *
+                                  </label>
+                                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                                    Cap Enforced
+                                  </span>
+                                </div>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="500"
+                                  placeholder="e.g. 20, 50, 100"
+                                  value={newAdminCodeLimit}
+                                  onChange={(e) => setNewAdminCodeLimit(e.target.value)}
+                                  className="w-full px-4 py-2.5 bg-white border border-emerald-400/80 rounded-xl text-sm font-sans font-semibold text-brand-espresso focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                                  required
+                                />
+                                <p className="text-[11px] text-emerald-900 font-sans leading-relaxed">
+                                  This family admin will be strictly capped to creating a maximum of <strong>{newAdminCodeLimit || '...'}</strong> invite codes / couples.
+                                </p>
+                              </motion.div>
+                            )}
+
+                            {/* Access Point Explanation Note */}
+                            <div className="p-3.5 bg-brand-ivory rounded-2xl border border-brand-sand/40 text-xs text-brand-espresso/80 font-sans leading-relaxed">
+                              <span className="font-bold text-brand-espresso">Access Point Details: </span>
+                              {newAdminAccessPoint === 'family' && (
+                                <span>
+                                  <strong>Family Admin:</strong> Restricts this user strictly to guests who RSVP'd using their assigned invite codes, and allows them to generate & share codes up to their assigned cap. All financial and registry details are hidden.
+                                </span>
+                              )}
+                              {newAdminAccessPoint === 'coordinator' && (
+                                <span>
+                                  <strong>Event Coordinator:</strong> Gives full visibility into the entire wedding guest list with real-time arrival check-in buttons and Excel export. Financial gifts, invite codes, and admin settings are strictly restricted.
+                                </span>
+                              )}
+                              {newAdminAccessPoint === 'super' && (
+                                <span>
+                                  <strong>Super Admin:</strong> Full permissions across the entire platform, including all guest lists, all invite codes, monetary gifts, wishlist, invitations, and admin roster management.
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-brand-sand/30">
+                              <button
+                                type="button"
+                                onClick={() => setAdminFormOpen(false)}
+                                className="px-5 py-2.5 rounded-xl text-brand-muted hover:text-brand-espresso text-xs font-sans font-bold uppercase tracking-wider hover:bg-brand-sand/30 transition-colors cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                className="px-6 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-sans font-bold uppercase tracking-wider hover:bg-brand-charcoal transition-colors shadow-md cursor-pointer"
+                              >
+                                Save & Create Admin
+                              </button>
+                            </div>
+                          </form>
+                        </motion.div>
+                      </div>
                     )}
                   </AnimatePresence>
 
@@ -3140,7 +3216,9 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                       </thead>
                       <tbody className="text-sm font-sans text-brand-espresso">
                         {wedding.admin.roles.map((adminRole, idx) => {
-                          const isPermanent = adminRole.role === 'miracle' || adminRole.role === 'malvin';
+                          const isPermanent = wedding.id === 'busonma-bunigom'
+                            ? (adminRole.role === 'busonma' || adminRole.role === 'bunigom')
+                            : (adminRole.role === 'miracle' || adminRole.role === 'malvin');
                           const roleAccess: 'super' | 'family' | 'coordinator' = adminRole.accessPoint || (adminRole.isMaster ? 'super' : 'family');
                           const activePin = getStoredPin(adminRole.role, adminRole.defaultPin);
                           const isRevealed = revealedPins.has(adminRole.role);
@@ -3166,21 +3244,26 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                                 </div>
                               </td>
                               <td className="p-6">
-                                {roleAccess === 'super' && (
-                                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300/60 inline-flex items-center gap-1.5">
-                                    <ShieldCheck className="w-3.5 h-3.5 text-amber-700" /> Super Admin
+                                <div className="flex flex-col items-start gap-1">
+                                  {roleAccess === 'super' && (
+                                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300/60 inline-flex items-center gap-1.5">
+                                      <ShieldCheck className="w-3.5 h-3.5 text-amber-700" /> Super Admin
+                                    </span>
+                                  )}
+                                  {roleAccess === 'family' && (
+                                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300/60 inline-flex items-center gap-1.5">
+                                      <Users className="w-3.5 h-3.5 text-emerald-700" /> Family Admin
+                                    </span>
+                                  )}
+                                  {roleAccess === 'coordinator' && (
+                                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-900 border border-indigo-300/60 inline-flex items-center gap-1.5">
+                                      <Clock className="w-3.5 h-3.5 text-indigo-700" /> Event Coordinator
+                                    </span>
+                                  )}
+                                  <span className="text-[11px] text-brand-muted font-sans">
+                                    {roleAccess === 'family' ? ('Cap: ' + (adminRole.codeLimit || 50) + ' couples') : (roleAccess === 'super' ? 'Unlimited access' : 'Full guest list alone')}
                                   </span>
-                                )}
-                                {roleAccess === 'family' && (
-                                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300/60 inline-flex items-center gap-1.5">
-                                    <Users className="w-3.5 h-3.5 text-emerald-700" /> Family Admin
-                                  </span>
-                                )}
-                                {roleAccess === 'coordinator' && (
-                                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-900 border border-indigo-300/60 inline-flex items-center gap-1.5">
-                                    <Clock className="w-3.5 h-3.5 text-indigo-700" /> Event Coordinator
-                                  </span>
-                                )}
+                                </div>
                               </td>
                               <td className="p-6">
                                 <div className="flex items-center gap-2">

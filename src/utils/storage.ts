@@ -1604,9 +1604,24 @@ export async function uploadInvitationPoster(
 // CUSTOM ADMIN ROLES & ACCESS POINT MANAGEMENT
 // ============================================================
 const MM_DB_ADMIN_ROLES = 'mm_db_custom_admin_roles';
+const STALE_HARDCODED_ROLES = ['busonma_s_mum', 'mummy_bride', 'mama_groom', 'dulcet', 'groomsfamily', 'bridesfamily'];
 
-export async function getStoredCustomAdminRoles(): Promise<AdminRoleConfig[]> {
-  const local = getLocalDb<AdminRoleConfig[]>(MM_DB_ADMIN_ROLES, []);
+export async function getStoredCustomAdminRoles(coupleId: string = 'miracle-malvin'): Promise<AdminRoleConfig[]> {
+  const dbKey = `${MM_DB_ADMIN_ROLES}_${coupleId}`;
+  let local = getLocalDb<AdminRoleConfig[]>(dbKey, []);
+  
+  // Clean up any stale roles from local storage
+  if (local.some(r => STALE_HARDCODED_ROLES.includes(r.role))) {
+    local = local.filter(r => !STALE_HARDCODED_ROLES.includes(r.role));
+    setLocalDb(dbKey, local);
+  }
+
+  // Also clean old un-prefixed storage key
+  const oldUnscoped = getLocalDb<AdminRoleConfig[]>(MM_DB_ADMIN_ROLES, []);
+  if (oldUnscoped.length > 0) {
+    localStorage.removeItem(MM_DB_ADMIN_ROLES);
+  }
+
   if (isTursoConfigured()) {
     try {
       const client = getTursoClient();
@@ -1619,21 +1634,37 @@ export async function getStoredCustomAdminRoles(): Promise<AdminRoleConfig[]> {
             access_point TEXT NOT NULL,
             is_master INTEGER NOT NULL DEFAULT 0,
             relation_filter TEXT,
+            couple_id TEXT DEFAULT 'miracle-malvin',
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
           )
         `);
 
-        const res = await client.execute('SELECT * FROM custom_admin_roles ORDER BY created_at ASC');
+        try {
+          await client.execute('ALTER TABLE custom_admin_roles ADD COLUMN code_limit INTEGER');
+        } catch {}
+
+        try {
+          await client.execute("ALTER TABLE custom_admin_roles ADD COLUMN couple_id TEXT DEFAULT 'miracle-malvin'");
+        } catch {}
+
+        const res = await client.execute({
+          sql: 'SELECT * FROM custom_admin_roles WHERE couple_id = ? OR couple_id IS NULL ORDER BY created_at ASC',
+          args: [coupleId]
+        });
+
         if (res.rows && res.rows.length > 0) {
-          const cloudRoles: AdminRoleConfig[] = res.rows.map(row => ({
-            role: String(row.role),
-            label: String(row.label),
-            defaultPin: String(row.pin),
-            isMaster: Boolean(row.is_master),
-            accessPoint: (String(row.access_point || 'family')) as 'super' | 'family' | 'coordinator',
-            relationFilter: row.relation_filter ? String(row.relation_filter) : undefined,
-            createdAt: String(row.created_at || '')
-          }));
+          const cloudRoles: AdminRoleConfig[] = res.rows
+            .filter(row => !STALE_HARDCODED_ROLES.includes(String(row.role)))
+            .map(row => ({
+              role: String(row.role),
+              label: String(row.label),
+              defaultPin: String(row.pin),
+              isMaster: Boolean(row.is_master),
+              accessPoint: (String(row.access_point || 'family')) as 'super' | 'family' | 'coordinator',
+              codeLimit: row.code_limit ? Number(row.code_limit) : undefined,
+              relationFilter: row.relation_filter ? String(row.relation_filter) : undefined,
+              createdAt: String(row.created_at || '')
+            }));
 
           const merged = [...cloudRoles];
           local.forEach(l => {
@@ -1641,7 +1672,7 @@ export async function getStoredCustomAdminRoles(): Promise<AdminRoleConfig[]> {
               merged.push(l);
             }
           });
-          setLocalDb(MM_DB_ADMIN_ROLES, merged);
+          setLocalDb(dbKey, merged);
           return merged;
         }
       }
@@ -1652,11 +1683,12 @@ export async function getStoredCustomAdminRoles(): Promise<AdminRoleConfig[]> {
   return local;
 }
 
-export async function saveCustomAdminRole(roleConfig: AdminRoleConfig): Promise<void> {
-  const current = getLocalDb<AdminRoleConfig[]>(MM_DB_ADMIN_ROLES, []);
-  const updated = current.filter(r => r.role !== roleConfig.role);
+export async function saveCustomAdminRole(roleConfig: AdminRoleConfig, coupleId: string = 'miracle-malvin'): Promise<void> {
+  const dbKey = `${MM_DB_ADMIN_ROLES}_${coupleId}`;
+  const current = getLocalDb<AdminRoleConfig[]>(dbKey, []);
+  const updated = current.filter(r => r.role !== roleConfig.role && !STALE_HARDCODED_ROLES.includes(r.role));
   updated.push(roleConfig);
-  setLocalDb(MM_DB_ADMIN_ROLES, updated);
+  setLocalDb(dbKey, updated);
 
   if (isTursoConfigured()) {
     try {
@@ -1670,12 +1702,20 @@ export async function saveCustomAdminRole(roleConfig: AdminRoleConfig): Promise<
             access_point TEXT NOT NULL,
             is_master INTEGER NOT NULL DEFAULT 0,
             relation_filter TEXT,
+            couple_id TEXT DEFAULT 'miracle-malvin',
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
           )
         `);
+        try {
+          await client.execute('ALTER TABLE custom_admin_roles ADD COLUMN code_limit INTEGER');
+        } catch {}
+        try {
+          await client.execute("ALTER TABLE custom_admin_roles ADD COLUMN couple_id TEXT DEFAULT 'miracle-malvin'");
+        } catch {}
+
         await client.execute({
-          sql: `INSERT OR REPLACE INTO custom_admin_roles (role, label, pin, access_point, is_master, relation_filter, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          sql: `INSERT OR REPLACE INTO custom_admin_roles (role, label, pin, access_point, is_master, relation_filter, code_limit, created_at, couple_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: [
             roleConfig.role,
             roleConfig.label,
@@ -1683,7 +1723,9 @@ export async function saveCustomAdminRole(roleConfig: AdminRoleConfig): Promise<
             roleConfig.accessPoint || (roleConfig.isMaster ? 'super' : 'family'),
             roleConfig.isMaster ? 1 : 0,
             roleConfig.relationFilter || roleConfig.role,
-            roleConfig.createdAt || new Date().toISOString()
+            roleConfig.codeLimit || null,
+            roleConfig.createdAt || new Date().toISOString(),
+            coupleId
           ]
         });
       }
@@ -1693,10 +1735,11 @@ export async function saveCustomAdminRole(roleConfig: AdminRoleConfig): Promise<
   }
 }
 
-export async function deleteCustomAdminRole(roleId: string): Promise<void> {
-  const current = getLocalDb<AdminRoleConfig[]>(MM_DB_ADMIN_ROLES, []);
+export async function deleteCustomAdminRole(roleId: string, coupleId: string = 'miracle-malvin'): Promise<void> {
+  const dbKey = `${MM_DB_ADMIN_ROLES}_${coupleId}`;
+  const current = getLocalDb<AdminRoleConfig[]>(dbKey, []);
   const updated = current.filter(r => r.role !== roleId);
-  setLocalDb(MM_DB_ADMIN_ROLES, updated);
+  setLocalDb(dbKey, updated);
 
   if (isTursoConfigured()) {
     try {

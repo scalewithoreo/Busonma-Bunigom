@@ -85,7 +85,7 @@ function updateMetaTags(wedding: WeddingConfig) {
 
   const title = `${wedding.couple.title} — Wedding Celebration`;
   const description = `${wedding.event.displayDate}. Celebrating the union of ${wedding.couple.formalNames.bride} and ${wedding.couple.formalNames.groom} in ${wedding.couple.locationText}.`;
-  const ogImage = wedding.id === 'miracle-malvin' ? 'https://miracle-malvin.vercel.app/assets/miracle-malvin/og-hero.jpg?v=2032' : wedding.couple.heroImage;
+  const ogImage = wedding.id === 'miracle-malvin' ? 'https://miracle-malvin.vercel.app/assets/miracle-malvin/og-hero.jpg?v=2050' : wedding.couple.heroImage;
 
   document.title = title;
 
@@ -175,15 +175,13 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [customRoles, setCustomRoles] = useState<AdminRoleConfig[]>([]);
 
   useEffect(() => {
-    getStoredCustomAdminRoles().then(roles => {
-      if (roles && roles.length > 0) {
-        setCustomRoles(roles);
-      }
+    getStoredCustomAdminRoles(activeCoupleId).then(roles => {
+      setCustomRoles(roles || []);
     });
-  }, []);
+  }, [activeCoupleId]);
 
   const addCustomRole = async (newRole: AdminRoleConfig) => {
-    await saveCustomAdminRole(newRole);
+    await saveCustomAdminRole(newRole, activeCoupleId);
     setCustomRoles(prev => {
       const filtered = prev.filter(r => r.role !== newRole.role);
       return [...filtered, newRole];
@@ -191,7 +189,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const removeCustomRole = async (roleId: string) => {
-    await deleteCustomAdminRole(roleId);
+    await deleteCustomAdminRole(roleId, activeCoupleId);
     setCustomRoles(prev => prev.filter(r => r.role !== roleId));
   };
 
@@ -238,7 +236,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
       story: {
         ...base.story,
         paragraphs: [
-          'It all started around February this year (2026), when Malvin asked Miracle for courtship. Taking her time and praying and waiting on GOD, Miracle made him wait six months before giving him an answer. In good humor, Malvin set a deadline: "If you don’t answer me by September 20th, I will stop asking!" It didn’t take until September. On August 5th, Miracle said a wholehearted YES, and the real adventure began.',
+          'Around February, Malvin asked Miracle for courtship. Taking her time and praying and waiting on GOD, Miracle made him wait six months before giving him an answer. In good humor, Malvin set a deadline: "If you don’t answer me by September 20th, I will stop asking!" It didn’t take until September. On August 5th, Miracle said a wholehearted YES, and the real adventure began.',
           'A while later came the proposal, a surprise evening hangout with dearest friends that turned into an unforgettable celebration and group dinner. Together, we found the perfect balance of calm strength, joyful laughter, and deep purpose. Now, we are ready to build a lifetime of love and forever together.',
         ],
       },

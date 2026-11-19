@@ -5,6 +5,10 @@
       "destination": "/main.html"
     },
     {
+      "source": "/main/(.*)",
+      "destination": "/main.html"
+    },
+    {
       "source": "/reception",
       "destination": "/index.html"
     },

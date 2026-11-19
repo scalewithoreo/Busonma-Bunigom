@@ -250,11 +250,8 @@ export const busonmaBunigomConfig: WeddingConfig = {
   ],
   admin: {
     roles: [
-      { role: 'busonma', label: 'Chimbusonma (Bride & Master Admin)', defaultPin: '2703', isMaster: true, relationFilter: 'busonma' },
-      { role: 'bunigom', label: 'Chukwuebunigom (Groom & Master Admin)', defaultPin: '2703', isMaster: true, relationFilter: 'bunigom' },
-      { role: 'mummy_bride', label: 'Mummy of Bride (Mother of Bride)', defaultPin: '2703', isMaster: false, relationFilter: 'Mummy of Bride' },
-      { role: 'mama_groom', label: 'Mama of groom (Mother of Groom)', defaultPin: '2703', isMaster: false, relationFilter: 'Mama of groom' },
-      { role: 'dulcet', label: 'Dulcet (Wedding Planner / Coordinator)', defaultPin: '2703', isMaster: false, relationFilter: 'dulcet' },
+      { role: 'busonma', label: 'Chimbusonma (Super Admin)', defaultPin: '2703', isMaster: true, accessPoint: 'super', relationFilter: 'busonma' },
+      { role: 'bunigom', label: 'Chukwuebunigom (Super Admin)', defaultPin: '2703', isMaster: true, accessPoint: 'super', relationFilter: 'bunigom' },
     ],
     pinSalt: 'BusonmaBunigom_Wedding_2027_Salt_',
     emergencyPin: '0000',

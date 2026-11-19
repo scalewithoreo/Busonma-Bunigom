@@ -10,15 +10,10 @@ export const PIN_SALT = 'Wedding_Core_Salt_2026_';
 export const MASTER_EMERGENCY_PIN = '0000';
 
 export const INITIAL_ADMIN_ROLES: AdminRoleConfig[] = [
-  { role: 'miracle', label: 'Miracle (Master Admin)', defaultPin: '1111', isMaster: true, relationFilter: 'miracle' },
-  { role: 'malvin', label: 'Malvin (Master Admin)', defaultPin: '2222', isMaster: true, relationFilter: 'malvin' },
-  { role: 'busonma', label: 'Chimbusonma (Bride & Master Admin)', defaultPin: '2703', isMaster: true, relationFilter: 'busonma' },
-  { role: 'bunigom', label: 'Chukwuebunigom (Groom & Master Admin)', defaultPin: '2703', isMaster: true, relationFilter: 'bunigom' },
-  { role: 'mummy_bride', label: 'Mummy of Bride (Mother of Bride)', defaultPin: '2703', isMaster: false, relationFilter: 'Mummy of Bride' },
-  { role: 'mama_groom', label: 'Mama of groom (Mother of Groom)', defaultPin: '2703', isMaster: false, relationFilter: 'Mama of groom' },
-  { role: 'dulcet', label: 'Dulcet (Wedding Planner / Coordinator)', defaultPin: '2703', isMaster: false, relationFilter: 'dulcet' },
-  { role: 'groomsfamily', label: "Groom's Family", defaultPin: '3333', isMaster: false, relationFilter: "Groom's Family" },
-  { role: 'bridesfamily', label: "Bride's Family", defaultPin: '4444', isMaster: false, relationFilter: "Bride's Family" },
+  { role: 'miracle', label: 'Miracle (Super Admin)', defaultPin: '1111', isMaster: true, accessPoint: 'super', relationFilter: 'miracle' },
+  { role: 'malvin', label: 'Malvin (Super Admin)', defaultPin: '2222', isMaster: true, accessPoint: 'super', relationFilter: 'malvin' },
+  { role: 'busonma', label: 'Chimbusonma (Super Admin)', defaultPin: '2703', isMaster: true, accessPoint: 'super', relationFilter: 'busonma' },
+  { role: 'bunigom', label: 'Chukwuebunigom (Super Admin)', defaultPin: '2703', isMaster: true, accessPoint: 'super', relationFilter: 'bunigom' },
 ];
 
 export async function hashPin(pin: string, salt: string = PIN_SALT): Promise<string> {

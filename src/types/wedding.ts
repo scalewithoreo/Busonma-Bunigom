@@ -4,6 +4,7 @@ export interface AdminRoleConfig {
   defaultPin: string;
   isMaster: boolean;
   accessPoint?: 'super' | 'family' | 'coordinator';
+  codeLimit?: number;
   relationFilter?: string;
   createdAt?: string;
 }
