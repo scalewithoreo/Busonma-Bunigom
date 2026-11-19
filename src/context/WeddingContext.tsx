@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { WeddingConfig, AdminRoleConfig, ThemeColors, ThemePresetId } from '../types/wedding';
 import { COUPLE_CONFIGS, ALL_COUPLES, resolveCoupleId, DEFAULT_COUPLE_ID } from '../config/couples';
 import { THEME_PRESETS, ALL_THEME_PRESETS, ThemePreset } from '../config/themePresets';
+import { getStoredCustomAdminRoles, saveCustomAdminRole, deleteCustomAdminRole } from '../utils/storage';
 
 interface WeddingContextValue {
   wedding: WeddingConfig;
@@ -18,6 +19,9 @@ interface WeddingContextValue {
   setGuestView: (view: 'full' | 'reception') => void;
   isReceptionOnly: boolean;
   isCeremonyOnly: boolean;
+  customRoles: AdminRoleConfig[];
+  addCustomRole: (role: AdminRoleConfig) => Promise<void>;
+  removeCustomRole: (roleId: string) => Promise<void>;
 }
 
 const WeddingContext = createContext<WeddingContextValue | null>(null);
@@ -168,6 +172,40 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     return COUPLE_CONFIGS[activeCoupleId] || COUPLE_CONFIGS[DEFAULT_COUPLE_ID];
   }, [activeCoupleId]);
 
+  const [customRoles, setCustomRoles] = useState<AdminRoleConfig[]>([]);
+
+  useEffect(() => {
+    getStoredCustomAdminRoles().then(roles => {
+      if (roles && roles.length > 0) {
+        setCustomRoles(roles);
+      }
+    });
+  }, []);
+
+  const addCustomRole = async (newRole: AdminRoleConfig) => {
+    await saveCustomAdminRole(newRole);
+    setCustomRoles(prev => {
+      const filtered = prev.filter(r => r.role !== newRole.role);
+      return [...filtered, newRole];
+    });
+  };
+
+  const removeCustomRole = async (roleId: string) => {
+    await deleteCustomAdminRole(roleId);
+    setCustomRoles(prev => prev.filter(r => r.role !== roleId));
+  };
+
+  const allAdminRoles = useMemo(() => {
+    const defaultRoles = rawWedding.admin?.roles || [];
+    const merged = [...defaultRoles];
+    customRoles.forEach(cr => {
+      if (!merged.some(r => r.role.toLowerCase() === cr.role.toLowerCase())) {
+        merged.push(cr);
+      }
+    });
+    return merged;
+  }, [rawWedding.admin?.roles, customRoles]);
+
   const [activePresetId, setActivePresetId] = useState<ThemePresetId>(() => {
     return rawWedding.theme.preset || 'botanical-sage';
   });
@@ -186,6 +224,10 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         ...rawWedding.theme,
         preset: activePresetId,
         colors: preset.colors,
+      },
+      admin: {
+        ...rawWedding.admin,
+        roles: allAdminRoles,
       },
     };
 
@@ -234,7 +276,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
           return q;
         }),
     };
-  }, [rawWedding, activePresetId, isReceptionOnly]);
+  }, [rawWedding, activePresetId, isReceptionOnly, allAdminRoles]);
 
   useEffect(() => {
     applyThemeVariables(wedding.theme.colors, wedding.couple.title);
@@ -294,6 +336,9 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setGuestView,
         isReceptionOnly,
         isCeremonyOnly,
+        customRoles,
+        addCustomRole,
+        removeCustomRole,
       }}
     >
       {children}

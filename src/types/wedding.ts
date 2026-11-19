@@ -3,7 +3,9 @@ export interface AdminRoleConfig {
   label: string;
   defaultPin: string;
   isMaster: boolean;
+  accessPoint?: 'super' | 'family' | 'coordinator';
   relationFilter?: string;
+  createdAt?: string;
 }
 
 export interface CoupleInfo {

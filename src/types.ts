@@ -9,6 +9,8 @@ export interface RsvpSubmission {
   relation?: string;
   message?: string;
   submittedAt: string;
+  isCheckedIn?: boolean;
+  checkedInAt?: string;
 }
 
 export interface ToastMessage {

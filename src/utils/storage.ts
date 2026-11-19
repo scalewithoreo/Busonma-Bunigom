@@ -1,4 +1,5 @@
 import { RsvpSubmission, GiftPledge, WishlistItem, GiftReminder } from '../types';
+import { AdminRoleConfig } from '../types/wedding';
 import { supabase } from './supabase';
 import { isTursoConfigured, getTursoClient } from './turso';
 import { INITIAL_WISHLIST_ITEMS } from '../data/wishlistData';
@@ -136,7 +137,9 @@ export async function getStoredRsvps(): Promise<RsvpSubmission[]> {
           attendingDates: row.attending_dates ? (String(row.attending_dates).startsWith('[') ? JSON.parse(String(row.attending_dates)) : [String(row.attending_dates)]) : undefined,
           relation: row.relation ? String(row.relation) : undefined,
           message: row.message ? String(row.message) : undefined,
-          submittedAt: String(row.created_at || new Date().toISOString())
+          submittedAt: String(row.created_at || new Date().toISOString()),
+          isCheckedIn: Boolean(row.is_checked_in),
+          checkedInAt: row.checked_in_at ? String(row.checked_in_at) : undefined
         }));
         setLocalDb(MM_DB_RSVPS, rsvps);
         return rsvps;
@@ -1595,4 +1598,142 @@ export async function uploadInvitationPoster(
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+// ============================================================
+// CUSTOM ADMIN ROLES & ACCESS POINT MANAGEMENT
+// ============================================================
+const MM_DB_ADMIN_ROLES = 'mm_db_custom_admin_roles';
+
+export async function getStoredCustomAdminRoles(): Promise<AdminRoleConfig[]> {
+  const local = getLocalDb<AdminRoleConfig[]>(MM_DB_ADMIN_ROLES, []);
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute(`
+          CREATE TABLE IF NOT EXISTS custom_admin_roles (
+            role TEXT PRIMARY KEY,
+            label TEXT NOT NULL,
+            pin TEXT NOT NULL,
+            access_point TEXT NOT NULL,
+            is_master INTEGER NOT NULL DEFAULT 0,
+            relation_filter TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+          )
+        `);
+
+        const res = await client.execute('SELECT * FROM custom_admin_roles ORDER BY created_at ASC');
+        if (res.rows && res.rows.length > 0) {
+          const cloudRoles: AdminRoleConfig[] = res.rows.map(row => ({
+            role: String(row.role),
+            label: String(row.label),
+            defaultPin: String(row.pin),
+            isMaster: Boolean(row.is_master),
+            accessPoint: (String(row.access_point || 'family')) as 'super' | 'family' | 'coordinator',
+            relationFilter: row.relation_filter ? String(row.relation_filter) : undefined,
+            createdAt: String(row.created_at || '')
+          }));
+
+          const merged = [...cloudRoles];
+          local.forEach(l => {
+            if (!merged.some(m => m.role === l.role)) {
+              merged.push(l);
+            }
+          });
+          setLocalDb(MM_DB_ADMIN_ROLES, merged);
+          return merged;
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch custom admin roles from Turso:', err);
+    }
+  }
+  return local;
+}
+
+export async function saveCustomAdminRole(roleConfig: AdminRoleConfig): Promise<void> {
+  const current = getLocalDb<AdminRoleConfig[]>(MM_DB_ADMIN_ROLES, []);
+  const updated = current.filter(r => r.role !== roleConfig.role);
+  updated.push(roleConfig);
+  setLocalDb(MM_DB_ADMIN_ROLES, updated);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute(`
+          CREATE TABLE IF NOT EXISTS custom_admin_roles (
+            role TEXT PRIMARY KEY,
+            label TEXT NOT NULL,
+            pin TEXT NOT NULL,
+            access_point TEXT NOT NULL,
+            is_master INTEGER NOT NULL DEFAULT 0,
+            relation_filter TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+          )
+        `);
+        await client.execute({
+          sql: `INSERT OR REPLACE INTO custom_admin_roles (role, label, pin, access_point, is_master, relation_filter, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            roleConfig.role,
+            roleConfig.label,
+            roleConfig.defaultPin,
+            roleConfig.accessPoint || (roleConfig.isMaster ? 'super' : 'family'),
+            roleConfig.isMaster ? 1 : 0,
+            roleConfig.relationFilter || roleConfig.role,
+            roleConfig.createdAt || new Date().toISOString()
+          ]
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to save custom admin role to Turso:', err);
+    }
+  }
+}
+
+export async function deleteCustomAdminRole(roleId: string): Promise<void> {
+  const current = getLocalDb<AdminRoleConfig[]>(MM_DB_ADMIN_ROLES, []);
+  const updated = current.filter(r => r.role !== roleId);
+  setLocalDb(MM_DB_ADMIN_ROLES, updated);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute({
+          sql: 'DELETE FROM custom_admin_roles WHERE role = ?',
+          args: [roleId]
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to delete custom admin role from Turso:', err);
+    }
+  }
+}
+
+export async function toggleRsvpCheckIn(rsvpId: string, isCheckedIn: boolean): Promise<void> {
+  const currentRsvps = getLocalDb<RsvpSubmission[]>(MM_DB_RSVPS, []);
+  const now = new Date().toISOString();
+  const updated = currentRsvps.map(r => r.id === rsvpId ? { ...r, isCheckedIn, checkedInAt: isCheckedIn ? now : undefined } : r);
+  setLocalDb(MM_DB_RSVPS, updated);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        try {
+          await client.execute('ALTER TABLE rsvps ADD COLUMN is_checked_in INTEGER DEFAULT 0');
+          await client.execute('ALTER TABLE rsvps ADD COLUMN checked_in_at TEXT');
+        } catch {}
+        await client.execute({
+          sql: 'UPDATE rsvps SET is_checked_in = ?, checked_in_at = ? WHERE id = ?',
+          args: [isCheckedIn ? 1 : 0, isCheckedIn ? now : null, rsvpId]
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to update RSVP check-in on Turso:', err);
+    }
+  }
 }

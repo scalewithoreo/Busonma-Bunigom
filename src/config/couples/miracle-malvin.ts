@@ -232,11 +232,8 @@ export const miracleMalvinConfig: WeddingConfig = {
   ],
   admin: {
     roles: [
-      { role: 'miracle', label: 'Miracle (Master Admin)', defaultPin: '1111', isMaster: true, relationFilter: 'miracle' },
-      { role: 'malvin', label: 'Malvin (Master Admin)', defaultPin: '2222', isMaster: true, relationFilter: 'malvin' },
-      { role: 'groomsfamily', label: "Groom's Family", defaultPin: '3333', isMaster: false, relationFilter: "Malvin's Family" },
-      { role: 'bridesfamily', label: "Bride's Family", defaultPin: '4444', isMaster: false, relationFilter: "Miracle's Family" },
-      { role: 'custom1964', label: 'Event Coordinator', defaultPin: '1964', isMaster: false, relationFilter: 'custom1964' },
+      { role: 'miracle', label: 'Miracle (Super Admin)', defaultPin: '1111', isMaster: true, accessPoint: 'super', relationFilter: 'miracle' },
+      { role: 'malvin', label: 'Malvin (Super Admin)', defaultPin: '2222', isMaster: true, accessPoint: 'super', relationFilter: 'malvin' },
     ],
     pinSalt: 'MiracleMalvin_Wedding_2027_Salt_',
     emergencyPin: '0000',

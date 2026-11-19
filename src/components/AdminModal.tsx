@@ -1,19 +1,22 @@
 import { useState, useEffect, FC, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload, RotateCcw, XCircle, Image as ImageIcon, UploadCloud, Eye, Share2, Sparkles, Save, Smartphone, Search } from 'lucide-react';
+import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload, RotateCcw, XCircle, Image as ImageIcon, UploadCloud, Eye, Share2, Sparkles, Save, Smartphone, Search, ShieldCheck, EyeOff, UserPlus } from 'lucide-react';
 import { 
   getStoredRsvps, deleteRsvp,
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
   getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, assignInviteCode, exportInviteCodesCsv, InviteCode,
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
   getStoredReminders, deleteReservation, markReservationFulfilled,
-  getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, DEFAULT_INVITATION_MESSAGES, formatInviteMessage
+  getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, DEFAULT_INVITATION_MESSAGES, formatInviteMessage,
+  toggleRsvpCheckIn
 } from '../utils/storage';
 import { sendReservationReminderEmail } from '../utils/email';
 import { RsvpSubmission, GiftPledge, WishlistItem, GiftReminder } from '../types';
 import { INITIAL_WISHLIST_ITEMS } from '../data/wishlistData';
 import { useWedding } from '../context/WeddingContext';
 import type { AdminRole } from '../config/adminConfig';
+import { getStoredPin, saveCustomPin } from '../config/adminConfig';
+import { AdminRoleConfig } from '../types/wedding';
 
 interface AdminDashboardProps {
   isOpen: boolean; 
@@ -24,9 +27,18 @@ interface AdminDashboardProps {
 }
 
 export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify, role, onOpenResetPin }) => {
-  const { wedding, isMasterAdmin } = useWedding();
+  const { wedding, isMasterAdmin, addCustomRole, removeCustomRole } = useWedding();
+  const currentRoleConfig = wedding.admin.roles.find(
+    r => r.role.toLowerCase() === (role || '').toLowerCase()
+  );
   const isMaster = isMasterAdmin(role);
-  const [activeTab, setActiveTab] = useState<'rsvps' | 'codes' | 'gifts' | 'wishlist' | 'reservations' | 'invitations'>('rsvps');
+  const accessPoint: 'super' | 'family' | 'coordinator' = 
+    currentRoleConfig?.accessPoint || (isMaster ? 'super' : 'family');
+  const isSuperAdmin = accessPoint === 'super' || isMaster;
+  const isCoordinator = accessPoint === 'coordinator';
+  const isFamilyAdmin = accessPoint === 'family' && !isSuperAdmin;
+
+  const [activeTab, setActiveTab] = useState<'rsvps' | 'codes' | 'gifts' | 'wishlist' | 'reservations' | 'invitations' | 'admins'>('rsvps');
   const [invitationPosters, setInvitationPosters] = useState<InvitationPostersConfig>(getLocalInvitationPosters);
   const [isUploadingPoster, setIsUploadingPoster] = useState<'general' | 'familyVip' | null>(null);
   const [previewPosterUrl, setPreviewPosterUrl] = useState<string | null>(null);
@@ -35,6 +47,112 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [editingRecipientCodeId, setEditingRecipientCodeId] = useState<string | null>(null);
   const [editingRecipientValue, setEditingRecipientValue] = useState<string>('');
   const [codeSearchQuery, setCodeSearchQuery] = useState<string>('');
+  const [guestSearchQuery, setGuestSearchQuery] = useState<string>('');
+
+  // Enforce access point tab restrictions
+  useEffect(() => {
+    if (isCoordinator && activeTab !== 'rsvps') {
+      setActiveTab('rsvps');
+    } else if (isFamilyAdmin && activeTab !== 'rsvps' && activeTab !== 'codes') {
+      setActiveTab('rsvps');
+    }
+  }, [isCoordinator, isFamilyAdmin, activeTab]);
+
+  // Admin Management State
+  const [adminFormOpen, setAdminFormOpen] = useState(false);
+  const [newAdminName, setNewAdminName] = useState('');
+  const [newAdminAccessPoint, setNewAdminAccessPoint] = useState<'super' | 'family' | 'coordinator'>('family');
+  const [newAdminPin, setNewAdminPin] = useState('');
+  const [adminFormError, setAdminFormError] = useState('');
+  const [revealedPins, setRevealedPins] = useState<Set<string>>(new Set());
+
+  const toggleRevealPin = (roleKey: string) => {
+    setRevealedPins(prev => {
+      const next = new Set(prev);
+      if (next.has(roleKey)) next.delete(roleKey);
+      else next.add(roleKey);
+      return next;
+    });
+  };
+
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminFormError('');
+
+    if (!newAdminName.trim()) {
+      setAdminFormError('Please enter an admin name or title.');
+      return;
+    }
+
+    if (!/^\d{4}$/.test(newAdminPin.trim())) {
+      setAdminFormError('Password / PIN must be exactly 4 numeric digits.');
+      return;
+    }
+
+    const baseSlug = newAdminName.trim().toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'admin';
+    let roleSlug = baseSlug;
+    if (wedding.admin.roles.some(r => r.role.toLowerCase() === roleSlug.toLowerCase())) {
+      roleSlug = baseSlug + '_' + Date.now().toString(36).slice(-4);
+    }
+
+    const roleConfig: AdminRoleConfig = {
+      role: roleSlug,
+      label: newAdminName.trim(),
+      defaultPin: newAdminPin.trim(),
+      isMaster: newAdminAccessPoint === 'super',
+      accessPoint: newAdminAccessPoint,
+      relationFilter: newAdminName.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      await addCustomRole(roleConfig);
+      saveCustomPin(roleSlug, newAdminPin.trim());
+      setNewAdminName('');
+      setNewAdminPin('');
+      setNewAdminAccessPoint('family');
+      setAdminFormOpen(false);
+      onNotify('Admin Created', roleConfig.label + ' added with ' + (roleConfig.accessPoint ? roleConfig.accessPoint.toUpperCase() : 'ADMIN') + ' access (PIN: ' + roleConfig.defaultPin + ').');
+    } catch (err) {
+      setAdminFormError('Failed to save new admin.');
+    }
+  };
+
+  const handleDeleteAdminRole = (roleConfig: AdminRoleConfig) => {
+    if (roleConfig.role === 'miracle' || roleConfig.role === 'malvin') {
+      onNotify('Protected', 'Miracle and Malvin are the permanent creators and cannot be removed.');
+      return;
+    }
+
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Remove Admin Access',
+      message: 'Are you sure you want to remove ' + roleConfig.label + ' (' + roleConfig.role + ')? Their login PIN and dashboard access will be permanently revoked.',
+      onConfirm: async () => {
+        try {
+          await removeCustomRole(roleConfig.role);
+          onNotify('Admin Removed', roleConfig.label + ' was removed.');
+        } catch (err) {
+          onNotify('Error', 'Failed to remove admin role.');
+        }
+      }
+    });
+  };
+
+  const handleToggleCheckIn = async (rsvp: RsvpSubmission) => {
+    const newStatus = !rsvp.isCheckedIn;
+    const now = new Date().toISOString();
+    try {
+      await toggleRsvpCheckIn(rsvp.id, newStatus);
+      setRsvps(prev => prev.map(r => r.id === rsvp.id ? { ...r, isCheckedIn: newStatus, checkedInAt: newStatus ? now : undefined } : r));
+      onNotify(
+        newStatus ? 'Guest Checked In' : 'Check-In Reverted',
+        rsvp.firstName + ' ' + rsvp.lastName + ' marked as ' + (newStatus ? 'Arrived / Checked In' : 'Not Checked In') + '.'
+      );
+    } catch (e) {
+      onNotify('Error', 'Failed to update check-in status.');
+    }
+  };
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [generalMsgDraft, setGeneralMsgDraft] = useState(invitationPosters.generalMessage || DEFAULT_INVITATION_MESSAGES.general);
   const [familyVipMsgDraft, setFamilyVipMsgDraft] = useState(invitationPosters.familyVipMessage || DEFAULT_INVITATION_MESSAGES.familyVip);
@@ -103,7 +221,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       setIsLoading(true);
       const load = async () => {
         try {
-          if (isMaster) {
+          if (isSuperAdmin) {
             const [loadedRsvps, loadedPledges, loadedCodes, loadedItems, loadedReservations, loadedPosters] = await Promise.all([
               getStoredRsvps(),
               getStoredGiftPledgesAdmin(),
@@ -118,8 +236,16 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
             setWishlistItems(loadedItems.length > 0 ? loadedItems : INITIAL_WISHLIST_ITEMS);
             setReservations(loadedReservations);
             setInvitationPosters(loadedPosters);
-          } else if (!isMaster) {
-            // These roles get to see RSVPs for guests who used codes generated by them
+          } else if (isCoordinator) {
+            // Event Coordinator: Full guest list alone
+            const [loadedRsvps, loadedCodes] = await Promise.all([
+              getStoredRsvps(),
+              getInviteCodes()
+            ]);
+            setRsvps(loadedRsvps);
+            setCodes(loadedCodes);
+          } else {
+            // Family admin: only see RSVPs for guests who used codes generated by them, and their own codes
             const [loadedRsvps, loadedCodes, loadedPosters] = await Promise.all([
               getStoredRsvps(),
               getInviteCodes(role),
@@ -128,13 +254,12 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
             setCodes(loadedCodes);
             setInvitationPosters(loadedPosters);
             
-            // Filter RSVPs to only those whose names match the 'used_by' on their invite codes
             const usedNames = loadedCodes
               .filter(c => c.is_used && c.used_by)
               .map(c => c.used_by!.trim().toLowerCase());
               
             const theirRsvps = loadedRsvps.filter(r => 
-              usedNames.includes(`${r.firstName.trim()} ${r.lastName.trim()}`.toLowerCase())
+              usedNames.includes((r.firstName.trim() + ' ' + r.lastName.trim()).toLowerCase())
             );
             setRsvps(theirRsvps);
           }
@@ -146,7 +271,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       };
       load();
     }
-  }, [isOpen, role]);
+  }, [isOpen, role, isSuperAdmin, isCoordinator]);
 
   if (!isOpen) return null;
 
@@ -157,36 +282,46 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
   const rsvpCounts = useMemo(() => {
     let base = rsvps;
-    if (isMaster && creatorFilter !== 'all') {
+    if (isSuperAdmin && creatorFilter !== 'all') {
       const creatorCodes = codes.filter(c => c.created_by === creatorFilter && c.is_used && c.used_by);
       const usedNames = creatorCodes.map(c => c.used_by!.trim().toLowerCase());
-      base = base.filter(r => usedNames.includes(`${r.firstName.trim()} ${r.lastName.trim()}`.toLowerCase()));
+      base = base.filter(r => usedNames.includes((r.firstName.trim() + ' ' + r.lastName.trim()).toLowerCase()));
     }
     const attending = base.filter(r => r.attendance === 'yes').length;
     const declined = base.filter(r => r.attendance === 'no').length;
+    const checkedIn = base.filter(r => r.isCheckedIn).length;
     const total = base.length;
-    return { attending, declined, total };
-  }, [rsvps, creatorFilter, role, codes]);
+    return { attending, declined, checkedIn, total };
+  }, [rsvps, creatorFilter, isSuperAdmin, codes]);
 
   const filteredRsvps = useMemo(() => {
     let result = rsvps;
-    if (isMaster && creatorFilter !== 'all') {
+    if (isSuperAdmin && creatorFilter !== 'all') {
       const creatorCodes = codes.filter(c => c.created_by === creatorFilter && c.is_used && c.used_by);
       const usedNames = creatorCodes.map(c => c.used_by!.trim().toLowerCase());
-      result = result.filter(r => usedNames.includes(`${r.firstName.trim()} ${r.lastName.trim()}`.toLowerCase()));
+      result = result.filter(r => usedNames.includes((r.firstName.trim() + ' ' + r.lastName.trim()).toLowerCase()));
     }
     if (rsvpAttendanceFilter === 'attending') {
       result = result.filter(r => r.attendance === 'yes');
     } else if (rsvpAttendanceFilter === 'declined') {
       result = result.filter(r => r.attendance === 'no');
     }
+    if (guestSearchQuery.trim()) {
+      const q = guestSearchQuery.trim().toLowerCase();
+      result = result.filter(r => 
+        (r.firstName + ' ' + r.lastName).toLowerCase().includes(q) ||
+        (r.email && r.email.toLowerCase().includes(q)) ||
+        (r.message && r.message.toLowerCase().includes(q)) ||
+        (r.selectedDate && r.selectedDate.toLowerCase().includes(q))
+      );
+    }
     return result;
-  }, [rsvps, creatorFilter, role, codes, rsvpAttendanceFilter]);
+  }, [rsvps, creatorFilter, isSuperAdmin, codes, rsvpAttendanceFilter, guestSearchQuery]);
 
   const [codeStatusFilter, setCodeStatusFilter] = useState<'all' | 'available' | 'shared' | 'used'>('all');
 
   const codeStats = useMemo(() => {
-    const base = isMaster && creatorFilter !== 'all'
+    const base = isSuperAdmin && creatorFilter !== 'all'
       ? codes.filter(c => c.created_by === creatorFilter)
       : codes;
 
@@ -197,7 +332,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
     const available = base.filter(c => !c.is_used && !c.is_shared).length;
 
     return { total, used, unused, shared, available };
-  }, [codes, creatorFilter, role]);
+  }, [codes, creatorFilter, isSuperAdmin]);
 
   const filteredCodes = useMemo(() => {
     let result = codes;
@@ -849,12 +984,18 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       <div className="bg-brand-espresso px-6 sm:px-12 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 shadow-md z-20">
         <div>
           <h2 className="text-2xl font-serif text-brand-goldLight">{wedding.couple.title}</h2>
-          <p className="text-brand-cream/70 text-xs font-sans tracking-widest uppercase mt-1.5">
-            Admin Dashboard
-          </p>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span className="text-brand-cream/70 text-xs font-sans tracking-widest uppercase">
+              Admin Dashboard
+            </span>
+            <span className="w-1 h-1 rounded-full bg-brand-gold/60" />
+            <span className="text-brand-goldLight text-xs font-sans font-bold uppercase tracking-wider">
+              {currentRoleConfig?.label || (isSuperAdmin ? 'Super Admin' : (isCoordinator ? 'Event Coordinator' : 'Family Admin'))}
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
-          {isMaster && onOpenResetPin && (
+          {isSuperAdmin && onOpenResetPin && (
             <button
               onClick={onOpenResetPin}
               className="flex items-center gap-2 px-3.5 py-2 bg-brand-gold/15 border border-brand-gold/30 rounded-xl text-brand-goldLight hover:bg-brand-gold/25 transition-colors text-xs font-semibold tracking-wider"
@@ -876,44 +1017,43 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 px-6 sm:px-12 pt-8 pb-0 shrink-0 overflow-x-auto bg-brand-ivory z-10 border-b border-brand-sand/50" data-lenis-prevent="true">
-        {(isMaster || Boolean(role)) && (
-          <button
-            onClick={() => setActiveTab('rsvps')}
-            className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
-              activeTab === 'rsvps'
-                ? 'bg-brand-espresso text-brand-goldLight'
-                : 'bg-white text-brand-muted hover:bg-brand-sand/50'
-            }`}
-          >
-            <Users className="w-4 h-4" /> {!isMaster ? 'My Guests RSVPs' : 'Guest RSVPs'}
-          </button>
-        )}
-        {isMaster && (
-          <button
-            onClick={() => setActiveTab('gifts')}
-            className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
-              activeTab === 'gifts'
-                ? 'bg-brand-espresso text-brand-goldLight'
-                : 'bg-white text-brand-muted hover:bg-brand-sand/50'
-            }`}
-          >
-            <Gift className="w-4 h-4" /> Gift Payments
-          </button>
-        )}
-
         <button
-          onClick={() => setActiveTab('codes')}
+          onClick={() => setActiveTab('rsvps')}
           className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
-            activeTab === 'codes'
+            activeTab === 'rsvps'
               ? 'bg-brand-espresso text-brand-goldLight'
               : 'bg-white text-brand-muted hover:bg-brand-sand/50'
           }`}
         >
-          <KeyRound className="w-4 h-4" /> Invite Codes
+          <Users className="w-4 h-4" /> {isFamilyAdmin ? 'My Guests RSVPs' : 'Guest RSVPs'}
         </button>
 
-        {isMaster && (
+        {!isCoordinator && (
+          <button
+            onClick={() => setActiveTab('codes')}
+            className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
+              activeTab === 'codes'
+                ? 'bg-brand-espresso text-brand-goldLight'
+                : 'bg-white text-brand-muted hover:bg-brand-sand/50'
+            }`}
+          >
+            <KeyRound className="w-4 h-4" /> {isFamilyAdmin ? 'My Invite Codes' : 'Invite Codes'}
+          </button>
+        )}
+
+        {isSuperAdmin && (
           <>
+            <button
+              onClick={() => setActiveTab('gifts')}
+              className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
+                activeTab === 'gifts'
+                  ? 'bg-brand-espresso text-brand-goldLight'
+                  : 'bg-white text-brand-muted hover:bg-brand-sand/50'
+              }`}
+            >
+              <Gift className="w-4 h-4" /> Gift Payments
+            </button>
+
             <button
               onClick={() => setActiveTab('wishlist')}
               className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
@@ -924,6 +1064,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
             >
               <Heart className="w-4 h-4" /> Wishlist
             </button>
+
             <button
               onClick={() => setActiveTab('reservations')}
               className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
@@ -939,6 +1080,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                 </span>
               )}
             </button>
+
             <button
               onClick={() => setActiveTab('invitations')}
               className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
@@ -948,6 +1090,17 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
               }`}
             >
               <ImageIcon className="w-4 h-4" /> Invitations
+            </button>
+
+            <button
+              onClick={() => setActiveTab('admins')}
+              className={`px-6 py-3 rounded-t-2xl text-xs font-sans font-bold tracking-widest uppercase transition-colors flex items-center gap-2 ${
+                activeTab === 'admins'
+                  ? 'bg-brand-espresso text-brand-goldLight'
+                  : 'bg-white text-brand-muted hover:bg-brand-sand/50'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" /> Admins & Roles
             </button>
           </>
         )}
@@ -1035,27 +1188,48 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                       <div className="flex flex-col gap-3 w-full sm:w-auto">
 
 
-                        {/* Creator Filter for Master */}
-                        {isMaster && (
+                        {/* Guest Search Bar */}
+                        <div className="relative w-full sm:w-72">
+                          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none" />
+                          <input
+                            type="text"
+                            placeholder="Search guest name or email..."
+                            value={guestSearchQuery}
+                            onChange={(e) => setGuestSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-8 py-2 bg-brand-cream/30 border border-brand-sand/50 rounded-xl text-xs font-sans text-brand-espresso placeholder:text-brand-muted/70 focus:outline-none focus:ring-1 focus:ring-brand-gold/60"
+                          />
+                          {guestSearchQuery && (
+                            <button
+                              onClick={() => setGuestSearchQuery('')}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-espresso"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Creator Filter for Super Admin (Miracle & Malvin and added family admins, excluding coordinators) */}
+                        {isSuperAdmin && (
                           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                             <div className="flex items-center gap-1.5 px-3 py-2 bg-brand-sand/30 rounded-xl text-brand-muted text-xs font-bold uppercase tracking-wider mr-2">
                               <Filter className="w-3.5 h-3.5" /> Creator
                             </div>
                           {(() => {
-                            // Compute RSVP count per creator
                             const getCreatorRsvpCount = (creatorId: string): number => {
                               if (creatorId === 'all') return rsvps.length;
                               const creatorCodes = codes.filter(c => c.created_by === creatorId && c.is_used && c.used_by);
                               const usedNames = creatorCodes.map(c => c.used_by!.trim().toLowerCase());
-                              return rsvps.filter(r => usedNames.includes(`${r.firstName.trim()} ${r.lastName.trim()}`.toLowerCase())).length;
+                              return rsvps.filter(r => usedNames.includes((r.firstName.trim() + ' ' + r.lastName.trim()).toLowerCase())).length;
                             };
 
                             return [
                               { id: 'all', label: 'All' },
-                              ...wedding.admin.roles.map(r => ({
-                                id: r.role,
-                                label: r.label.split('(')[0].trim()
-                              }))
+                              ...wedding.admin.roles
+                                .filter(r => r.accessPoint !== 'coordinator')
+                                .map(r => ({
+                                  id: r.role,
+                                  label: r.label.split('(')[0].trim()
+                                }))
                             ].map((f) => {
                               const count = getCreatorRsvpCount(f.id);
                               return (
@@ -1092,14 +1266,16 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                           const formatData = (data: typeof rsvps) => data.map(r => ({
                             'First Name': r.firstName,
                             'Last Name': r.lastName,
-                            'Email': r.email || '',
                             'Attendance': r.attendance === 'yes' ? 'Attending' : 'Declined',
+                            'Checked In': r.isCheckedIn ? 'Yes' : 'No',
+                            'Check-In Time': r.checkedInAt ? new Date(r.checkedInAt).toLocaleTimeString() : '',
                             'Selected Date': r.selectedDate || (r.attendingDates ? r.attendingDates.join(' & ') : (r.attendance === 'yes' ? 'Both Dates' : 'N/A')),
+                            'Email': r.email || '',
                             'Message': r.message || '',
                             'Submitted At': new Date(r.submittedAt).toLocaleString()
                           }));
 
-                          if (isMaster) {
+                          if (isSuperAdmin || isCoordinator) {
                             const roles = wedding.admin.roles.map(r => r.role);
                             const roleLabels: Record<string, string> = wedding.admin.roles.reduce((acc, r) => {
                               acc[r.role] = r.label.split('(')[0].trim();
@@ -1145,6 +1321,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                           <th className="p-6 font-semibold w-16 text-center text-brand-muted">#</th>
                           <th className="p-6 font-semibold">Guest Name</th>
                           <th className="p-6 font-semibold">Status</th>
+                          <th className="p-6 font-semibold">Day-Of Check-In</th>
                           <th className="p-6 font-semibold">Contact / Message</th>
                           <th className="p-6 font-semibold">Date</th>
                           <th className="p-6 font-semibold text-right">Action</th>
@@ -1180,6 +1357,27 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                                   )}
                                 </div>
                               </td>
+                              <td className="p-6">
+                                <div className="flex flex-col items-start gap-1">
+                                  <button
+                                    onClick={() => handleToggleCheckIn(rsvp)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-sans font-bold flex items-center gap-1.5 transition-all shadow-sm ${
+                                      rsvp.isCheckedIn
+                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                        : 'bg-brand-sand/40 hover:bg-emerald-100 text-brand-espresso hover:text-emerald-900 border border-brand-sand/60'
+                                    }`}
+                                    title={rsvp.isCheckedIn ? 'Click to mark as not arrived' : 'Click to check in guest'}
+                                  >
+                                    <Check className={`w-3.5 h-3.5 ${rsvp.isCheckedIn ? 'text-white' : 'text-emerald-700'}`} />
+                                    <span>{rsvp.isCheckedIn ? 'Checked In' : 'Check In'}</span>
+                                  </button>
+                                  {rsvp.isCheckedIn && rsvp.checkedInAt && (
+                                    <span className="text-[10px] text-brand-muted font-mono">
+                                      {new Date(rsvp.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
                               <td className="p-6 min-w-[250px]">
                                 {rsvp.email && (
                                   <div className="flex items-center gap-2 text-sm text-brand-muted mb-2 font-medium">
@@ -1200,12 +1398,20 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                                 {(() => {
                                   const guestFullName = `${rsvp.firstName.trim()} ${rsvp.lastName.trim()}`.toLowerCase();
                                   const matchingCode = codes.find(c => c.is_used && c.used_by && c.used_by.trim().toLowerCase() === guestFullName);
+                                  if (isCoordinator) {
+                                    return (
+                                      <div className="text-right text-xs text-brand-muted font-mono">
+                                        {matchingCode ? ('Code: ' + matchingCode.code) : 'Guest Verified'}
+                                      </div>
+                                    );
+                                  }
+
                                   return (
                                     <div className="flex items-center justify-end gap-2">
                                       <button
                                         onClick={() => handleReallocateRsvpCode(rsvp, matchingCode)}
                                         className="px-2.5 py-1.5 rounded-xl bg-brand-sand/40 hover:bg-amber-100 text-brand-espresso hover:text-amber-900 border border-brand-sand/60 text-xs font-sans font-bold flex items-center gap-1.5 transition-all shadow-sm shrink-0"
-                                        title={matchingCode ? `Re-allocate code ${matchingCode.code} (Guest: ${rsvp.firstName})` : `Generate replacement code for ${rsvp.firstName}`}
+                                        title={matchingCode ? ('Re-allocate code ' + matchingCode.code + ' (Guest: ' + rsvp.firstName + ')') : ('Generate replacement code for ' + rsvp.firstName)}
                                       >
                                         <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
                                         <span>Re-allocate Code</span>
@@ -2730,6 +2936,287 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                         </button>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'admins' && isSuperAdmin && (
+              <motion.div
+                key="admins"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-8"
+              >
+                {/* Header Stats */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-white p-6 rounded-3xl shadow-sm border border-brand-sand/30 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-700 flex items-center justify-center shrink-0">
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-brand-muted font-bold">Super Admins</p>
+                      <p className="text-2xl font-sans font-semibold text-brand-espresso">
+                        {wedding.admin.roles.filter(r => (r.accessPoint === 'super' || r.isMaster)).length}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-3xl shadow-sm border border-brand-sand/30 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-700 flex items-center justify-center shrink-0">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-brand-muted font-bold">Family Admins</p>
+                      <p className="text-2xl font-sans font-semibold text-brand-espresso">
+                        {wedding.admin.roles.filter(r => r.accessPoint === 'family').length}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-3xl shadow-sm border border-brand-sand/30 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-700 flex items-center justify-center shrink-0">
+                      <Clock className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-brand-muted font-bold">Event Coordinators</p>
+                      <p className="text-2xl font-sans font-semibold text-brand-espresso">
+                        {wedding.admin.roles.filter(r => r.accessPoint === 'coordinator').length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Admin Management Container */}
+                <div className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col border border-brand-sand/30">
+                  <div className="p-6 border-b border-brand-sand/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-brand-cream/10">
+                    <div>
+                      <h3 className="font-serif text-2xl text-brand-espresso">Admin Roster & Access Control</h3>
+                      <p className="text-xs text-brand-muted mt-1 font-sans">
+                        Manage who can access the dashboard, assign 4-digit PINs, and grant access points.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setAdminFormOpen(!adminFormOpen);
+                        setAdminFormError('');
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-sans font-bold tracking-wider uppercase hover:bg-brand-charcoal transition-colors shadow-md"
+                    >
+                      {adminFormOpen ? <X className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                      <span>{adminFormOpen ? 'Close Form' : '+ Add New Admin'}</span>
+                    </button>
+                  </div>
+
+                  {/* Add Admin Form */}
+                  <AnimatePresence>
+                    {adminFormOpen && (
+                      <motion.form
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        onSubmit={handleCreateAdmin}
+                        className="p-6 sm:p-8 border-b border-brand-sand/40 bg-brand-cream/30 space-y-6"
+                      >
+                        <div className="border-b border-brand-sand/30 pb-4">
+                          <h4 className="font-serif text-lg text-brand-espresso">Create New Admin Account</h4>
+                          <p className="text-xs text-brand-muted font-sans mt-0.5">
+                            Set their name, access point, and 4-digit PIN password. They will use this PIN on the /admin screen.
+                          </p>
+                        </div>
+
+                        {adminFormError && (
+                          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
+                            {adminFormError}
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {/* Admin Name */}
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
+                              Admin Name / Title *
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Groom's Family, Auntie Helen, Lead Coordinator"
+                              value={newAdminName}
+                              onChange={(e) => setNewAdminName(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-brand-sand/60 rounded-xl text-sm font-sans text-brand-espresso placeholder:text-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
+                              required
+                            />
+                          </div>
+
+                          {/* Access Point Selection */}
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
+                              Access Point *
+                            </label>
+                            <select
+                              value={newAdminAccessPoint}
+                              onChange={(e) => setNewAdminAccessPoint(e.target.value as any)}
+                              className="w-full px-4 py-2.5 bg-white border border-brand-sand/60 rounded-xl text-sm font-sans text-brand-espresso focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
+                            >
+                              <option value="family">Family Admin (Personal Guests & Invite Codes)</option>
+                              <option value="coordinator">Event Coordinator (Full Guest List Alone & Day-of Check-In)</option>
+                              <option value="super">Super Admin (Full Access to Everything)</option>
+                            </select>
+                          </div>
+
+                          {/* 4-Digit PIN */}
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 font-sans">
+                              4-Digit PIN / Password *
+                            </label>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={4}
+                              placeholder="e.g. 5555"
+                              value={newAdminPin}
+                              onChange={(e) => setNewAdminPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                              className="w-full px-4 py-2.5 bg-white border border-brand-sand/60 rounded-xl text-sm font-mono tracking-widest text-brand-espresso placeholder:text-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
+                              required
+                            />
+                            <p className="text-[11px] text-brand-muted mt-1 font-sans">
+                              Must be exactly 4 digits.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Access Point Explanation Note */}
+                        <div className="p-4 bg-brand-ivory rounded-2xl border border-brand-sand/40 text-xs text-brand-espresso/80 font-sans leading-relaxed">
+                          <span className="font-bold text-brand-espresso">Access Point Details: </span>
+                          {newAdminAccessPoint === 'family' && (
+                            <span>
+                              <strong>Family Admin:</strong> Restricts this user strictly to guests who RSVP'd using their assigned invite codes, and allows them to generate & share their own invite codes. All financial and gift details are hidden.
+                            </span>
+                          )}
+                          {newAdminAccessPoint === 'coordinator' && (
+                            <span>
+                              <strong>Event Coordinator:</strong> Gives full visibility into the entire wedding guest list with real-time arrival check-in buttons and Excel export. Financial gifts, invite codes, and admin settings are strictly restricted.
+                            </span>
+                          )}
+                          {newAdminAccessPoint === 'super' && (
+                            <span>
+                              <strong>Super Admin:</strong> Full permissions across the entire platform, including all guest lists, all invite codes, monetary gifts, wishlist, invitations, and admin roster management.
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-end gap-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setAdminFormOpen(false)}
+                            className="px-5 py-2.5 rounded-xl text-brand-muted hover:text-brand-espresso text-xs font-sans font-bold uppercase tracking-wider hover:bg-brand-sand/30 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-6 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-sans font-bold uppercase tracking-wider hover:bg-brand-charcoal transition-colors shadow-md"
+                          >
+                            Save & Create Admin
+                          </button>
+                        </div>
+                      </motion.form>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Admin Roster Table */}
+                  <div className="overflow-x-auto" data-lenis-prevent="true">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-brand-cream/30 text-xs uppercase tracking-widest font-sans text-brand-muted border-b border-brand-sand/30">
+                          <th className="p-6 font-semibold w-16 text-center">#</th>
+                          <th className="p-6 font-semibold">Admin / Creator</th>
+                          <th className="p-6 font-semibold">Access Point</th>
+                          <th className="p-6 font-semibold">4-Digit PIN</th>
+                          <th className="p-6 font-semibold">Created</th>
+                          <th className="p-6 font-semibold text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm font-sans text-brand-espresso">
+                        {wedding.admin.roles.map((adminRole, idx) => {
+                          const isPermanent = adminRole.role === 'miracle' || adminRole.role === 'malvin';
+                          const roleAccess: 'super' | 'family' | 'coordinator' = adminRole.accessPoint || (adminRole.isMaster ? 'super' : 'family');
+                          const activePin = getStoredPin(adminRole.role, adminRole.defaultPin);
+                          const isRevealed = revealedPins.has(adminRole.role);
+
+                          return (
+                            <tr key={adminRole.role} className="border-b border-brand-sand/30 hover:bg-brand-cream/20 transition-colors">
+                              <td className="p-6 text-center text-brand-muted font-mono text-xs">
+                                {idx + 1}
+                              </td>
+                              <td className="p-6">
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-base text-brand-espresso flex items-center gap-2">
+                                    {adminRole.label}
+                                    {isPermanent && (
+                                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold tracking-wider uppercase border border-amber-300">
+                                        Creator
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="text-xs text-brand-muted font-mono mt-0.5">
+                                    Role ID: {adminRole.role}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="p-6">
+                                {roleAccess === 'super' && (
+                                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300/60 inline-flex items-center gap-1.5">
+                                    <ShieldCheck className="w-3.5 h-3.5 text-amber-700" /> Super Admin
+                                  </span>
+                                )}
+                                {roleAccess === 'family' && (
+                                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300/60 inline-flex items-center gap-1.5">
+                                    <Users className="w-3.5 h-3.5 text-emerald-700" /> Family Admin
+                                  </span>
+                                )}
+                                {roleAccess === 'coordinator' && (
+                                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-900 border border-indigo-300/60 inline-flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5 text-indigo-700" /> Event Coordinator
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-6">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-sm tracking-widest bg-brand-cream/60 px-2.5 py-1 rounded-lg border border-brand-sand/40">
+                                    {isRevealed ? activePin : '••••'}
+                                  </span>
+                                  <button
+                                    onClick={() => toggleRevealPin(adminRole.role)}
+                                    className="p-1.5 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/30 rounded-lg transition-colors"
+                                    title={isRevealed ? 'Hide PIN' : 'Reveal PIN'}
+                                  >
+                                    {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-brand-goldDark" />}
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="p-6 text-xs text-brand-muted">
+                                {adminRole.createdAt ? new Date(adminRole.createdAt).toLocaleDateString() : 'Initial Setup'}
+                              </td>
+                              <td className="p-6 text-right">
+                                {isPermanent ? (
+                                  <span className="text-xs text-brand-muted/70 italic">Protected</span>
+                                ) : (
+                                  <button
+                                    onClick={() => handleDeleteAdminRole(adminRole)}
+                                    className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
+                                    title={'Delete admin ' + adminRole.label}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </motion.div>
