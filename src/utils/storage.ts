@@ -1673,6 +1673,7 @@ export async function getStoredCustomAdminRoles(coupleId: string = 'miracle-malv
             }
           });
           setLocalDb(dbKey, merged);
+          await syncAdminPinsFromCloud(coupleId);
           return merged;
         }
       }
@@ -1680,6 +1681,7 @@ export async function getStoredCustomAdminRoles(coupleId: string = 'miracle-malv
       console.warn('Failed to fetch custom admin roles from Turso:', err);
     }
   }
+  await syncAdminPinsFromCloud(coupleId);
   return local;
 }
 
@@ -1778,5 +1780,85 @@ export async function toggleRsvpCheckIn(rsvpId: string, isCheckedIn: boolean): P
     } catch (err) {
       console.warn('Failed to update RSVP check-in on Turso:', err);
     }
+  }
+}
+
+export async function saveAdminPin(role: string, newPin: string, coupleId: string = 'miracle-malvin'): Promise<boolean> {
+  if (!/^\d{4}$/.test(newPin.trim())) return false;
+  const pin = newPin.trim();
+  localStorage.setItem(`custom_pin_${role}`, pin);
+
+  // Update in local custom roles if it exists
+  const dbKey = `${MM_DB_ADMIN_ROLES}_${coupleId}`;
+  const localRoles = getLocalDb<AdminRoleConfig[]>(dbKey, []);
+  if (localRoles.some(r => r.role === role)) {
+    const updatedRoles = localRoles.map(r => r.role === role ? { ...r, defaultPin: pin } : r);
+    setLocalDb(dbKey, updatedRoles);
+  }
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        await client.execute(`
+          CREATE TABLE IF NOT EXISTS admin_pin_overrides (
+            role TEXT PRIMARY KEY,
+            pin TEXT NOT NULL,
+            couple_id TEXT DEFAULT 'miracle-malvin',
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+          )
+        `);
+
+        await client.execute({
+          sql: `INSERT OR REPLACE INTO admin_pin_overrides (role, pin, couple_id, updated_at) VALUES (?, ?, ?, datetime('now'))`,
+          args: [role, pin, coupleId]
+        });
+
+        try {
+          await client.execute({
+            sql: `UPDATE custom_admin_roles SET pin = ? WHERE role = ?`,
+            args: [pin, role]
+          });
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('Failed to save admin PIN override to Turso:', err);
+    }
+  }
+
+  return true;
+}
+
+export async function syncAdminPinsFromCloud(coupleId: string = 'miracle-malvin'): Promise<void> {
+  if (!isTursoConfigured()) return;
+  try {
+    const client = getTursoClient();
+    if (client) {
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS admin_pin_overrides (
+          role TEXT PRIMARY KEY,
+          pin TEXT NOT NULL,
+          couple_id TEXT DEFAULT 'miracle-malvin',
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+      `);
+
+      const res = await client.execute({
+        sql: 'SELECT role, pin FROM admin_pin_overrides WHERE couple_id = ? OR couple_id IS NULL',
+        args: [coupleId]
+      });
+
+      if (res.rows && res.rows.length > 0) {
+        res.rows.forEach(row => {
+          const r = String(row.role);
+          const p = String(row.pin);
+          if (/^\d{4}$/.test(p)) {
+            localStorage.setItem(`custom_pin_${r}`, p);
+          }
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to sync admin PINs from cloud:', err);
   }
 }

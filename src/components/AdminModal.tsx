@@ -1,6 +1,6 @@
 import { useState, useEffect, FC, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload, RotateCcw, XCircle, Image as ImageIcon, UploadCloud, Eye, Share2, Sparkles, Save, Smartphone, Search, ShieldCheck, EyeOff, UserPlus } from 'lucide-react';
+import { Download, Users, Mail, MessageSquare, Trash2, Gift, KeyRound, Plus, Check, LogOut, Filter, Heart, Clock, X, Edit2, Upload, RotateCcw, XCircle, Image as ImageIcon, UploadCloud, Eye, Share2, Sparkles, Save, Smartphone, Search, ShieldCheck, EyeOff, UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { 
   getStoredRsvps, deleteRsvp,
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
@@ -8,14 +8,14 @@ import {
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
   getStoredReminders, deleteReservation, markReservationFulfilled,
   getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, DEFAULT_INVITATION_MESSAGES, formatInviteMessage,
-  toggleRsvpCheckIn
+  toggleRsvpCheckIn, saveAdminPin
 } from '../utils/storage';
 import { sendReservationReminderEmail } from '../utils/email';
 import { RsvpSubmission, GiftPledge, WishlistItem, GiftReminder } from '../types';
 import { INITIAL_WISHLIST_ITEMS } from '../data/wishlistData';
 import { useWedding } from '../context/WeddingContext';
 import type { AdminRole } from '../config/adminConfig';
-import { getStoredPin, saveCustomPin } from '../config/adminConfig';
+import { getStoredPin, saveCustomPin, hashPin } from '../config/adminConfig';
 import { AdminRoleConfig } from '../types/wedding';
 
 interface AdminDashboardProps {
@@ -66,6 +66,66 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [newAdminPin, setNewAdminPin] = useState('');
   const [adminFormError, setAdminFormError] = useState('');
   const [revealedPins, setRevealedPins] = useState<Set<string>>(new Set());
+
+  // Super Admin Change PIN State
+  const [pinModalAdmin, setPinModalAdmin] = useState<AdminRoleConfig | null>(null);
+  const [newPinValue, setNewPinValue] = useState('');
+  const [confirmPinValue, setConfirmPinValue] = useState('');
+  const [pinModalError, setPinModalError] = useState('');
+  const [pinModalSuccess, setPinModalSuccess] = useState('');
+  const [isSavingPin, setIsSavingPin] = useState(false);
+  const [, setPinVersion] = useState(0);
+
+  const handleOpenChangePinModal = (adminRole: AdminRoleConfig) => {
+    setPinModalAdmin(adminRole);
+    setNewPinValue('');
+    setConfirmPinValue('');
+    setPinModalError('');
+    setPinModalSuccess('');
+  };
+
+  const handleSavePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pinModalAdmin) return;
+    setPinModalError('');
+    setPinModalSuccess('');
+
+    const targetPin = newPinValue.trim();
+    const targetConfirm = confirmPinValue.trim();
+
+    if (!/^\d{4}$/.test(targetPin)) {
+      setPinModalError('PIN must be exactly 4 numeric digits (e.g. 1234).');
+      return;
+    }
+
+    if (targetPin !== targetConfirm) {
+      setPinModalError('PINs do not match. Please verify and re-enter.');
+      return;
+    }
+
+    setIsSavingPin(true);
+    try {
+      await saveAdminPin(pinModalAdmin.role, targetPin, wedding.id);
+
+      // If current logged-in role is the target admin, update active session hash
+      if (role === pinModalAdmin.role) {
+        const newHash = await hashPin(targetPin, wedding.admin.pinSalt);
+        localStorage.setItem('admin_pin_hash', newHash);
+      }
+
+      setPinVersion(v => v + 1);
+      setPinModalSuccess(`PIN for ${pinModalAdmin.label} updated to ${targetPin}!`);
+      onNotify('PIN Updated', `Successfully updated PIN for ${pinModalAdmin.label} to ${targetPin}.`);
+
+      setTimeout(() => {
+        setPinModalAdmin(null);
+        setIsSavingPin(false);
+      }, 1200);
+    } catch (err) {
+      setPinModalError('Failed to save new PIN. Please try again.');
+      setIsSavingPin(false);
+    }
+  };
 
   const toggleRevealPin = (roleKey: string) => {
     setRevealedPins(prev => {
@@ -2530,314 +2590,213 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                   </div>
                 </div>
 
-                {/* Poster Cards Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* 1. General Invitation Card */}
-                  <div className="bg-white rounded-3xl shadow-sm border border-brand-sand/40 overflow-hidden flex flex-col">
-                    <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-brand-cream/30">
-                      <div>
-                        <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-700 bg-emerald-100 font-bold px-2.5 py-0.5 rounded-full">
-                          General Guests
-                        </span>
-                        <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">General Invitation Card</h4>
-                        <p className="text-xs text-brand-muted mt-0.5">Solemnization & Main Reception</p>
-                      </div>
-                      <span className="text-[11px] font-sans text-brand-muted/70 bg-white px-3 py-1 rounded-xl border border-brand-sand/40">
-                        {invitationPosters.generalUrl ? (invitationPosters.generalUpdatedAt || 'Uploaded') : 'Empty'}
-                      </span>
-                    </div>
-
-                    <div className="p-5 sm:p-6 flex flex-col items-center flex-1 bg-brand-ivory/30">
-                      {invitationPosters.generalUrl ? (
-                        <div className="w-full max-w-sm aspect-[4/5] rounded-2xl overflow-hidden bg-brand-sand/20 border-2 border-brand-sand/50 shadow-md relative group">
-                          <img
-                            src={invitationPosters.generalUrl}
-                            alt="General Invitation Poster"
-                            className="w-full h-full object-contain bg-white"
-                          />
-                          <div className="absolute inset-0 bg-brand-espresso/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
-                            <button
-                              onClick={() => setPreviewPosterUrl(invitationPosters.generalUrl)}
-                              className="px-4 py-2 bg-white text-brand-espresso rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 hover:bg-brand-gold hover:text-white transition-all cursor-pointer"
-                            >
-                              <Eye className="w-4 h-4" /> Full View
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-full max-w-sm aspect-[4/5] rounded-2xl border-2 border-dashed border-brand-sand/70 flex flex-col items-center justify-center p-6 text-center bg-white/70">
-                          <div className="w-16 h-16 rounded-full bg-brand-cream border border-brand-sand/50 flex items-center justify-center mb-3.5 text-brand-muted">
-                            <ImageIcon className="w-8 h-8 text-brand-goldDark" />
-                          </div>
-                          <p className="font-serif text-xl text-brand-espresso font-medium mb-1.5">No Invitation Card</p>
-                          <p className="font-sans text-xs text-brand-muted max-w-[220px] leading-relaxed">
-                            Upload the official general guests invitation card for {wedding.couple.title}.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-5 sm:p-6 border-t border-brand-sand/30 bg-white flex flex-wrap items-center justify-between gap-3">
-                      <label className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-goldDark transition-colors cursor-pointer shadow-sm">
-                        <UploadCloud className="w-4 h-4" />
-                        <span>{isUploadingPoster === 'general' ? 'Uploading...' : (invitationPosters.generalUrl ? 'Replace Poster' : 'Upload Card')}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={isUploadingPoster === 'general'}
-                          onChange={(e) => handleUploadPoster(e, 'general')}
-                          className="hidden"
-                        />
-                      </label>
-
-                      {invitationPosters.generalUrl && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setPreviewPosterUrl(invitationPosters.generalUrl)}
-                            className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-brand-sand/30 text-brand-muted hover:text-brand-espresso transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                            title="Preview full image"
-                          >
-                            <Eye className="w-4 h-4" />
-                            <span className="hidden sm:inline">Preview</span>
-                          </button>
-                          <button
-                            onClick={() => handleResetPoster('general')}
-                            className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                            title="Remove card"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="hidden sm:inline">Delete</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 2. Close Family & VIP Invitation Card */}
-                  <div className="bg-white rounded-3xl shadow-sm border-2 border-brand-gold/40 overflow-hidden flex flex-col">
-                    <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-gradient-to-r from-brand-gold/10 via-brand-cream/40 to-transparent">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-mono uppercase tracking-widest text-brand-espresso bg-brand-gold/30 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-brand-goldDark" /> VIP & Family
-                          </span>
-                        </div>
-                        <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">Close Family & VIP Card</h4>
-                        <p className="text-xs text-brand-muted mt-0.5">Includes Engagement & Exclusive Afterparty</p>
-                      </div>
-                      <span className="text-[11px] font-sans text-brand-muted/70 bg-white px-3 py-1 rounded-xl border border-brand-sand/40">
-                        {invitationPosters.familyVipUrl ? (invitationPosters.familyVipUpdatedAt || 'Uploaded') : 'Empty'}
-                      </span>
-                    </div>
-
-                    <div className="p-5 sm:p-6 flex flex-col items-center flex-1 bg-brand-ivory/30">
-                      {invitationPosters.familyVipUrl ? (
-                        <div className="w-full max-w-sm aspect-[4/5] rounded-2xl overflow-hidden bg-brand-sand/20 border-2 border-brand-gold/40 shadow-md relative group">
-                          <img
-                            src={invitationPosters.familyVipUrl}
-                            alt="Close Family & VIP Invitation Poster"
-                            className="w-full h-full object-contain bg-white"
-                          />
-                          <div className="absolute inset-0 bg-brand-espresso/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
-                            <button
-                              onClick={() => setPreviewPosterUrl(invitationPosters.familyVipUrl)}
-                              className="px-4 py-2 bg-white text-brand-espresso rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 hover:bg-brand-gold hover:text-white transition-all cursor-pointer"
-                            >
-                              <Eye className="w-4 h-4" /> Full View
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-full max-w-sm aspect-[4/5] rounded-2xl border-2 border-dashed border-brand-gold/60 flex flex-col items-center justify-center p-6 text-center bg-white/70">
-                          <div className="w-16 h-16 rounded-full bg-brand-gold/15 border border-brand-gold/30 flex items-center justify-center mb-3.5 text-brand-goldDark">
-                            <Sparkles className="w-8 h-8 text-brand-goldDark" />
-                          </div>
-                          <p className="font-serif text-xl text-brand-espresso font-medium mb-1.5">No VIP Card</p>
-                          <p className="font-sans text-xs text-brand-muted max-w-[220px] leading-relaxed">
-                            Upload the special Close Family & VIP invitation card for {wedding.couple.title}.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-5 sm:p-6 border-t border-brand-sand/30 bg-white flex flex-wrap items-center justify-between gap-3">
-                      <label className="flex items-center gap-2 px-5 py-2.5 bg-brand-goldDark text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-espresso transition-colors cursor-pointer shadow-sm">
-                        <UploadCloud className="w-4 h-4" />
-                        <span>{isUploadingPoster === 'familyVip' ? 'Uploading...' : (invitationPosters.familyVipUrl ? 'Replace Poster' : 'Upload Card')}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={isUploadingPoster === 'familyVip'}
-                          onChange={(e) => handleUploadPoster(e, 'familyVip')}
-                          className="hidden"
-                        />
-                      </label>
-
-                      {invitationPosters.familyVipUrl && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setPreviewPosterUrl(invitationPosters.familyVipUrl)}
-                            className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-brand-sand/30 text-brand-muted hover:text-brand-espresso transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                            title="Preview full image"
-                          >
-                            <Eye className="w-4 h-4" />
-                            <span className="hidden sm:inline">Preview</span>
-                          </button>
-                          <button
-                            onClick={() => handleResetPoster('familyVip')}
-                            className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                            title="Remove card"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="hidden sm:inline">Delete</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 2: Accompanying Invitation Messages */}
-                <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-brand-sand/40 flex flex-col gap-6">
-                  {/* Section Title & Description */}
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-brand-sand/30">
-                    <div>
-                      <div className="flex items-center gap-2 text-brand-goldDark text-xs font-bold uppercase tracking-widest mb-1.5">
-                        <MessageSquare className="w-4 h-4" /> Accompanying Message Editor
-                      </div>
-                      <h3 className="font-serif text-2xl sm:text-3xl text-brand-espresso">Invitation Messages</h3>
-                      <p className="text-xs sm:text-sm font-sans text-brand-muted mt-1 max-w-2xl leading-relaxed">
-                        Customize the WhatsApp, SMS, and email messages sent to guests alongside each invitation card. The unique 5-digit RSVP code and website URL will automatically fill in for each recipient.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 px-3.5 py-2 bg-brand-sand/20 rounded-2xl border border-brand-sand/40 text-xs text-brand-muted shrink-0">
-                      <Sparkles className="w-4 h-4 text-brand-goldDark" />
-                      <span>Use <strong className="text-brand-espresso font-mono">{`{code}`}</strong> & <strong className="text-brand-espresso font-mono">{`{link}`}</strong> tags</span>
-                    </div>
-                  </div>
-
-                  {/* Message Cards Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* General Message Card */}
-                    <div className="bg-brand-cream/20 rounded-3xl border border-brand-sand/40 overflow-hidden flex flex-col">
-                      <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-white">
+                                {/* 2-Column Suite: General Guests on Left, Close Family & VIP on Right (Stacked on Mobile) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                  {/* Column 1: General Guests Suite (Poster + Accompanying Message) */}
+                  <div className="flex flex-col gap-6">
+                    {/* 1. General Invitation Card */}
+                    <div className="bg-white rounded-3xl shadow-sm border border-brand-sand/40 overflow-hidden flex flex-col">
+                      <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-brand-cream/30">
                         <div>
                           <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-700 bg-emerald-100 font-bold px-2.5 py-0.5 rounded-full">
                             General Guests
                           </span>
-                          <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">General Message</h4>
-                          <p className="text-xs text-brand-muted mt-0.5">Sent with General Invitation Card</p>
+                          <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">General Invitation Card</h4>
+                          <p className="text-xs text-brand-muted mt-0.5">Solemnization & Main Reception</p>
                         </div>
-                        <span className="text-[11px] font-sans text-brand-muted/70 bg-brand-ivory px-3 py-1 rounded-xl border border-brand-sand/40">
-                          {invitationPosters.generalMessageUpdatedAt || 'Default Template'}
+                        <span className="text-[11px] font-sans text-brand-muted/70 bg-white px-3 py-1 rounded-xl border border-brand-sand/40">
+                          {invitationPosters.generalUrl ? (invitationPosters.generalUpdatedAt || 'Uploaded') : 'Empty'}
                         </span>
                       </div>
-
-                      {/* Toolbar */}
-                      <div className="px-5 py-3 bg-brand-ivory/60 border-b border-brand-sand/30 flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-brand-muted font-semibold uppercase tracking-wider mr-1">Insert:</span>
-                          <button
-                            type="button"
-                            onClick={() => handleInsertPlaceholder('general', '{code}')}
-                            className="px-2.5 py-1 rounded-lg bg-white border border-brand-sand/60 hover:bg-brand-gold/10 hover:border-brand-gold text-brand-espresso text-xs font-mono font-medium transition-colors cursor-pointer shadow-2xs"
-                            title="Insert unique guest RSVP code tag"
-                          >
-                            + {`{code}`}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleInsertPlaceholder('general', '{link}')}
-                            className="px-2.5 py-1 rounded-lg bg-white border border-brand-sand/60 hover:bg-brand-gold/10 hover:border-brand-gold text-brand-espresso text-xs font-mono font-medium transition-colors cursor-pointer shadow-2xs"
-                            title="Insert website RSVP link tag"
-                          >
-                            + {`{link}`}
-                          </button>
-                        </div>
-
-                        {/* Toggle Editor vs Live Phone Preview */}
-                        <div className="flex items-center gap-1 bg-brand-sand/30 p-0.5 rounded-xl">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewTab(prev => ({ ...prev, general: 'editor' }))}
-                            className={`px-3 py-1 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
-                              previewTab.general === 'editor'
-                                ? 'bg-white text-brand-espresso shadow-xs'
-                                : 'text-brand-muted hover:text-brand-espresso'
-                            }`}
-                          >
-                            <Edit2 className="w-3 h-3 inline mr-1" /> Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewTab(prev => ({ ...prev, general: 'preview' }))}
-                            className={`px-3 py-1 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
-                              previewTab.general === 'preview'
-                                ? 'bg-white text-brand-espresso shadow-xs'
-                                : 'text-brand-muted hover:text-brand-espresso'
-                            }`}
-                          >
-                            <Smartphone className="w-3 h-3 inline mr-1" /> Preview
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Content Area */}
-                      <div className="p-5 flex-1 flex flex-col bg-white">
-                        {previewTab.general === 'editor' ? (
-                          <div className="flex-1 flex flex-col">
-                            <textarea
-                              value={generalMsgDraft}
-                              onChange={(e) => setGeneralMsgDraft(e.target.value)}
-                              rows={11}
-                              className="w-full flex-1 p-4 rounded-2xl border border-brand-sand/60 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 font-sans text-xs sm:text-sm text-brand-espresso leading-relaxed resize-y min-h-[220px]"
-                              placeholder="Write the accompanying general invitation message..."
+  
+                      <div className="p-5 sm:p-6 flex flex-col items-center flex-1 bg-brand-ivory/30">
+                        {invitationPosters.generalUrl ? (
+                          <div className="w-full max-w-sm aspect-[4/5] rounded-2xl overflow-hidden bg-brand-sand/20 border-2 border-brand-sand/50 shadow-md relative group">
+                            <img
+                              src={invitationPosters.generalUrl}
+                              alt="General Invitation Poster"
+                              className="w-full h-full object-contain bg-white"
                             />
-                            <div className="flex items-center justify-between mt-2 text-[11px] text-brand-muted">
-                              <span>Formatting: *bold*, _italic_</span>
-                              <span>{generalMsgDraft.length} characters</span>
+                            <div className="absolute inset-0 bg-brand-espresso/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                              <button
+                                onClick={() => setPreviewPosterUrl(invitationPosters.generalUrl)}
+                                className="px-4 py-2 bg-white text-brand-espresso rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 hover:bg-brand-gold hover:text-white transition-all cursor-pointer"
+                              >
+                                <Eye className="w-4 h-4" /> Full View
+                              </button>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex-1 flex flex-col justify-center">
-                            <div className="bg-[#EFEAE2] p-4 sm:p-5 rounded-2xl border border-brand-sand/40 shadow-inner">
-                              <div className="text-[11px] font-mono text-emerald-800 font-bold mb-2 flex items-center gap-1">
-                                <Smartphone className="w-3.5 h-3.5" /> Sample WhatsApp Message Preview
-                              </div>
-                              <div className="bg-white p-4 rounded-xl rounded-tl-none shadow-sm text-xs sm:text-sm text-brand-espresso whitespace-pre-wrap leading-relaxed font-sans border border-brand-sand/30">
-                                {formatInviteMessage(generalMsgDraft, '84722', window.location.origin, role, 'general', wedding.couple.title, wedding.event.displayDate)}
-                              </div>
+                          <div className="w-full max-w-sm aspect-[4/5] rounded-2xl border-2 border-dashed border-brand-sand/70 flex flex-col items-center justify-center p-6 text-center bg-white/70">
+                            <div className="w-16 h-16 rounded-full bg-brand-cream border border-brand-sand/50 flex items-center justify-center mb-3.5 text-brand-muted">
+                              <ImageIcon className="w-8 h-8 text-brand-goldDark" />
                             </div>
+                            <p className="font-serif text-xl text-brand-espresso font-medium mb-1.5">No Invitation Card</p>
+                            <p className="font-sans text-xs text-brand-muted max-w-[220px] leading-relaxed">
+                              Upload the official general guests invitation card for {wedding.couple.title}.
+                            </p>
                           </div>
                         )}
                       </div>
-
-                      {/* Footer Actions */}
-                      <div className="p-5 border-t border-brand-sand/30 bg-brand-cream/30 flex items-center justify-between gap-3">
-                        <button
-                          type="button"
-                          onClick={() => handleSaveMessage('general')}
-                          disabled={isSavingMessage === 'general'}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-charcoal transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
-                        >
-                          <Save className="w-4 h-4" />
-                          <span>{isSavingMessage === 'general' ? 'Saving...' : 'Save Message'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleResetMessage('general')}
-                          className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                          title="Restore default message template"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          <span className="hidden sm:inline">Reset Default</span>
-                        </button>
+  
+                      <div className="p-5 sm:p-6 border-t border-brand-sand/30 bg-white flex flex-wrap items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-goldDark transition-colors cursor-pointer shadow-sm">
+                          <UploadCloud className="w-4 h-4" />
+                          <span>{isUploadingPoster === 'general' ? 'Uploading...' : (invitationPosters.generalUrl ? 'Replace Poster' : 'Upload Card')}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={isUploadingPoster === 'general'}
+                            onChange={(e) => handleUploadPoster(e, 'general')}
+                            className="hidden"
+                          />
+                        </label>
+  
+                        {invitationPosters.generalUrl && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setPreviewPosterUrl(invitationPosters.generalUrl)}
+                              className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-brand-sand/30 text-brand-muted hover:text-brand-espresso transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                              title="Preview full image"
+                            >
+                              <Eye className="w-4 h-4" />
+                              <span className="hidden sm:inline">Preview</span>
+                            </button>
+                            <button
+                              onClick={() => handleResetPoster('general')}
+                              className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                              title="Remove card"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span className="hidden sm:inline">Delete</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Close Family & VIP Message Card */}
-                    <div className="bg-brand-cream/20 rounded-3xl border-2 border-brand-gold/40 overflow-hidden flex flex-col">
+                    {/* General Message Card */}
+                      <div className="bg-brand-cream/20 rounded-3xl border border-brand-sand/40 overflow-hidden flex flex-col">
+                        <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-white">
+                          <div>
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-700 bg-emerald-100 font-bold px-2.5 py-0.5 rounded-full">
+                              General Guests
+                            </span>
+                            <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">General Message</h4>
+                            <p className="text-xs text-brand-muted mt-0.5">Sent with General Invitation Card</p>
+                          </div>
+                          <span className="text-[11px] font-sans text-brand-muted/70 bg-brand-ivory px-3 py-1 rounded-xl border border-brand-sand/40">
+                            {invitationPosters.generalMessageUpdatedAt || 'Default Template'}
+                          </span>
+                        </div>
+  
+                        {/* Toolbar */}
+                        <div className="px-5 py-3 bg-brand-ivory/60 border-b border-brand-sand/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-brand-muted font-semibold uppercase tracking-wider mr-1">Insert:</span>
+                            <button
+                              type="button"
+                              onClick={() => handleInsertPlaceholder('general', '{code}')}
+                              className="px-2.5 py-1 rounded-lg bg-white border border-brand-sand/60 hover:bg-brand-gold/10 hover:border-brand-gold text-brand-espresso text-xs font-mono font-medium transition-colors cursor-pointer shadow-2xs"
+                              title="Insert unique guest RSVP code tag"
+                            >
+                              + {`{code}`}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleInsertPlaceholder('general', '{link}')}
+                              className="px-2.5 py-1 rounded-lg bg-white border border-brand-sand/60 hover:bg-brand-gold/10 hover:border-brand-gold text-brand-espresso text-xs font-mono font-medium transition-colors cursor-pointer shadow-2xs"
+                              title="Insert website RSVP link tag"
+                            >
+                              + {`{link}`}
+                            </button>
+                          </div>
+  
+                          {/* Toggle Editor vs Live Phone Preview */}
+                          <div className="flex items-center gap-1 bg-brand-sand/30 p-0.5 rounded-xl">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewTab(prev => ({ ...prev, general: 'editor' }))}
+                              className={`px-3 py-1 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
+                                previewTab.general === 'editor'
+                                  ? 'bg-white text-brand-espresso shadow-xs'
+                                  : 'text-brand-muted hover:text-brand-espresso'
+                              }`}
+                            >
+                              <Edit2 className="w-3 h-3 inline mr-1" /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewTab(prev => ({ ...prev, general: 'preview' }))}
+                              className={`px-3 py-1 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
+                                previewTab.general === 'preview'
+                                  ? 'bg-white text-brand-espresso shadow-xs'
+                                  : 'text-brand-muted hover:text-brand-espresso'
+                              }`}
+                            >
+                              <Smartphone className="w-3 h-3 inline mr-1" /> Preview
+                            </button>
+                          </div>
+                        </div>
+  
+                        {/* Content Area */}
+                        <div className="p-5 flex-1 flex flex-col bg-white">
+                          {previewTab.general === 'editor' ? (
+                            <div className="flex-1 flex flex-col">
+                              <textarea
+                                value={generalMsgDraft}
+                                onChange={(e) => setGeneralMsgDraft(e.target.value)}
+                                rows={11}
+                                className="w-full flex-1 p-4 rounded-2xl border border-brand-sand/60 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 font-sans text-xs sm:text-sm text-brand-espresso leading-relaxed resize-y min-h-[220px]"
+                                placeholder="Write the accompanying general invitation message..."
+                              />
+                              <div className="flex items-center justify-between mt-2 text-[11px] text-brand-muted">
+                                <span>Formatting: *bold*, _italic_</span>
+                                <span>{generalMsgDraft.length} characters</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex-1 flex flex-col justify-center">
+                              <div className="bg-[#EFEAE2] p-4 sm:p-5 rounded-2xl border border-brand-sand/40 shadow-inner">
+                                <div className="text-[11px] font-mono text-emerald-800 font-bold mb-2 flex items-center gap-1">
+                                  <Smartphone className="w-3.5 h-3.5" /> Sample WhatsApp Message Preview
+                                </div>
+                                <div className="bg-white p-4 rounded-xl rounded-tl-none shadow-sm text-xs sm:text-sm text-brand-espresso whitespace-pre-wrap leading-relaxed font-sans border border-brand-sand/30">
+                                  {formatInviteMessage(generalMsgDraft, '84722', window.location.origin, role, 'general', wedding.couple.title, wedding.event.displayDate)}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+  
+                        {/* Footer Actions */}
+                        <div className="p-5 border-t border-brand-sand/30 bg-brand-cream/30 flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveMessage('general')}
+                            disabled={isSavingMessage === 'general'}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-brand-espresso text-brand-goldLight rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-charcoal transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                          >
+                            <Save className="w-4 h-4" />
+                            <span>{isSavingMessage === 'general' ? 'Saving...' : 'Save Message'}</span>
+                          </button>
+  
+                          <button
+                            type="button"
+                            onClick={() => handleResetMessage('general')}
+                            className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                            title="Restore default message template"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            <span className="hidden sm:inline">Reset Default</span>
+                          </button>
+                        </div>
+                  </div>
+
+                  {/* Column 2: Close Family & VIP Suite (Poster + Accompanying Message) */}
+                  <div className="flex flex-col gap-6">
+                    {/* 2. Close Family & VIP Invitation Card */}
+                    <div className="bg-white rounded-3xl shadow-sm border-2 border-brand-gold/40 overflow-hidden flex flex-col">
                       <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-gradient-to-r from-brand-gold/10 via-brand-cream/40 to-transparent">
                         <div>
                           <div className="flex items-center gap-1.5">
@@ -2845,114 +2804,197 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                               <Sparkles className="w-3 h-3 text-brand-goldDark" /> VIP & Family
                             </span>
                           </div>
-                          <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">VIP & Family Message</h4>
+                          <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">Close Family & VIP Card</h4>
                           <p className="text-xs text-brand-muted mt-0.5">Includes Engagement & Exclusive Afterparty</p>
                         </div>
                         <span className="text-[11px] font-sans text-brand-muted/70 bg-white px-3 py-1 rounded-xl border border-brand-sand/40">
-                          {invitationPosters.familyVipMessageUpdatedAt || 'Default Template'}
+                          {invitationPosters.familyVipUrl ? (invitationPosters.familyVipUpdatedAt || 'Uploaded') : 'Empty'}
                         </span>
                       </div>
-
-                      {/* Toolbar */}
-                      <div className="px-5 py-3 bg-brand-ivory/60 border-b border-brand-sand/30 flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-brand-muted font-semibold uppercase tracking-wider mr-1">Insert:</span>
-                          <button
-                            type="button"
-                            onClick={() => handleInsertPlaceholder('familyVip', '{code}')}
-                            className="px-2.5 py-1 rounded-lg bg-white border border-brand-sand/60 hover:bg-brand-gold/10 hover:border-brand-gold text-brand-espresso text-xs font-mono font-medium transition-colors cursor-pointer shadow-2xs"
-                            title="Insert unique guest RSVP code tag"
-                          >
-                            + {`{code}`}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleInsertPlaceholder('familyVip', '{link}')}
-                            className="px-2.5 py-1 rounded-lg bg-white border border-brand-sand/60 hover:bg-brand-gold/10 hover:border-brand-gold text-brand-espresso text-xs font-mono font-medium transition-colors cursor-pointer shadow-2xs"
-                            title="Insert website RSVP link tag"
-                          >
-                            + {`{link}`}
-                          </button>
-                        </div>
-
-                        {/* Toggle Editor vs Live Phone Preview */}
-                        <div className="flex items-center gap-1 bg-brand-sand/30 p-0.5 rounded-xl">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewTab(prev => ({ ...prev, familyVip: 'editor' }))}
-                            className={`px-3 py-1 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
-                              previewTab.familyVip === 'editor'
-                                ? 'bg-white text-brand-espresso shadow-xs'
-                                : 'text-brand-muted hover:text-brand-espresso'
-                            }`}
-                          >
-                            <Edit2 className="w-3 h-3 inline mr-1" /> Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewTab(prev => ({ ...prev, familyVip: 'preview' }))}
-                            className={`px-3 py-1 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
-                              previewTab.familyVip === 'preview'
-                                ? 'bg-white text-brand-espresso shadow-xs'
-                                : 'text-brand-muted hover:text-brand-espresso'
-                            }`}
-                          >
-                            <Smartphone className="w-3 h-3 inline mr-1" /> Preview
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Content Area */}
-                      <div className="p-5 flex-1 flex flex-col bg-white">
-                        {previewTab.familyVip === 'editor' ? (
-                          <div className="flex-1 flex flex-col">
-                            <textarea
-                              value={familyVipMsgDraft}
-                              onChange={(e) => setFamilyVipMsgDraft(e.target.value)}
-                              rows={11}
-                              className="w-full flex-1 p-4 rounded-2xl border border-brand-sand/60 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 font-sans text-xs sm:text-sm text-brand-espresso leading-relaxed resize-y min-h-[220px]"
-                              placeholder="Write the accompanying VIP & family invitation message..."
+  
+                      <div className="p-5 sm:p-6 flex flex-col items-center flex-1 bg-brand-ivory/30">
+                        {invitationPosters.familyVipUrl ? (
+                          <div className="w-full max-w-sm aspect-[4/5] rounded-2xl overflow-hidden bg-brand-sand/20 border-2 border-brand-gold/40 shadow-md relative group">
+                            <img
+                              src={invitationPosters.familyVipUrl}
+                              alt="Close Family & VIP Invitation Poster"
+                              className="w-full h-full object-contain bg-white"
                             />
-                            <div className="flex items-center justify-between mt-2 text-[11px] text-brand-muted">
-                              <span>Formatting: *bold*, _italic_</span>
-                              <span>{familyVipMsgDraft.length} characters</span>
+                            <div className="absolute inset-0 bg-brand-espresso/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                              <button
+                                onClick={() => setPreviewPosterUrl(invitationPosters.familyVipUrl)}
+                                className="px-4 py-2 bg-white text-brand-espresso rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 hover:bg-brand-gold hover:text-white transition-all cursor-pointer"
+                              >
+                                <Eye className="w-4 h-4" /> Full View
+                              </button>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex-1 flex flex-col justify-center">
-                            <div className="bg-[#EFEAE2] p-4 sm:p-5 rounded-2xl border border-brand-sand/40 shadow-inner">
-                              <div className="text-[11px] font-mono text-emerald-800 font-bold mb-2 flex items-center gap-1">
-                                <Smartphone className="w-3.5 h-3.5" /> Sample WhatsApp Message Preview
-                              </div>
-                              <div className="bg-white p-4 rounded-xl rounded-tl-none shadow-sm text-xs sm:text-sm text-brand-espresso whitespace-pre-wrap leading-relaxed font-sans border border-brand-sand/30">
-                                {formatInviteMessage(familyVipMsgDraft, '84722', window.location.origin, role, 'familyVip', wedding.couple.title, wedding.event.displayDate)}
-                              </div>
+                          <div className="w-full max-w-sm aspect-[4/5] rounded-2xl border-2 border-dashed border-brand-gold/60 flex flex-col items-center justify-center p-6 text-center bg-white/70">
+                            <div className="w-16 h-16 rounded-full bg-brand-gold/15 border border-brand-gold/30 flex items-center justify-center mb-3.5 text-brand-goldDark">
+                              <Sparkles className="w-8 h-8 text-brand-goldDark" />
                             </div>
+                            <p className="font-serif text-xl text-brand-espresso font-medium mb-1.5">No VIP Card</p>
+                            <p className="font-sans text-xs text-brand-muted max-w-[220px] leading-relaxed">
+                              Upload the special Close Family & VIP invitation card for {wedding.couple.title}.
+                            </p>
                           </div>
                         )}
                       </div>
-
-                      {/* Footer Actions */}
-                      <div className="p-5 border-t border-brand-sand/30 bg-brand-cream/30 flex items-center justify-between gap-3">
-                        <button
-                          type="button"
-                          onClick={() => handleSaveMessage('familyVip')}
-                          disabled={isSavingMessage === 'familyVip'}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-brand-goldDark text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-espresso transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
-                        >
-                          <Save className="w-4 h-4" />
-                          <span>{isSavingMessage === 'familyVip' ? 'Saving...' : 'Save Message'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleResetMessage('familyVip')}
-                          className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                          title="Restore default message template"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          <span className="hidden sm:inline">Reset Default</span>
-                        </button>
+  
+                      <div className="p-5 sm:p-6 border-t border-brand-sand/30 bg-white flex flex-wrap items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 px-5 py-2.5 bg-brand-goldDark text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-espresso transition-colors cursor-pointer shadow-sm">
+                          <UploadCloud className="w-4 h-4" />
+                          <span>{isUploadingPoster === 'familyVip' ? 'Uploading...' : (invitationPosters.familyVipUrl ? 'Replace Poster' : 'Upload Card')}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={isUploadingPoster === 'familyVip'}
+                            onChange={(e) => handleUploadPoster(e, 'familyVip')}
+                            className="hidden"
+                          />
+                        </label>
+  
+                        {invitationPosters.familyVipUrl && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setPreviewPosterUrl(invitationPosters.familyVipUrl)}
+                              className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-brand-sand/30 text-brand-muted hover:text-brand-espresso transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                              title="Preview full image"
+                            >
+                              <Eye className="w-4 h-4" />
+                              <span className="hidden sm:inline">Preview</span>
+                            </button>
+                            <button
+                              onClick={() => handleResetPoster('familyVip')}
+                              className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                              title="Remove card"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span className="hidden sm:inline">Delete</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                      {/* Close Family & VIP Message Card */}
+                      <div className="bg-brand-cream/20 rounded-3xl border-2 border-brand-gold/40 overflow-hidden flex flex-col">
+                        <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-gradient-to-r from-brand-gold/10 via-brand-cream/40 to-transparent">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono uppercase tracking-widest text-brand-espresso bg-brand-gold/30 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-brand-goldDark" /> VIP & Family
+                              </span>
+                            </div>
+                            <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mt-1">VIP & Family Message</h4>
+                            <p className="text-xs text-brand-muted mt-0.5">Includes Engagement & Exclusive Afterparty</p>
+                          </div>
+                          <span className="text-[11px] font-sans text-brand-muted/70 bg-white px-3 py-1 rounded-xl border border-brand-sand/40">
+                            {invitationPosters.familyVipMessageUpdatedAt || 'Default Template'}
+                          </span>
+                        </div>
+  
+                        {/* Toolbar */}
+                        <div className="px-5 py-3 bg-brand-ivory/60 border-b border-brand-sand/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-brand-muted font-semibold uppercase tracking-wider mr-1">Insert:</span>
+                            <button
+                              type="button"
+                              onClick={() => handleInsertPlaceholder('familyVip', '{code}')}
+                              className="px-2.5 py-1 rounded-lg bg-white border border-brand-sand/60 hover:bg-brand-gold/10 hover:border-brand-gold text-brand-espresso text-xs font-mono font-medium transition-colors cursor-pointer shadow-2xs"
+                              title="Insert unique guest RSVP code tag"
+                            >
+                              + {`{code}`}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleInsertPlaceholder('familyVip', '{link}')}
+                              className="px-2.5 py-1 rounded-lg bg-white border border-brand-sand/60 hover:bg-brand-gold/10 hover:border-brand-gold text-brand-espresso text-xs font-mono font-medium transition-colors cursor-pointer shadow-2xs"
+                              title="Insert website RSVP link tag"
+                            >
+                              + {`{link}`}
+                            </button>
+                          </div>
+  
+                          {/* Toggle Editor vs Live Phone Preview */}
+                          <div className="flex items-center gap-1 bg-brand-sand/30 p-0.5 rounded-xl">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewTab(prev => ({ ...prev, familyVip: 'editor' }))}
+                              className={`px-3 py-1 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
+                                previewTab.familyVip === 'editor'
+                                  ? 'bg-white text-brand-espresso shadow-xs'
+                                  : 'text-brand-muted hover:text-brand-espresso'
+                              }`}
+                            >
+                              <Edit2 className="w-3 h-3 inline mr-1" /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewTab(prev => ({ ...prev, familyVip: 'preview' }))}
+                              className={`px-3 py-1 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
+                                previewTab.familyVip === 'preview'
+                                  ? 'bg-white text-brand-espresso shadow-xs'
+                                  : 'text-brand-muted hover:text-brand-espresso'
+                              }`}
+                            >
+                              <Smartphone className="w-3 h-3 inline mr-1" /> Preview
+                            </button>
+                          </div>
+                        </div>
+  
+                        {/* Content Area */}
+                        <div className="p-5 flex-1 flex flex-col bg-white">
+                          {previewTab.familyVip === 'editor' ? (
+                            <div className="flex-1 flex flex-col">
+                              <textarea
+                                value={familyVipMsgDraft}
+                                onChange={(e) => setFamilyVipMsgDraft(e.target.value)}
+                                rows={11}
+                                className="w-full flex-1 p-4 rounded-2xl border border-brand-sand/60 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 font-sans text-xs sm:text-sm text-brand-espresso leading-relaxed resize-y min-h-[220px]"
+                                placeholder="Write the accompanying VIP & family invitation message..."
+                              />
+                              <div className="flex items-center justify-between mt-2 text-[11px] text-brand-muted">
+                                <span>Formatting: *bold*, _italic_</span>
+                                <span>{familyVipMsgDraft.length} characters</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex-1 flex flex-col justify-center">
+                              <div className="bg-[#EFEAE2] p-4 sm:p-5 rounded-2xl border border-brand-sand/40 shadow-inner">
+                                <div className="text-[11px] font-mono text-emerald-800 font-bold mb-2 flex items-center gap-1">
+                                  <Smartphone className="w-3.5 h-3.5" /> Sample WhatsApp Message Preview
+                                </div>
+                                <div className="bg-white p-4 rounded-xl rounded-tl-none shadow-sm text-xs sm:text-sm text-brand-espresso whitespace-pre-wrap leading-relaxed font-sans border border-brand-sand/30">
+                                  {formatInviteMessage(familyVipMsgDraft, '84722', window.location.origin, role, 'familyVip', wedding.couple.title, wedding.event.displayDate)}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+  
+                        {/* Footer Actions */}
+                        <div className="p-5 border-t border-brand-sand/30 bg-brand-cream/30 flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveMessage('familyVip')}
+                            disabled={isSavingMessage === 'familyVip'}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-brand-goldDark text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-espresso transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                          >
+                            <Save className="w-4 h-4" />
+                            <span>{isSavingMessage === 'familyVip' ? 'Saving...' : 'Save Message'}</span>
+                          </button>
+  
+                          <button
+                            type="button"
+                            onClick={() => handleResetMessage('familyVip')}
+                            className="p-2.5 rounded-xl border border-brand-sand/60 hover:bg-rose-50 text-brand-muted hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                            title="Restore default message template"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            <span className="hidden sm:inline">Reset Default</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3272,28 +3314,48 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                                   </span>
                                   <button
                                     onClick={() => toggleRevealPin(adminRole.role)}
-                                    className="p-1.5 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/30 rounded-lg transition-colors"
+                                    className="p-1.5 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/30 rounded-lg transition-colors cursor-pointer"
                                     title={isRevealed ? 'Hide PIN' : 'Reveal PIN'}
                                   >
                                     {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-brand-goldDark" />}
                                   </button>
+                                  {isSuperAdmin && (
+                                    <button
+                                      onClick={() => handleOpenChangePinModal(adminRole)}
+                                      className="px-2.5 py-1 rounded-lg bg-brand-sand/40 hover:bg-brand-gold/20 text-brand-espresso hover:text-brand-goldDark text-xs font-semibold flex items-center gap-1 transition-all border border-brand-sand/60 cursor-pointer shadow-2xs"
+                                      title={'Change PIN for ' + adminRole.label}
+                                    >
+                                      <KeyRound className="w-3 h-3 text-brand-goldDark" />
+                                      <span>Change</span>
+                                    </button>
+                                  )}
                                 </div>
                               </td>
                               <td className="p-6 text-xs text-brand-muted">
                                 {adminRole.createdAt ? new Date(adminRole.createdAt).toLocaleDateString() : 'Initial Setup'}
                               </td>
                               <td className="p-6 text-right">
-                                {isPermanent ? (
-                                  <span className="text-xs text-brand-muted/70 italic">Protected</span>
-                                ) : (
-                                  <button
-                                    onClick={() => handleDeleteAdminRole(adminRole)}
-                                    className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
-                                    title={'Delete admin ' + adminRole.label}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                )}
+                                <div className="flex items-center justify-end gap-2">
+                                  {isSuperAdmin && (
+                                    <button
+                                      onClick={() => handleOpenChangePinModal(adminRole)}
+                                      className="px-3 py-1.5 rounded-xl bg-brand-gold/15 hover:bg-brand-gold/30 text-brand-goldDark font-bold text-xs flex items-center gap-1.5 transition-all border border-brand-gold/30 shadow-2xs cursor-pointer"
+                                      title={'Change PIN for ' + adminRole.label}
+                                    >
+                                      <KeyRound className="w-3.5 h-3.5" />
+                                      <span>Change PIN</span>
+                                    </button>
+                                  )}
+                                  {!isPermanent && (
+                                    <button
+                                      onClick={() => handleDeleteAdminRole(adminRole)}
+                                      className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                                      title={'Delete admin ' + adminRole.label}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           );
@@ -3308,6 +3370,130 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
           )}
         </div>
       </div>
+
+      
+      {/* Super Admin Change PIN Modal */}
+      <AnimatePresence>
+        {pinModalAdmin && (
+          <div
+            className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-brand-espresso/70 backdrop-blur-sm animate-fade-in"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !isSavingPin) setPinModalAdmin(null);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-brand-cream rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-brand-gold/30 text-left relative"
+            >
+              <button
+                onClick={() => {
+                  if (!isSavingPin) setPinModalAdmin(null);
+                }}
+                className="absolute top-5 right-5 p-2 rounded-full hover:bg-black/5 text-brand-muted hover:text-brand-espresso transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300/60 flex items-center justify-center text-amber-800 shadow-sm shrink-0">
+                  <KeyRound className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-brand-espresso">
+                    Change Admin PIN
+                  </h3>
+                  <p className="text-xs text-brand-muted font-sans mt-0.5">
+                    {role === pinModalAdmin.role ? 'Update your personal 4-digit PIN' : ('Set a new 4-digit PIN for ' + pinModalAdmin.label)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 mb-5 rounded-2xl bg-white/80 border border-brand-sand/40 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] text-brand-muted font-sans uppercase tracking-wider font-semibold">Target Admin</p>
+                  <p className="text-sm font-bold text-brand-espresso mt-0.5">{pinModalAdmin.label}</p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-brand-sand/30 text-brand-espresso text-xs font-mono font-medium">
+                  Role: {pinModalAdmin.role}
+                </span>
+              </div>
+
+              {pinModalError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-sans flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <p>{pinModalError}</p>
+                </div>
+              )}
+
+              {pinModalSuccess && (
+                <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs font-sans flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <p>{pinModalSuccess}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSavePinSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
+                    New 4-Digit PIN *
+                  </label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    required
+                    disabled={isSavingPin}
+                    value={newPinValue}
+                    onChange={(e) => setNewPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="e.g. 5678"
+                    className="w-full px-4 py-3 bg-white border border-brand-sand/60 rounded-xl font-mono text-center tracking-[0.5em] text-lg text-brand-espresso placeholder:tracking-normal placeholder:font-sans placeholder:text-sm focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold shadow-sm"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
+                    Confirm New 4-Digit PIN *
+                  </label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    required
+                    disabled={isSavingPin}
+                    value={confirmPinValue}
+                    onChange={(e) => setConfirmPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="Re-enter 4-digit PIN"
+                    className="w-full px-4 py-3 bg-white border border-brand-sand/60 rounded-xl font-mono text-center tracking-[0.5em] text-lg text-brand-espresso placeholder:tracking-normal placeholder:font-sans placeholder:text-sm focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold shadow-sm"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={isSavingPin}
+                    onClick={() => setPinModalAdmin(null)}
+                    className="flex-1 py-3 px-4 rounded-xl border border-brand-sand/60 text-brand-muted hover:text-brand-espresso hover:bg-white text-xs font-sans font-bold uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingPin || newPinValue.length !== 4 || confirmPinValue.length !== 4}
+                    className="flex-1 py-3 px-4 rounded-xl bg-brand-espresso hover:bg-brand-espresso/90 text-brand-goldLight text-xs font-sans font-bold uppercase tracking-wider transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isSavingPin ? 'Saving...' : 'Update PIN'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Card Selection Modal on Share */}
       <AnimatePresence>
