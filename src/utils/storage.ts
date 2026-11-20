@@ -1758,6 +1758,31 @@ export async function deleteCustomAdminRole(roleId: string, coupleId: string = '
   }
 }
 
+export async function updateAdminCodeLimit(roleId: string, newLimit: number, coupleId: string = 'miracle-malvin'): Promise<void> {
+  const dbKey = `${MM_DB_ADMIN_ROLES}_${coupleId}`;
+  const current = getLocalDb<AdminRoleConfig[]>(dbKey, []);
+  const updated = current.map(r => r.role === roleId ? { ...r, codeLimit: newLimit } : r);
+  setLocalDb(dbKey, updated);
+
+  if (isTursoConfigured()) {
+    try {
+      const client = getTursoClient();
+      if (client) {
+        try {
+          await client.execute('ALTER TABLE custom_admin_roles ADD COLUMN code_limit INTEGER');
+        } catch {}
+
+        await client.execute({
+          sql: 'UPDATE custom_admin_roles SET code_limit = ? WHERE role = ?',
+          args: [newLimit, roleId]
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to update admin code limit on Turso:', err);
+    }
+  }
+}
+
 export async function toggleRsvpCheckIn(rsvpId: string, isCheckedIn: boolean): Promise<void> {
   const currentRsvps = getLocalDb<RsvpSubmission[]>(MM_DB_RSVPS, []);
   const now = new Date().toISOString();

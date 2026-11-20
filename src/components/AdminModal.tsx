@@ -27,7 +27,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify, role, onOpenResetPin }) => {
-  const { wedding, isMasterAdmin, addCustomRole, removeCustomRole } = useWedding();
+  const { wedding, isMasterAdmin, addCustomRole, removeCustomRole, updateRoleCodeLimit } = useWedding();
   const currentRoleConfig = wedding.admin.roles.find(
     r => r.role.toLowerCase() === (role || '').toLowerCase()
   );
@@ -71,15 +71,43 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   const [pinModalAdmin, setPinModalAdmin] = useState<AdminRoleConfig | null>(null);
   const [newPinValue, setNewPinValue] = useState('');
   const [confirmPinValue, setConfirmPinValue] = useState('');
+  const [showNewPin, setShowNewPin] = useState(false);
+  const [showConfirmPin, setShowConfirmPin] = useState(false);
   const [pinModalError, setPinModalError] = useState('');
   const [pinModalSuccess, setPinModalSuccess] = useState('');
   const [isSavingPin, setIsSavingPin] = useState(false);
   const [, setPinVersion] = useState(0);
 
+  // Editable Invite Cap State
+  const [editingCapRole, setEditingCapRole] = useState<string | null>(null);
+  const [editingCapValue, setEditingCapValue] = useState<string>('50');
+
+  const handleStartEditCap = (adminRole: AdminRoleConfig) => {
+    setEditingCapRole(adminRole.role);
+    setEditingCapValue(String(adminRole.codeLimit || 50));
+  };
+
+  const handleSaveCap = async (roleId: string, roleLabel: string) => {
+    const num = parseInt(editingCapValue, 10);
+    if (isNaN(num) || num < 1) {
+      onNotify('Invalid Cap', 'Please enter a valid positive number for the couple cap.');
+      return;
+    }
+    try {
+      await updateRoleCodeLimit(roleId, num);
+      setEditingCapRole(null);
+      onNotify('Cap Updated', 'Invite cap for ' + roleLabel + ' updated to ' + num + ' couples.');
+    } catch (err) {
+      onNotify('Error', 'Failed to update invite cap.');
+    }
+  };
+
   const handleOpenChangePinModal = (adminRole: AdminRoleConfig) => {
     setPinModalAdmin(adminRole);
     setNewPinValue('');
     setConfirmPinValue('');
+    setShowNewPin(false);
+    setShowConfirmPin(false);
     setPinModalError('');
     setPinModalSuccess('');
   };
@@ -114,8 +142,8 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       }
 
       setPinVersion(v => v + 1);
-      setPinModalSuccess(`PIN for ${pinModalAdmin.label} updated to ${targetPin}!`);
-      onNotify('PIN Updated', `Successfully updated PIN for ${pinModalAdmin.label} to ${targetPin}.`);
+      setPinModalSuccess(`PIN for ${pinModalAdmin.label} updated successfully!`);
+      onNotify('PIN Updated', `Successfully updated PIN for ${pinModalAdmin.label}.`);
 
       setTimeout(() => {
         setPinModalAdmin(null);
@@ -184,7 +212,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       setNewAdminAccessPoint('family');
       setNewAdminCodeLimit('50');
       setAdminFormOpen(false);
-      onNotify('Admin Created', roleConfig.label + ' added with ' + (roleConfig.accessPoint ? roleConfig.accessPoint.toUpperCase() : 'ADMIN') + ' access (PIN: ' + roleConfig.defaultPin + ').');
+      onNotify('Admin Created', roleConfig.label + ' added with ' + (roleConfig.accessPoint ? roleConfig.accessPoint.toUpperCase() : 'ADMIN') + ' access.');
     } catch (err) {
       setAdminFormError('Failed to save new admin.');
     }
@@ -2590,12 +2618,10 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                   </div>
                 </div>
 
-                                {/* 2-Column Suite: General Guests on Left, Close Family & VIP on Right (Stacked on Mobile) */}
+                                                {/* Responsive Grid: Side-by-side on Desktop (2x2 with Section Header), Stacked General/VIP pairs on Mobile */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-                  {/* Column 1: General Guests Suite (Poster + Accompanying Message) */}
-                  <div className="flex flex-col gap-6">
                     {/* 1. General Invitation Card */}
-                    <div className="bg-white rounded-3xl shadow-sm border border-brand-sand/40 overflow-hidden flex flex-col">
+                    <div className="order-1 lg:order-1 bg-white rounded-3xl shadow-sm border border-brand-sand/40 overflow-hidden flex flex-col">
                       <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-brand-cream/30">
                         <div>
                           <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-700 bg-emerald-100 font-bold px-2.5 py-0.5 rounded-full">
@@ -2674,9 +2700,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                         )}
                       </div>
                     </div>
-
-                    {/* General Message Card */}
-                      <div className="bg-brand-cream/20 rounded-3xl border border-brand-sand/40 overflow-hidden flex flex-col">
+                      <div className="order-2 lg:order-4 bg-white rounded-3xl shadow-sm border border-brand-sand/40 overflow-hidden flex flex-col">
                         <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-white">
                           <div>
                             <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-700 bg-emerald-100 font-bold px-2.5 py-0.5 rounded-full">
@@ -2792,11 +2816,26 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                           </button>
                         </div>
                   </div>
-
-                  {/* Column 2: Close Family & VIP Suite (Poster + Accompanying Message) */}
-                  <div className="flex flex-col gap-6">
+                {/* Desktop Section Header: Accompanying Invitation Messages */}
+                <div className="hidden lg:block lg:col-span-2 lg:order-3 bg-white p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-brand-sand/40">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 text-brand-goldDark text-xs font-bold uppercase tracking-widest mb-1.5">
+                        <MessageSquare className="w-4 h-4" /> Accompanying Message Editor
+                      </div>
+                      <h3 className="font-serif text-2xl sm:text-3xl text-brand-espresso">Invitation Messages</h3>
+                      <p className="text-xs sm:text-sm font-sans text-brand-muted mt-1 max-w-2xl leading-relaxed">
+                        Customize the WhatsApp, SMS, and email messages sent to guests alongside each invitation card. The unique 5-digit RSVP code and website URL will automatically fill in for each recipient.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 px-3.5 py-2 bg-brand-sand/20 rounded-2xl border border-brand-sand/40 text-xs text-brand-muted shrink-0">
+                      <Sparkles className="w-4 h-4 text-brand-goldDark" />
+                      <span>Use <strong className="text-brand-espresso font-mono">{'{code}'}</strong> and <strong className="text-brand-espresso font-mono">{'{link}'}</strong> placeholders</span>
+                    </div>
+                  </div>
+                </div>
                     {/* 2. Close Family & VIP Invitation Card */}
-                    <div className="bg-white rounded-3xl shadow-sm border-2 border-brand-gold/40 overflow-hidden flex flex-col">
+                    <div className="order-3 lg:order-2 bg-white rounded-3xl shadow-sm border-2 border-brand-gold/40 overflow-hidden flex flex-col">
                       <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-gradient-to-r from-brand-gold/10 via-brand-cream/40 to-transparent">
                         <div>
                           <div className="flex items-center gap-1.5">
@@ -2877,8 +2916,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                         )}
                       </div>
                     </div>
-                      {/* Close Family & VIP Message Card */}
-                      <div className="bg-brand-cream/20 rounded-3xl border-2 border-brand-gold/40 overflow-hidden flex flex-col">
+                      <div className="order-4 lg:order-5 bg-white rounded-3xl shadow-sm border-2 border-brand-gold/40 overflow-hidden flex flex-col">
                         <div className="p-5 sm:p-6 border-b border-brand-sand/30 flex items-center justify-between bg-gradient-to-r from-brand-gold/10 via-brand-cream/40 to-transparent">
                           <div>
                             <div className="flex items-center gap-1.5">
@@ -2996,8 +3034,6 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
                 </div>
               </motion.div>
             )}
@@ -3251,6 +3287,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                           <th className="p-6 font-semibold w-16 text-center">#</th>
                           <th className="p-6 font-semibold">Admin / Creator</th>
                           <th className="p-6 font-semibold">Access Point</th>
+                          <th className="p-6 font-semibold">Invite / Couple Cap</th>
                           <th className="p-6 font-semibold">4-Digit PIN</th>
                           <th className="p-6 font-semibold">Created</th>
                           <th className="p-6 font-semibold text-right">Actions</th>
@@ -3302,10 +3339,68 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                                       <Clock className="w-3.5 h-3.5 text-indigo-700" /> Event Coordinator
                                     </span>
                                   )}
-                                  <span className="text-[11px] text-brand-muted font-sans">
-                                    {roleAccess === 'family' ? ('Cap: ' + (adminRole.codeLimit || 50) + ' couples') : (roleAccess === 'super' ? 'Unlimited access' : 'Full guest list alone')}
-                                  </span>
                                 </div>
+                              </td>
+                              <td className="p-6">
+                                {roleAccess === 'super' && (
+                                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1.5">
+                                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" /> ∞ Unlimited
+                                  </span>
+                                )}
+                                {roleAccess === 'coordinator' && (
+                                  <span className="px-3 py-1 rounded-full text-xs font-semibold text-brand-muted bg-brand-sand/30 border border-brand-sand/50">
+                                    N/A (Read Only)
+                                  </span>
+                                )}
+                                {roleAccess === 'family' && (
+                                  editingCapRole === adminRole.role ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        max="1000"
+                                        value={editingCapValue}
+                                        onChange={(e) => setEditingCapValue(e.target.value)}
+                                        className="w-20 px-2.5 py-1 bg-white border-2 border-brand-gold rounded-lg text-xs font-mono font-bold text-brand-espresso focus:outline-none shadow-inner"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') handleSaveCap(adminRole.role, adminRole.label);
+                                          if (e.key === 'Escape') setEditingCapRole(null);
+                                        }}
+                                      />
+                                      <button
+                                        onClick={() => handleSaveCap(adminRole.role, adminRole.label)}
+                                        className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors cursor-pointer shadow-xs"
+                                        title="Save cap"
+                                      >
+                                        <Check className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={() => setEditingCapRole(null)}
+                                        className="p-1.5 bg-brand-sand/40 hover:bg-brand-sand text-brand-muted hover:text-brand-espresso rounded-lg transition-colors cursor-pointer"
+                                        title="Cancel"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1.5 shadow-2xs">
+                                        <Users className="w-3.5 h-3.5 text-emerald-600" />
+                                        {adminRole.codeLimit || 50} couples
+                                      </span>
+                                      {isSuperAdmin && (
+                                        <button
+                                          onClick={() => handleStartEditCap(adminRole)}
+                                          className="p-1.5 rounded-lg text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/30 transition-colors cursor-pointer"
+                                          title={'Edit invite cap for ' + adminRole.label}
+                                        >
+                                          <Edit2 className="w-3.5 h-3.5 text-brand-goldDark" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  )
+                                )}
                               </td>
                               <td className="p-6">
                                 <div className="flex items-center gap-2">
@@ -3439,37 +3534,57 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
                   <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
                     New 4-Digit PIN *
                   </label>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={4}
-                    required
-                    disabled={isSavingPin}
-                    value={newPinValue}
-                    onChange={(e) => setNewPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="e.g. 5678"
-                    className="w-full px-4 py-3 bg-white border border-brand-sand/60 rounded-xl font-mono text-center tracking-[0.5em] text-lg text-brand-espresso placeholder:tracking-normal placeholder:font-sans placeholder:text-sm focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold shadow-sm"
-                    autoFocus
-                  />
+                  <div className="relative">
+                    <input
+                      type={showNewPin ? 'text' : 'password'}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
+                      required
+                      disabled={isSavingPin}
+                      value={newPinValue}
+                      onChange={(e) => setNewPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="e.g. 5678"
+                      className="w-full px-4 pr-12 py-3 bg-white border border-brand-sand/60 rounded-xl font-mono text-center tracking-[0.5em] text-lg text-brand-espresso placeholder:tracking-normal placeholder:font-sans placeholder:text-sm focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold shadow-sm"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPin(prev => !prev)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/30 rounded-lg transition-colors cursor-pointer"
+                      title={showNewPin ? 'Hide PIN' : 'Reveal PIN'}
+                    >
+                      {showNewPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-brand-goldDark" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-sans font-semibold text-brand-espresso uppercase tracking-wider mb-1.5">
                     Confirm New 4-Digit PIN *
                   </label>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={4}
-                    required
-                    disabled={isSavingPin}
-                    value={confirmPinValue}
-                    onChange={(e) => setConfirmPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="Re-enter 4-digit PIN"
-                    className="w-full px-4 py-3 bg-white border border-brand-sand/60 rounded-xl font-mono text-center tracking-[0.5em] text-lg text-brand-espresso placeholder:tracking-normal placeholder:font-sans placeholder:text-sm focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold shadow-sm"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPin ? 'text' : 'password'}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
+                      required
+                      disabled={isSavingPin}
+                      value={confirmPinValue}
+                      onChange={(e) => setConfirmPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="Re-enter 4-digit PIN"
+                      className="w-full px-4 pr-12 py-3 bg-white border border-brand-sand/60 rounded-xl font-mono text-center tracking-[0.5em] text-lg text-brand-espresso placeholder:tracking-normal placeholder:font-sans placeholder:text-sm focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPin(prev => !prev)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-brand-muted hover:text-brand-espresso hover:bg-brand-sand/30 rounded-lg transition-colors cursor-pointer"
+                      title={showConfirmPin ? 'Hide PIN' : 'Reveal PIN'}
+                    >
+                      {showConfirmPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-brand-goldDark" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="pt-2 flex items-center gap-3">

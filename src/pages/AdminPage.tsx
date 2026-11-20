@@ -145,7 +145,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
 
     const saved = saveCustomPin(targetRole, newPin);
     if (saved) {
-      setResetSuccess(`PIN updated successfully! You can now log in with ${newPin}.`);
+      setResetSuccess('PIN updated successfully! You can now log in with your new PIN.');
       onNotify('PIN Updated', `New PIN for ${targetRole.toUpperCase()} saved.`);
       setTimeout(() => {
         setIsResetModalOpen(false);
@@ -163,8 +163,7 @@ export const AdminPage: FC<{ onNotify: (title: string, message?: string) => void
   const handleRestoreDefaults = () => {
     wedding.admin.roles.forEach(r => resetRolePinToDefault(r.role));
     setResetSuccess('All PINs restored to default values.');
-    const summary = wedding.admin.roles.filter(r => r.isMaster).map(r => `${r.label.split(' ')[0]}: ${r.defaultPin}`).join(' | ');
-    onNotify('Defaults Restored', summary);
+    onNotify('Defaults Restored', 'All admin PINs have been restored to defaults.');
     setTimeout(() => {
       setIsResetModalOpen(false);
       setResetSuccess('');

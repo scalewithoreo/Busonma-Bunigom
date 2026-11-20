@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { WeddingConfig, AdminRoleConfig, ThemeColors, ThemePresetId } from '../types/wedding';
 import { COUPLE_CONFIGS, ALL_COUPLES, resolveCoupleId, DEFAULT_COUPLE_ID } from '../config/couples';
 import { THEME_PRESETS, ALL_THEME_PRESETS, ThemePreset } from '../config/themePresets';
-import { getStoredCustomAdminRoles, saveCustomAdminRole, deleteCustomAdminRole } from '../utils/storage';
+import { getStoredCustomAdminRoles, saveCustomAdminRole, deleteCustomAdminRole, updateAdminCodeLimit } from '../utils/storage';
 
 interface WeddingContextValue {
   wedding: WeddingConfig;
@@ -22,6 +22,7 @@ interface WeddingContextValue {
   customRoles: AdminRoleConfig[];
   addCustomRole: (role: AdminRoleConfig) => Promise<void>;
   removeCustomRole: (roleId: string) => Promise<void>;
+  updateRoleCodeLimit: (roleId: string, newLimit: number) => Promise<void>;
 }
 
 const WeddingContext = createContext<WeddingContextValue | null>(null);
@@ -193,9 +194,17 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setCustomRoles(prev => prev.filter(r => r.role !== roleId));
   };
 
+  const updateRoleCodeLimit = async (roleId: string, newLimit: number) => {
+    await updateAdminCodeLimit(roleId, newLimit, activeCoupleId);
+    setCustomRoles(prev => prev.map(r => r.role === roleId ? { ...r, codeLimit: newLimit } : r));
+  };
+
   const allAdminRoles = useMemo(() => {
     const defaultRoles = rawWedding.admin?.roles || [];
-    const merged = [...defaultRoles];
+    const merged = defaultRoles.map(dr => {
+      const cr = customRoles.find(c => c.role.toLowerCase() === dr.role.toLowerCase());
+      return cr ? { ...dr, ...cr } : dr;
+    });
     customRoles.forEach(cr => {
       if (!merged.some(r => r.role.toLowerCase() === cr.role.toLowerCase())) {
         merged.push(cr);
@@ -337,6 +346,7 @@ export const WeddingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         customRoles,
         addCustomRole,
         removeCustomRole,
+        updateRoleCodeLimit,
       }}
     >
       {children}
