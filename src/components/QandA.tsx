@@ -79,14 +79,30 @@ export const QandA: FC = () => {
                   >
                     <div className="px-6 pb-6 pt-2 font-sans text-brand-muted text-[15px] sm:text-base leading-relaxed border-t border-brand-sand/20">
                       {faq.contacts && faq.contacts.length > 0 ? (
-                        <>
-                          For any further inquiries or assistance, please feel free to contact our coordinators:<br />
-                          {faq.contacts.map((c, i) => (
-                            <span key={i}>
-                              <strong>{c.name}:</strong> {c.phone}<br />
-                            </span>
-                          ))}
-                        </>
+                        <div>
+                          {faq.answer ? (
+                            <p className="mb-3">{faq.answer}</p>
+                          ) : (
+                            <p className="mb-2">For any further inquiries or assistance, please feel free to contact our coordinators:</p>
+                          )}
+                          <div className="space-y-1.5">
+                            {faq.contacts.map((c, i) => (
+                              <div key={i} className="flex items-center gap-2 flex-wrap">
+                                <strong className="text-brand-espresso">{c.name}:</strong>
+                                {/^[+0-9\s-]+$/.test(c.phone) ? (
+                                  <a 
+                                    href={`tel:${c.phone.replace(/\s+/g, '')}`} 
+                                    className="text-brand-goldDark font-semibold hover:text-brand-gold hover:underline transition-colors"
+                                  >
+                                    {c.phone}
+                                  </a>
+                                ) : (
+                                  <span>{c.phone}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       ) : (
                         faq.answer
                       )}

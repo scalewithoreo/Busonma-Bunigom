@@ -235,9 +235,9 @@ export const busonmaBunigomConfig: WeddingConfig = {
     },
     {
       question: '15. Who can I contact if I need help?',
-      answer: 'For questions about your invitation, RSVP, accommodation or transport, please contact our wedding planner Dulcet or reach out directly to the bridal team.',
+      answer: 'For questions about your invitation, RSVP, accommodation or transport, please contact Amanda (+234 706 249 6125) or reach out directly to the bridal team.',
       contacts: [
-        { name: 'Dulcet', phone: 'Wedding Planner / Coordinator' },
+        { name: 'Amanda', phone: '+234 706 249 6125' },
       ],
     },
   ],
