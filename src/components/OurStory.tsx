@@ -6,6 +6,27 @@ export const OurStory: FC = () => {
   const { wedding } = useWedding();
   const story = wedding.story;
 
+  const renderFormattedText = (text: string) => {
+    const lines = text.split('\n');
+    return lines.map((line, lineIdx) => {
+      const parts = line.split(/(\*\*.*?\*\*)/g);
+      return (
+        <span key={lineIdx} className={lineIdx > 0 ? 'block mt-3' : 'block'}>
+          {parts.map((part, partIdx) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return (
+                <strong key={partIdx} className="font-bold text-brand-espresso">
+                  {part.slice(2, -2)}
+                </strong>
+              );
+            }
+            return part;
+          })}
+        </span>
+      );
+    });
+  };
+
   return (
     <section id="our-story" className="py-24 sm:py-32 px-4 sm:px-6 bg-brand-cream relative border-t border-brand-espresso/10">
       <div className="max-w-5xl mx-auto">
@@ -62,9 +83,9 @@ export const OurStory: FC = () => {
               "
             </div>
             {story.paragraphs.map((p, idx) => (
-              <p key={idx} className="relative z-10">
-                {p}
-              </p>
+              <div key={idx} className="relative z-10">
+                {renderFormattedText(p)}
+              </div>
             ))}
             <div className="pt-8 relative z-10">
               <p className="font-serif italic text-2xl text-brand-goldDark">{story.signoff}</p>
