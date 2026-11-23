@@ -1,12 +1,13 @@
-import { FC, useState, useMemo } from 'react';
+import { FC, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Maximize2, GalleryHorizontal, LayoutGrid } from 'lucide-react';
 import { useWedding } from '../context/WeddingContext';
 
 export const Colours: FC = () => {
   const { wedding } = useWedding();
   const theme = wedding.theme;
   const looks = theme.looks || [];
+  const runwayRef = useRef<HTMLDivElement>(null);
   
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -18,6 +19,8 @@ export const Colours: FC = () => {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activeLookId, setActiveLookId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'runway' | 'grid'>('runway');
+  const [activeRunwayIndex, setActiveRunwayIndex] = useState<number>(0);
 
   const filteredLooks = useMemo(() => {
     if (selectedCategory === 'All') return looks;
@@ -26,6 +29,56 @@ export const Colours: FC = () => {
 
   const activeLookIndex = filteredLooks.findIndex(l => l.id === activeLookId);
   const activeLook = activeLookIndex >= 0 ? filteredLooks[activeLookIndex] : null;
+
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat);
+    setActiveRunwayIndex(0);
+    if (runwayRef.current) {
+      runwayRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRunway = (direction: 'left' | 'right') => {
+    if (!runwayRef.current) return;
+    const container = runwayRef.current;
+    const card = container.querySelector('[data-runway-card]') as HTMLElement | null;
+    const scrollAmount = card ? card.offsetWidth + 16 : 320;
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+  };
+
+  const scrollToLookIndex = (index: number) => {
+    if (!runwayRef.current) return;
+    const cards = runwayRef.current.querySelectorAll('[data-runway-card]');
+    if (cards[index]) {
+      (cards[index] as HTMLElement).scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+      setActiveRunwayIndex(index);
+    }
+  };
+
+  const handleRunwayScroll = () => {
+    if (!runwayRef.current) return;
+    const container = runwayRef.current;
+    const center = container.scrollLeft + container.offsetWidth / 2;
+    const cards = Array.from(container.querySelectorAll('[data-runway-card]')) as HTMLElement[];
+    let closestIndex = 0;
+    let minDistance = Infinity;
+    cards.forEach((card, idx) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const dist = Math.abs(cardCenter - center);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestIndex = idx;
+      }
+    });
+    setActiveRunwayIndex(closestIndex);
+  };
 
   const handleNextModal = () => {
     if (activeLookIndex >= 0 && filteredLooks.length > 0) {
@@ -179,109 +232,271 @@ export const Colours: FC = () => {
         )}
 
         {/* Lookbook Header */}
-        <div className="text-center mt-24 mb-10">
+        <div className="text-center mt-20 sm:mt-28 mb-8 sm:mb-10">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-gold/10 border border-brand-gold/30 mb-3"
+          >
+            <span className="text-[11px] font-sans tracking-[0.25em] uppercase text-brand-goldDark font-semibold">
+              Curated Style Guide
+            </span>
+          </motion.div>
           <motion.h3 
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-3xl sm:text-4xl font-serif text-brand-espresso mb-3"
+            className="text-3xl sm:text-4xl lg:text-5xl font-serif text-brand-espresso mb-3"
           >
             Style Inspiration & Lookbook
           </motion.h3>
-          <p className="font-sans text-brand-muted text-[17px] max-w-xl mx-auto">
+          <p className="font-sans text-brand-muted text-base sm:text-lg max-w-xl mx-auto">
             Curated silhouettes and styling details to guide your wedding celebration attire.
           </p>
 
-          {/* Category Filter Tabs */}
-          {categories.length > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-8"
-            >
+          {/* Controls Bar: Category Tabs & View Mode Switcher */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 max-w-5xl mx-auto px-1">
+            {/* Category Filter Tabs */}
+            {categories.length > 1 && (
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto max-w-full pb-1 no-scrollbar w-full sm:w-auto justify-start sm:justify-center">
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange('All')}
+                  className={`px-4 py-2 rounded-full text-xs font-sans font-semibold tracking-wider uppercase whitespace-nowrap transition-all duration-300 ${
+                    selectedCategory === 'All'
+                      ? 'bg-brand-espresso text-brand-cream shadow-md scale-105'
+                      : 'bg-white/80 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50'
+                  }`}
+                >
+                  All Looks ({looks.length})
+                </button>
+                {categories.map((cat) => {
+                  const count = looks.filter(l => l.category === cat).length;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => handleCategoryChange(cat)}
+                      className={`px-4 py-2 rounded-full text-xs font-sans font-semibold tracking-wider uppercase whitespace-nowrap transition-all duration-300 ${
+                        selectedCategory === cat
+                          ? 'bg-brand-espresso text-brand-cream shadow-md scale-105'
+                          : 'bg-white/80 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50'
+                      }`}
+                    >
+                      {cat} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* View Mode Toggle Pill */}
+            <div className="inline-flex p-1 rounded-full bg-white/90 border border-brand-sand/60 shadow-sm shrink-0 self-center sm:self-auto">
               <button
                 type="button"
-                onClick={() => setSelectedCategory('All')}
-                className={`px-5 py-2 rounded-full text-xs sm:text-sm font-sans font-semibold tracking-wider uppercase transition-all duration-300 ${
-                  selectedCategory === 'All'
-                    ? 'bg-brand-espresso text-brand-cream shadow-md scale-105'
-                    : 'bg-white/80 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50'
+                onClick={() => setViewMode('runway')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-sans font-semibold tracking-wider uppercase transition-all duration-300 ${
+                  viewMode === 'runway'
+                    ? 'bg-brand-espresso text-brand-cream shadow-sm'
+                    : 'text-brand-muted hover:text-brand-espresso'
                 }`}
+                title="Swipeable Runway Carousel"
               >
-                All Looks ({looks.length})
+                <GalleryHorizontal className="w-3.5 h-3.5" />
+                <span>Runway</span>
               </button>
-              {categories.map((cat) => {
-                const count = looks.filter(l => l.category === cat).length;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-5 py-2 rounded-full text-xs sm:text-sm font-sans font-semibold tracking-wider uppercase transition-all duration-300 ${
-                      selectedCategory === cat
-                        ? 'bg-brand-espresso text-brand-cream shadow-md scale-105'
-                        : 'bg-white/80 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50'
-                    }`}
-                  >
-                    {cat} ({count})
-                  </button>
-                );
-              })}
-            </motion.div>
-          )}
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-sans font-semibold tracking-wider uppercase transition-all duration-300 ${
+                  viewMode === 'grid'
+                    ? 'bg-brand-espresso text-brand-cream shadow-sm'
+                    : 'text-brand-muted hover:text-brand-espresso'
+                }`}
+                title="Compact Grid"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Grid</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Looks Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto justify-center">
-          {filteredLooks.map((look, index) => (
-            <motion.div
-              key={look.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: Math.min(index * 0.06, 0.4), duration: 0.5 }}
-              onClick={() => setActiveLookId(look.id)}
-              className="group cursor-pointer flex flex-col bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 border border-brand-sand/40 hover:-translate-y-1.5"
+        {/* View Mode: RUNWAY (Horizontal Swipeable Track with Filmstrip) */}
+        {viewMode === 'runway' && (
+          <div className="relative max-w-6xl mx-auto">
+            {/* Runway Controls */}
+            {filteredLooks.length > 1 && (
+              <div className="hidden md:flex items-center justify-between pointer-events-none absolute -top-12 right-0 gap-2 z-20">
+                <button
+                  type="button"
+                  onClick={() => scrollRunway('left')}
+                  className="pointer-events-auto p-2 rounded-full bg-white/90 hover:bg-white text-brand-espresso shadow-md border border-brand-sand/60 transition-all hover:scale-105"
+                  aria-label="Previous look"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollRunway('right')}
+                  className="pointer-events-auto p-2 rounded-full bg-white/90 hover:bg-white text-brand-espresso shadow-md border border-brand-sand/60 transition-all hover:scale-105"
+                  aria-label="Next look"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Horizontal Runway Track */}
+            <div
+              ref={runwayRef}
+              onScroll={handleRunwayScroll}
+              className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory py-4 px-2 sm:px-4 no-scrollbar scroll-smooth"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              <div className="relative aspect-[3/4] overflow-hidden bg-brand-espresso">
-                <img loading="lazy" decoding="async" 
-                  src={look.src} 
-                  alt={look.title}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-6">
-                  <span className="text-white text-xs font-sans uppercase tracking-widest flex items-center gap-1.5">
-                    <Maximize2 className="w-4 h-4 text-brand-gold" />
-                    Enlarge Look
-                  </span>
+              {filteredLooks.map((look, index) => (
+                <div
+                  key={look.id}
+                  data-runway-card
+                  onClick={() => setActiveLookId(look.id)}
+                  className="w-[82vw] sm:w-[340px] md:w-[360px] shrink-0 snap-center group cursor-pointer flex flex-col bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-brand-sand/40 hover:-translate-y-1.5"
+                >
+                  <div className="relative aspect-[3/4] overflow-hidden bg-brand-espresso">
+                    <img
+                      loading="lazy"
+                      decoding="async"
+                      src={look.src}
+                      alt={look.title}
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-5">
+                      <span className="text-white text-xs font-sans uppercase tracking-widest flex items-center gap-1.5">
+                        <Maximize2 className="w-4 h-4 text-brand-gold" />
+                        Enlarge Look
+                      </span>
+                    </div>
+                    {look.category && (
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-brand-espresso/80 backdrop-blur-md text-brand-cream text-[11px] font-sans uppercase tracking-widest px-3 py-1 rounded-full border border-white/10 shadow-sm">
+                          {look.category}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute top-4 right-4">
+                      <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-mono px-2.5 py-1 rounded-full border border-white/10">
+                        {index + 1} / {filteredLooks.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 sm:p-6 flex flex-col flex-1 justify-between bg-white">
+                    <div>
+                      <h4 className="font-serif text-lg sm:text-xl text-brand-espresso mb-1.5 group-hover:text-brand-primary transition-colors line-clamp-1">
+                        {look.title}
+                      </h4>
+                      <p className="font-sans text-brand-muted text-xs sm:text-sm leading-relaxed line-clamp-2">
+                        {look.caption}
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-brand-sand/40 flex items-center justify-between text-xs font-sans text-brand-goldDark font-semibold tracking-wider uppercase">
+                      <span>View Full Look</span>
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                  </div>
                 </div>
-                {look.category && (
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-brand-espresso/80 backdrop-blur-md text-brand-cream text-[11px] font-sans uppercase tracking-widest px-3 py-1 rounded-full border border-white/10 shadow-sm">
-                      {look.category}
+              ))}
+            </div>
+
+            {/* Quick Glance Thumbnail Scrubber Filmstrip */}
+            <div className="mt-4 pt-2 border-t border-brand-sand/30">
+              <div className="flex items-center justify-between px-2 mb-2">
+                <span className="text-[11px] font-sans uppercase tracking-widest text-brand-goldDark font-semibold">
+                  Quick Selector ({filteredLooks.length} Styles)
+                </span>
+                <span className="text-[11px] font-sans text-brand-muted">
+                  Slide or tap thumbnail
+                </span>
+              </div>
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 pt-1 px-2 no-scrollbar scroll-smooth">
+                {filteredLooks.map((look, idx) => (
+                  <button
+                    key={look.id}
+                    type="button"
+                    onClick={() => scrollToLookIndex(idx)}
+                    className={`group relative shrink-0 w-12 h-16 sm:w-14 sm:h-20 rounded-xl overflow-hidden transition-all duration-300 border-2 ${
+                      activeRunwayIndex === idx
+                        ? 'border-brand-gold scale-105 shadow-md ring-2 ring-brand-gold/30 opacity-100'
+                        : 'border-brand-sand/50 opacity-60 hover:opacity-100 hover:border-brand-gold/60'
+                    }`}
+                    title={look.title}
+                  >
+                    <img
+                      loading="lazy"
+                      decoding="async"
+                      src={look.src}
+                      alt={look.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                    <span className="absolute bottom-1 right-1 px-1 rounded bg-black/60 text-[8px] font-mono text-brand-cream">
+                      {idx + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Mode: COMPACT GRID (2 columns on mobile, 3 columns on desktop) */}
+        {viewMode === 'grid' && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 max-w-6xl mx-auto">
+            {filteredLooks.map((look, index) => (
+              <motion.div
+                key={look.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(index * 0.04, 0.3), duration: 0.4 }}
+                onClick={() => setActiveLookId(look.id)}
+                className="group cursor-pointer relative aspect-[3/4] rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-brand-sand/40 bg-brand-espresso"
+              >
+                <img
+                  loading="lazy"
+                  decoding="async"
+                  src={look.src}
+                  alt={look.title}
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-between p-3 sm:p-5">
+                  <div className="flex items-center justify-between">
+                    {look.category ? (
+                      <span className="bg-brand-espresso/80 backdrop-blur-md text-brand-cream text-[9px] sm:text-[11px] font-sans uppercase tracking-widest px-2.5 py-0.5 rounded-full border border-white/10">
+                        {look.category}
+                      </span>
+                    ) : <span />}
+                    <span className="bg-black/50 text-white/80 text-[10px] font-mono px-2 py-0.5 rounded-full">
+                      {index + 1}
                     </span>
                   </div>
-                )}
-              </div>
 
-              <div className="p-6 flex flex-col flex-1 justify-between bg-white">
-                <div>
-                  <h4 className="font-serif text-xl sm:text-2xl text-brand-espresso mb-2 group-hover:text-brand-primary transition-colors">
-                    {look.title}
-                  </h4>
-                  <p className="font-sans text-brand-muted text-sm leading-relaxed line-clamp-3">
-                    {look.caption}
-                  </p>
+                  <div>
+                    <h4 className="font-serif text-sm sm:text-lg text-white font-medium line-clamp-1 mb-1 drop-shadow-md group-hover:text-brand-gold transition-colors">
+                      {look.title}
+                    </h4>
+                    <p className="hidden sm:block text-white/70 font-sans text-xs line-clamp-2 leading-relaxed mb-2">
+                      {look.caption}
+                    </p>
+                    <div className="flex items-center gap-1 text-[10px] sm:text-xs font-sans text-brand-gold uppercase tracking-wider font-semibold">
+                      <Maximize2 className="w-3 h-3" />
+                      <span>Tap to enlarge</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-brand-sand/40 flex items-center justify-between text-xs font-sans text-brand-goldDark font-semibold tracking-wider uppercase">
-                  <span>View Details</span>
-                  <span className="group-hover:translate-x-1 transition-transform">→</span>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Lookbook Lightbox Modal */}
