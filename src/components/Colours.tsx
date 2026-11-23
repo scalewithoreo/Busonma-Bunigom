@@ -257,16 +257,16 @@ export const Colours: FC = () => {
 
           {/* Controls Bar: Category Tabs & View Mode Switcher */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 max-w-5xl mx-auto px-1">
-            {/* Category Filter Tabs */}
+            {/* Category Filter Tabs - All visible at once on mobile */}
             {categories.length > 1 && (
-              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto max-w-full pb-1 no-scrollbar w-full sm:w-auto justify-start sm:justify-center">
+              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 max-w-full w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => handleCategoryChange('All')}
-                  className={`px-4 py-2 rounded-full text-xs font-sans font-semibold tracking-wider uppercase whitespace-nowrap transition-all duration-300 ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[11px] sm:text-xs font-sans font-semibold tracking-wider uppercase transition-all duration-300 ${
                     selectedCategory === 'All'
                       ? 'bg-brand-espresso text-brand-cream shadow-md scale-105'
-                      : 'bg-white/80 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50'
+                      : 'bg-white/90 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50 shadow-xs'
                   }`}
                 >
                   All Looks ({looks.length})
@@ -278,10 +278,10 @@ export const Colours: FC = () => {
                       key={cat}
                       type="button"
                       onClick={() => handleCategoryChange(cat)}
-                      className={`px-4 py-2 rounded-full text-xs font-sans font-semibold tracking-wider uppercase whitespace-nowrap transition-all duration-300 ${
+                      className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[11px] sm:text-xs font-sans font-semibold tracking-wider uppercase transition-all duration-300 ${
                         selectedCategory === cat
                           ? 'bg-brand-espresso text-brand-cream shadow-md scale-105'
-                          : 'bg-white/80 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50'
+                          : 'bg-white/90 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50 shadow-xs'
                       }`}
                     >
                       {cat} ({count})
@@ -291,8 +291,8 @@ export const Colours: FC = () => {
               </div>
             )}
 
-            {/* View Mode Toggle Pill */}
-            <div className="inline-flex p-1 rounded-full bg-white/90 border border-brand-sand/60 shadow-sm shrink-0 self-center sm:self-auto">
+            {/* View Mode Toggle Pill - Desktop only */}
+            <div className="hidden sm:inline-flex p-1 rounded-full bg-white/90 border border-brand-sand/60 shadow-sm shrink-0">
               <button
                 type="button"
                 onClick={() => setViewMode('runway')}
@@ -326,9 +326,21 @@ export const Colours: FC = () => {
         {/* View Mode: RUNWAY (Horizontal Swipeable Track with Filmstrip) */}
         {viewMode === 'runway' && (
           <div className="relative max-w-6xl mx-auto">
-            {/* Runway Controls */}
+            {/* Mobile Swipe Cue Banner */}
+            <div className="flex sm:hidden items-center justify-between px-3.5 py-2 mb-2 rounded-2xl bg-brand-gold/15 border border-brand-gold/40 text-brand-espresso shadow-xs">
+              <div className="flex items-center gap-1 text-[11px] font-sans font-bold tracking-wider uppercase text-brand-goldDark">
+                <ChevronLeft className="w-3.5 h-3.5 animate-pulse text-brand-goldDark shrink-0" />
+                <span>Swipe sideways to explore styles</span>
+                <ChevronRight className="w-3.5 h-3.5 animate-pulse text-brand-goldDark shrink-0" />
+              </div>
+              <span className="text-[10px] font-mono font-bold text-brand-espresso bg-white/80 px-2 py-0.5 rounded-full border border-brand-gold/30 shrink-0">
+                {activeRunwayIndex + 1} / {filteredLooks.length}
+              </span>
+            </div>
+
+            {/* Desktop Runway Top Arrows */}
             {filteredLooks.length > 1 && (
-              <div className="hidden md:flex items-center justify-between pointer-events-none absolute -top-12 right-0 gap-2 z-20">
+              <div className="hidden sm:flex items-center justify-between pointer-events-none absolute -top-12 right-0 gap-2 z-20">
                 <button
                   type="button"
                   onClick={() => scrollRunway('left')}
@@ -348,11 +360,33 @@ export const Colours: FC = () => {
               </div>
             )}
 
+            {/* Mobile Floating Arrow Buttons */}
+            {filteredLooks.length > 1 && (
+              <div className="sm:hidden pointer-events-none absolute top-1/2 -translate-y-12 inset-x-0 flex items-center justify-between z-20 px-1">
+                <button
+                  type="button"
+                  onClick={() => scrollRunway('left')}
+                  className="pointer-events-auto p-2 rounded-full bg-black/60 hover:bg-black/80 text-white shadow-xl backdrop-blur-md border border-white/20 active:scale-90 transition-transform"
+                  aria-label="Previous style"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollRunway('right')}
+                  className="pointer-events-auto p-2 rounded-full bg-black/60 hover:bg-black/80 text-white shadow-xl backdrop-blur-md border border-white/20 active:scale-90 transition-transform"
+                  aria-label="Next style"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Horizontal Runway Track */}
             <div
               ref={runwayRef}
               onScroll={handleRunwayScroll}
-              className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory py-4 px-2 sm:px-4 no-scrollbar scroll-smooth"
+              className="flex gap-3.5 sm:gap-6 overflow-x-auto snap-x snap-mandatory py-3 sm:py-4 px-2 sm:px-4 no-scrollbar scroll-smooth"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {filteredLooks.map((look, index) => (
@@ -360,7 +394,7 @@ export const Colours: FC = () => {
                   key={look.id}
                   data-runway-card
                   onClick={() => setActiveLookId(look.id)}
-                  className="w-[82vw] sm:w-[340px] md:w-[360px] shrink-0 snap-center group cursor-pointer flex flex-col bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-brand-sand/40 hover:-translate-y-1.5"
+                  className="w-[76vw] max-w-[310px] sm:w-[340px] md:w-[360px] shrink-0 snap-center group cursor-pointer flex flex-col bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-brand-sand/40 hover:-translate-y-1.5"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden bg-brand-espresso">
                     <img
