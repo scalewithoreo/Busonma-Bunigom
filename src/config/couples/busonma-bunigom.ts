@@ -248,7 +248,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
     title: 'Our Story',
     subtitle: 'How We Met',
     welcomeQuote:
-      'Welcome to our little corner of the internet and thank you for becoming part of our story! So whether you’re joining us from down the road or flying across the world, you have a special place in our hearts. So, explore our story, plan your trip, RSVP, pick out a gift if you wish, and get ready for a beautiful celebration!',
+      'Welcome to our little corner of the internet and thank you for becoming part of our story! Whether you’re joining us from down the road or flying across the world, you have a special place in our hearts. So, explore our story, plan your trip, RSVP, pick out a gift if you wish, and get ready for a beautiful celebration!',
     image: '/assets/busonma-bunigom/story.jpg',
     imageAlt: 'Chimbusonma and Chukwuebunigom',
     paragraphs: [

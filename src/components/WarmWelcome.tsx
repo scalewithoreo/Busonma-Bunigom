@@ -48,7 +48,7 @@ export const WarmWelcome: FC = () => {
             </h2>
 
             <p className="font-serif italic text-lg sm:text-xl lg:text-2xl text-brand-espresso/90 leading-relaxed mb-6 font-light">
-              "{story.welcomeQuote}"
+              "{story.welcomeQuote?.replace(/^["'“”\s]+|["'“”\s]+$/g, '')}"
             </p>
 
             <div className="pt-2">
