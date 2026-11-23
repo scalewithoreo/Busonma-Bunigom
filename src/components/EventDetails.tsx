@@ -383,11 +383,6 @@ export const EventDetails: FC<EventDetailsProps> = ({ onNotify }) => {
                   <p className="text-brand-sand text-[17px] font-sans leading-relaxed drop-shadow-sm">
                     {wedding.event.church.address}
                   </p>
-                  <div className="pt-2">
-                    <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-white/10 text-brand-sand text-xs font-sans tracking-wider uppercase border border-white/10">
-                      Dress Code: {wedding.theme.dressCodeDescription?.includes('Luxury Traditional') ? 'Luxury Traditional Attire' : 'Formal / Traditional'}
-                    </span>
-                  </div>
                 </div>
               ) : (
                 /* Split Venues (Church + Reception) */
