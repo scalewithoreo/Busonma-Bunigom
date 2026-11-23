@@ -1414,7 +1414,7 @@ To help us finalize our guest list, please use your unique code 👉 *{code}* �
 🔗 {link}
 *(Kindly note that this code can only be used once)*
 
-✨ *A Gentle Reminder:* As much as we love little ones, this will be an adult-only celebration. Thank you so much for understanding!`,
+We look forward to celebrating our special day with you!`,
 
   familyVip: `*HONOURED WEDDING & CELEBRATION INVITATION 💍✨*
 We are overjoyed to invite you as our valued family & VIP guest to celebrate our special day with us!
@@ -1426,7 +1426,7 @@ To help us finalize our guest list, please use your unique code 👉 *{code}* �
 🔗 {link}
 *(Kindly note that this code can only be used once)*
 
-✨ *A Gentle Reminder:* As much as we love little ones, this will be an adult-only celebration. Thank you so much for understanding!`
+We can’t wait to celebrate this blessed milestone with you!`
 };
 
 export const DEFAULT_INVITATION_MESSAGES = DEFAULT_INVITATION_MESSAGES_MIRACLE;

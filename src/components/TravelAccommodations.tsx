@@ -1,5 +1,5 @@
 import { FC, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plane, 
   Building2, 
@@ -11,7 +11,12 @@ import {
   ExternalLink, 
   Tag, 
   MapPin, 
-  Info
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Images,
+  X
 } from 'lucide-react';
 import { useWedding } from '../context/WeddingContext';
 
@@ -24,6 +29,8 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
   const travelAndStay = wedding.travelAndStay;
   const [activeTab, setActiveTab] = useState<'travel' | 'stay'>('stay');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [hotelImageIndices, setHotelImageIndices] = useState<Record<number, number>>({});
+  const [lightboxHotel, setLightboxHotel] = useState<{ hotelIndex: number; imageIndex: number } | null>(null);
 
   if (!travelAndStay) return null;
 
@@ -34,6 +41,46 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
     setCopiedCode(true);
     onNotify('Discount Code Copied!', `Use code "${code}" when booking your accommodation.`);
     setTimeout(() => setCopiedCode(false), 2500);
+  };
+
+  const handleNextHotelImage = (hotelIdx: number, total: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHotelImageIndices(prev => ({
+      ...prev,
+      [hotelIdx]: ((prev[hotelIdx] || 0) + 1) % total
+    }));
+  };
+
+  const handlePrevHotelImage = (hotelIdx: number, total: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHotelImageIndices(prev => ({
+      ...prev,
+      [hotelIdx]: ((prev[hotelIdx] || 0) - 1 + total) % total
+    }));
+  };
+
+  const openHotelLightbox = (hotelIdx: number, imgIdx: number) => {
+    setLightboxHotel({ hotelIndex: hotelIdx, imageIndex: imgIdx });
+  };
+
+  const handleNextLightbox = () => {
+    if (!lightboxHotel) return;
+    const hotel = accommodations.hotels[lightboxHotel.hotelIndex];
+    const total = hotel?.images?.length || 1;
+    setLightboxHotel(prev => prev ? {
+      ...prev,
+      imageIndex: (prev.imageIndex + 1) % total
+    } : null);
+  };
+
+  const handlePrevLightbox = () => {
+    if (!lightboxHotel) return;
+    const hotel = accommodations.hotels[lightboxHotel.hotelIndex];
+    const total = hotel?.images?.length || 1;
+    setLightboxHotel(prev => prev ? {
+      ...prev,
+      imageIndex: (prev.imageIndex - 1 + total) % total
+    } : null);
   };
 
   return (
@@ -142,47 +189,123 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {accommodations.hotels.map((hotel, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-brand-sand/50 flex flex-col justify-between group"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-cream text-brand-goldDark font-sans text-xs font-semibold uppercase tracking-wider border border-brand-sand/40">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {hotel.city} &bull; {hotel.area}
-                        </span>
-                        <span className="text-xs font-sans text-brand-muted uppercase tracking-wider">
-                          {hotel.type}
-                        </span>
-                      </div>
+                {accommodations.hotels.map((hotel, idx) => {
+                  const hotelImgs = hotel.images || (hotel.image ? [hotel.image] : []);
+                  const curImgIdx = (hotelImageIndices[idx] || 0) % (hotelImgs.length || 1);
+                  const currentImage = hotelImgs[curImgIdx];
 
-                      <h4 className="font-serif text-2xl text-brand-espresso group-hover:text-brand-primary transition-colors">
-                        {hotel.name}
-                      </h4>
-                      <p className="text-brand-muted font-sans text-sm sm:text-[15px] leading-relaxed mt-2.5">
-                        {hotel.description}
-                      </p>
-                    </div>
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-brand-sand/50 flex flex-col justify-between group"
+                    >
+                      {/* Hotel Photo Gallery Preview */}
+                      {hotelImgs.length > 0 && (
+                        <div className="relative aspect-[16/10] overflow-hidden bg-brand-espresso select-none">
+                          <img
+                            loading="lazy"
+                            decoding="async"
+                            src={currentImage}
+                            alt={`${hotel.name} photo`}
+                            onClick={() => openHotelLightbox(idx, curImgIdx)}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 cursor-pointer"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
 
-                    <div className="mt-6 pt-5 border-t border-brand-sand/30 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-sans uppercase tracking-wider text-brand-muted">Guest Code:</span>
-                        <span className="font-mono text-xs font-bold text-brand-espresso bg-brand-sand/40 px-2 py-0.5 rounded">
-                          {hotel.discountCode || accommodations.discountCode}
-                        </span>
+                          {/* Image Count Badge */}
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-espresso/80 backdrop-blur-md text-brand-cream text-[11px] font-sans font-medium border border-white/10">
+                            <Images className="w-3.5 h-3.5 text-brand-gold" />
+                            <span>{curImgIdx + 1} / {hotelImgs.length}</span>
+                          </div>
+
+                          {/* Lightbox Trigger Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openHotelLightbox(idx, curImgIdx);
+                            }}
+                            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md text-white border border-white/20 transition-all hover:scale-105"
+                            title="View Full Photos"
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Chevron Controls (if multiple images) */}
+                          {hotelImgs.length > 1 && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => handlePrevHotelImage(idx, hotelImgs.length, e)}
+                                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/45 hover:bg-black/75 backdrop-blur-md text-white flex items-center justify-center border border-white/10 transition-all hover:scale-110"
+                                aria-label="Previous photo"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleNextHotelImage(idx, hotelImgs.length, e)}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/45 hover:bg-black/75 backdrop-blur-md text-white flex items-center justify-center border border-white/10 transition-all hover:scale-110"
+                                aria-label="Next photo"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+
+                              {/* Dot Indicators */}
+                              <div className="absolute bottom-2.5 left-0 right-0 flex items-center justify-center gap-1.5 pointer-events-none">
+                                {hotelImgs.map((_, dotIdx) => (
+                                  <span
+                                    key={dotIdx}
+                                    className={`h-1.5 rounded-full transition-all ${
+                                      dotIdx === curImgIdx ? 'w-5 bg-brand-gold' : 'w-1.5 bg-white/50'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="p-6 sm:p-8 flex flex-col justify-between flex-1">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-cream text-brand-goldDark font-sans text-xs font-semibold uppercase tracking-wider border border-brand-sand/40">
+                              <MapPin className="w-3.5 h-3.5" />
+                              {hotel.city} &bull; {hotel.area}
+                            </span>
+                            <span className="text-xs font-sans text-brand-muted uppercase tracking-wider">
+                              {hotel.type}
+                            </span>
+                          </div>
+
+                          <h4 className="font-serif text-2xl text-brand-espresso group-hover:text-brand-primary transition-colors">
+                            {hotel.name}
+                          </h4>
+                          <p className="text-brand-muted font-sans text-sm sm:text-[15px] leading-relaxed mt-2.5">
+                            {hotel.description}
+                          </p>
+                        </div>
+
+                        <div className="mt-6 pt-5 border-t border-brand-sand/30 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-sans uppercase tracking-wider text-brand-muted">Guest Code:</span>
+                            <span className="font-mono text-xs font-bold text-brand-espresso bg-brand-sand/40 px-2 py-0.5 rounded">
+                              {hotel.discountCode || accommodations.discountCode}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleCopyCode(hotel.discountCode || accommodations.discountCode)}
+                            className="text-xs font-sans text-brand-goldDark hover:text-brand-espresso font-semibold uppercase tracking-wider flex items-center gap-1 transition-colors"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy Code</span>
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => handleCopyCode(hotel.discountCode || accommodations.discountCode)}
-                        className="text-xs font-sans text-brand-goldDark hover:text-brand-espresso font-semibold uppercase tracking-wider flex items-center gap-1 transition-colors"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Code</span>
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -399,6 +522,107 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
           </motion.div>
         )}
       </div>
+
+      {/* Hotel Photo Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxHotel !== null && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setLightboxHotel(null)}
+              className="absolute inset-0"
+            />
+
+            {(() => {
+              const hotel = accommodations.hotels[lightboxHotel.hotelIndex];
+              const hotelImgs = hotel?.images || (hotel?.image ? [hotel.image] : []);
+              const currentImg = hotelImgs[lightboxHotel.imageIndex];
+              if (!hotel || !currentImg) return null;
+
+              return (
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="relative z-10 max-w-4xl w-full bg-brand-espresso text-brand-cream rounded-3xl overflow-hidden shadow-2xl border border-brand-gold/30 flex flex-col max-h-[92vh]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Modal Header */}
+                  <div className="p-4 sm:p-5 flex items-center justify-between border-b border-white/10 bg-black/30">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-sans uppercase tracking-widest text-brand-gold font-semibold">
+                          {hotel.city} &bull; {hotel.area}
+                        </span>
+                        <span className="text-white/40">&bull;</span>
+                        <span className="text-xs text-white/70">{hotel.type}</span>
+                      </div>
+                      <h3 className="font-serif text-lg sm:text-xl text-white mt-0.5">{hotel.name}</h3>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono text-brand-gold">
+                        Photo {lightboxHotel.imageIndex + 1} of {hotelImgs.length}
+                      </span>
+                      <button
+                        onClick={() => setLightboxHotel(null)}
+                        className="p-2 rounded-full hover:bg-white/10 text-brand-cream transition-colors"
+                        aria-label="Close photo preview"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Photo Display */}
+                  <div className="relative flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[68vh] overflow-hidden">
+                    <img
+                      src={currentImg}
+                      alt={hotel.name}
+                      className="max-h-[68vh] w-auto max-w-full object-contain mx-auto"
+                    />
+
+                    {hotelImgs.length > 1 && (
+                      <>
+                        <button
+                          onClick={handlePrevLightbox}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all border border-white/10"
+                          aria-label="Previous photo"
+                        >
+                          <ChevronLeft className="w-6 h-6" />
+                        </button>
+                        <button
+                          onClick={handleNextLightbox}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all border border-white/10"
+                          aria-label="Next photo"
+                        >
+                          <ChevronRight className="w-6 h-6" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="p-4 sm:p-5 border-t border-white/10 bg-black/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                    <p className="text-brand-sand/80 max-w-xl">{hotel.description}</p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-brand-muted uppercase tracking-wider text-[11px]">Guest Code:</span>
+                      <button
+                        onClick={() => handleCopyCode(hotel.discountCode || accommodations.discountCode)}
+                        className="font-mono font-bold text-white bg-brand-gold/20 border border-brand-gold/40 px-3 py-1 rounded-full hover:bg-brand-gold hover:text-brand-espresso transition-colors flex items-center gap-1.5"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{hotel.discountCode || accommodations.discountCode}</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })()}
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

@@ -53,7 +53,7 @@ export const WarmWelcome: FC = () => {
 
             <div className="pt-2">
               <span className="font-alex text-2xl sm:text-3xl text-brand-goldDark tracking-wide">
-                Bunigom &amp; Busonma
+                {wedding.couple.title}
               </span>
             </div>
           </div>

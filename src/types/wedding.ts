@@ -206,6 +206,8 @@ export interface HotelOption {
   type: string;
   discountCode?: string;
   whatsapp?: string;
+  image?: string;
+  images?: string[];
 }
 
 export interface ApartmentOption {

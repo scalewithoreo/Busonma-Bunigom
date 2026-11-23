@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { useWedding } from '../context/WeddingContext';
@@ -6,18 +6,38 @@ import { useWedding } from '../context/WeddingContext';
 export const Colours: FC = () => {
   const { wedding } = useWedding();
   const theme = wedding.theme;
-  const looks = theme.looks;
-  const [activeModalIndex, setActiveModalIndex] = useState<number | null>(null);
+  const looks = theme.looks || [];
+  
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    looks.forEach(l => {
+      if (l.category) set.add(l.category);
+    });
+    return Array.from(set);
+  }, [looks]);
+
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [activeLookId, setActiveLookId] = useState<string | null>(null);
+
+  const filteredLooks = useMemo(() => {
+    if (selectedCategory === 'All') return looks;
+    return looks.filter(l => l.category === selectedCategory);
+  }, [looks, selectedCategory]);
+
+  const activeLookIndex = filteredLooks.findIndex(l => l.id === activeLookId);
+  const activeLook = activeLookIndex >= 0 ? filteredLooks[activeLookIndex] : null;
 
   const handleNextModal = () => {
-    if (activeModalIndex !== null) {
-      setActiveModalIndex((activeModalIndex + 1) % looks.length);
+    if (activeLookIndex >= 0 && filteredLooks.length > 0) {
+      const nextIdx = (activeLookIndex + 1) % filteredLooks.length;
+      setActiveLookId(filteredLooks[nextIdx].id);
     }
   };
 
   const handlePrevModal = () => {
-    if (activeModalIndex !== null) {
-      setActiveModalIndex((activeModalIndex - 1 + looks.length) % looks.length);
+    if (activeLookIndex >= 0 && filteredLooks.length > 0) {
+      const prevIdx = (activeLookIndex - 1 + filteredLooks.length) % filteredLooks.length;
+      setActiveLookId(filteredLooks[prevIdx].id);
     }
   };
 
@@ -159,7 +179,7 @@ export const Colours: FC = () => {
         )}
 
         {/* Lookbook Header */}
-        <div className="text-center mt-24 mb-12">
+        <div className="text-center mt-24 mb-10">
           <motion.h3 
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -171,19 +191,58 @@ export const Colours: FC = () => {
           <p className="font-sans text-brand-muted text-[17px] max-w-xl mx-auto">
             Curated silhouettes and styling details to guide your wedding celebration attire.
           </p>
+
+          {/* Category Filter Tabs */}
+          {categories.length > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-8"
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('All')}
+                className={`px-5 py-2 rounded-full text-xs sm:text-sm font-sans font-semibold tracking-wider uppercase transition-all duration-300 ${
+                  selectedCategory === 'All'
+                    ? 'bg-brand-espresso text-brand-cream shadow-md scale-105'
+                    : 'bg-white/80 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50'
+                }`}
+              >
+                All Looks ({looks.length})
+              </button>
+              {categories.map((cat) => {
+                const count = looks.filter(l => l.category === cat).length;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-5 py-2 rounded-full text-xs sm:text-sm font-sans font-semibold tracking-wider uppercase transition-all duration-300 ${
+                      selectedCategory === cat
+                        ? 'bg-brand-espresso text-brand-cream shadow-md scale-105'
+                        : 'bg-white/80 text-brand-muted hover:text-brand-espresso hover:bg-white border border-brand-sand/50'
+                    }`}
+                  >
+                    {cat} ({count})
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
         </div>
 
-        {/* Looks Grid - 3 Wide Centralized Cards for Igbo Attire */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 max-w-6xl mx-auto justify-center">
-          {looks.map((look, index) => (
+        {/* Looks Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto justify-center">
+          {filteredLooks.map((look, index) => (
             <motion.div
               key={look.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
-              onClick={() => setActiveModalIndex(index)}
-              className="group cursor-pointer flex flex-col bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-brand-sand/40 hover:-translate-y-1.5"
+              transition={{ delay: Math.min(index * 0.06, 0.4), duration: 0.5 }}
+              onClick={() => setActiveLookId(look.id)}
+              className="group cursor-pointer flex flex-col bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 border border-brand-sand/40 hover:-translate-y-1.5"
             >
               <div className="relative aspect-[3/4] overflow-hidden bg-brand-espresso">
                 <img loading="lazy" decoding="async" 
@@ -197,11 +256,13 @@ export const Colours: FC = () => {
                     Enlarge Look
                   </span>
                 </div>
-                <div className="absolute top-4 left-4">
-                  <span className="bg-brand-espresso/80 backdrop-blur-md text-brand-cream text-[11px] font-sans uppercase tracking-widest px-3 py-1 rounded-full border border-white/10">
-                    {look.category}
-                  </span>
-                </div>
+                {look.category && (
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-brand-espresso/80 backdrop-blur-md text-brand-cream text-[11px] font-sans uppercase tracking-widest px-3 py-1 rounded-full border border-white/10 shadow-sm">
+                      {look.category}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="p-6 flex flex-col flex-1 justify-between bg-white">
@@ -225,13 +286,13 @@ export const Colours: FC = () => {
 
       {/* Lookbook Lightbox Modal */}
       <AnimatePresence>
-        {activeModalIndex !== null && (
+        {activeLook !== null && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setActiveModalIndex(null)}
+              onClick={() => setActiveLookId(null)}
               className="absolute inset-0"
             />
 
@@ -243,7 +304,7 @@ export const Colours: FC = () => {
             >
               {/* Close Button */}
               <button
-                onClick={() => setActiveModalIndex(null)}
+                onClick={() => setActiveLookId(null)}
                 className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
                 aria-label="Close Preview"
               >
@@ -251,32 +312,36 @@ export const Colours: FC = () => {
               </button>
 
               {/* Prev / Next Modal Buttons */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrevModal();
-                }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
-                aria-label="Previous Look"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNextModal();
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 md:right-[42%] z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
-                aria-label="Next Look"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+              {filteredLooks.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePrevModal();
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                    aria-label="Previous Look"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNextModal();
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 md:right-[42%] z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                    aria-label="Next Look"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
 
               {/* Modal Image */}
               <div className="w-full md:w-3/5 bg-black flex items-center justify-center overflow-hidden aspect-[3/4] md:aspect-auto">
                 <img loading="lazy" decoding="async" 
-                  src={looks[activeModalIndex].src} 
-                  alt={looks[activeModalIndex].title}
+                  src={activeLook.src} 
+                  alt={activeLook.title}
                   className="w-full h-full object-cover" 
                 />
               </div>
@@ -284,22 +349,24 @@ export const Colours: FC = () => {
               {/* Modal Info */}
               <div className="w-full md:w-2/5 p-8 sm:p-10 flex flex-col justify-between overflow-y-auto">
                 <div>
-                  <span className="text-xs uppercase tracking-[0.25em] text-brand-gold font-sans font-semibold block mb-3">
-                    {looks[activeModalIndex].category}
-                  </span>
+                  {activeLook.category && (
+                    <span className="text-xs uppercase tracking-[0.25em] text-brand-gold font-sans font-semibold block mb-3">
+                      {activeLook.category}
+                    </span>
+                  )}
                   <h3 className="font-serif text-3xl sm:text-4xl text-brand-cream mb-4 leading-tight">
-                    {looks[activeModalIndex].title}
+                    {activeLook.title}
                   </h3>
                   <div className="w-12 h-0.5 bg-brand-gold/40 mb-6" />
                   <p className="font-sans text-brand-sand/90 text-base leading-relaxed">
-                    {looks[activeModalIndex].caption}
+                    {activeLook.caption}
                   </p>
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-brand-sand/60 font-sans">
-                  <span>Look {activeModalIndex + 1} of {looks.length}</span>
+                  <span>Look {activeLookIndex + 1} of {filteredLooks.length}</span>
                   <button
-                    onClick={() => setActiveModalIndex(null)}
+                    onClick={() => setActiveLookId(null)}
                     className="hover:text-brand-gold transition-colors"
                   >
                     Close Lookbook
