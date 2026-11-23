@@ -7,8 +7,8 @@ import {
   getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, assignInviteCode, exportInviteCodesCsv, InviteCode,
   getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
   getStoredReminders, deleteReservation, markReservationFulfilled,
-  getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, DEFAULT_INVITATION_MESSAGES, formatInviteMessage,
-  toggleRsvpCheckIn, saveAdminPin
+  getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, formatInviteMessage,
+  toggleRsvpCheckIn, saveAdminPin, getDefaultInvitationMessage
 } from '../utils/storage';
 import { sendReservationReminderEmail } from '../utils/email';
 import { RsvpSubmission, GiftPledge, WishlistItem, GiftReminder } from '../types';
@@ -258,9 +258,12 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       onNotify('Error', 'Failed to update check-in status.');
     }
   };
+  const defaultGenTemplate = getDefaultInvitationMessage('general', wedding.couple.title);
+  const defaultFamilyVipTemplate = getDefaultInvitationMessage('familyVip', wedding.couple.title);
+
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [generalMsgDraft, setGeneralMsgDraft] = useState(invitationPosters.generalMessage || DEFAULT_INVITATION_MESSAGES.general);
-  const [familyVipMsgDraft, setFamilyVipMsgDraft] = useState(invitationPosters.familyVipMessage || DEFAULT_INVITATION_MESSAGES.familyVip);
+  const [generalMsgDraft, setGeneralMsgDraft] = useState(invitationPosters.generalMessage || defaultGenTemplate);
+  const [familyVipMsgDraft, setFamilyVipMsgDraft] = useState(invitationPosters.familyVipMessage || defaultFamilyVipTemplate);
   const [isSavingMessage, setIsSavingMessage] = useState<'general' | 'familyVip' | null>(null);
   const [previewTab, setPreviewTab] = useState<{ general: 'editor' | 'preview'; familyVip: 'editor' | 'preview' }>({
     general: 'editor',
@@ -268,9 +271,9 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
   });
 
   useEffect(() => {
-    setGeneralMsgDraft(invitationPosters.generalMessage || DEFAULT_INVITATION_MESSAGES.general);
-    setFamilyVipMsgDraft(invitationPosters.familyVipMessage || DEFAULT_INVITATION_MESSAGES.familyVip);
-  }, [invitationPosters.generalMessage, invitationPosters.familyVipMessage]);
+    setGeneralMsgDraft(invitationPosters.generalMessage || defaultGenTemplate);
+    setFamilyVipMsgDraft(invitationPosters.familyVipMessage || defaultFamilyVipTemplate);
+  }, [invitationPosters.generalMessage, invitationPosters.familyVipMessage, defaultGenTemplate, defaultFamilyVipTemplate]);
 
   // Completely pause Lenis smooth scroll while Admin Dashboard is open
   useEffect(() => {
@@ -735,7 +738,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
       title: 'Reset Message to Default',
       message: `Are you sure you want to restore the default ${tier === 'familyVip' ? 'Family & VIP' : 'General'} invitation message? Any unsaved edits will be discarded.`,
       onConfirm: async () => {
-        const defaultText = tier === 'general' ? DEFAULT_INVITATION_MESSAGES.general : DEFAULT_INVITATION_MESSAGES.familyVip;
+        const defaultText = getDefaultInvitationMessage(tier, wedding.couple.title);
         if (tier === 'general') setGeneralMsgDraft(defaultText);
         else setFamilyVipMsgDraft(defaultText);
 

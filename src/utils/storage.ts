@@ -1372,7 +1372,40 @@ export async function exportInviteCodesCsv(filterByRole?: string, prefix: string
 
 // --- Invitation Posters & Messages Management ---
 
-export const DEFAULT_INVITATION_MESSAGES = {
+export const DEFAULT_INVITATION_MESSAGES_MIRACLE = {
+  general: `*WEDDING RECEPTION INVITATION 💍✨*
+We are overjoyed to invite you to celebrate with us at the Grand Wedding Reception for *Miracle & Malvin*!
+
+✨ *Event:* Wedding Reception
+🗓 *Date:* Saturday, January 9, 2027 at 11:00 AM WAT
+📍 *Venue:* Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos, Nigeria
+
+📌 *YOUR EXCLUSIVE RSVP CODE* 📌
+Please use your unique code 👉 *{code}* 👈 to RSVP online on or before *December 17th, 2026* here:
+🔗 {link}
+*(Kindly note that this code can only be used once)*
+
+We look forward to celebrating our special day with you!`,
+
+  familyVip: `*HONOURED WEDDING & CELEBRATION INVITATION 💍✨*
+We are overjoyed to invite you as our valued family & VIP guest to celebrate our complete wedding festivities for *Miracle & Malvin*!
+
+✨ *Events Include:*
+1️⃣ *Solemnization & White Wedding:* Thursday, January 7, 2027 at 11:00 AM WAT
+📍 Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos
+
+2️⃣ *Grand Wedding Reception:* Saturday, January 9, 2027 at 11:00 AM WAT
+📍 Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos
+
+📌 *YOUR EXCLUSIVE RSVP CODE* 📌
+Please use your unique code 👉 *{code}* 👈 to RSVP online on or before *December 17th, 2026* here:
+🔗 {link}
+*(Kindly note that this code can only be used once)*
+
+We can’t wait to celebrate this blessed milestone with you!`
+};
+
+export const DEFAULT_INVITATION_MESSAGES_BUSONMA = {
   general: `*WEDDING INVITATION 💍*
 We are absolutely overjoyed to invite you to celebrate with us as we tie the knot on *Saturday, March 27, 2027*!
 
@@ -1395,6 +1428,13 @@ To help us finalize our guest list, please use your unique code 👉 *{code}* �
 
 ✨ *A Gentle Reminder:* As much as we love little ones, this will be an adult-only celebration. Thank you so much for understanding!`
 };
+
+export const DEFAULT_INVITATION_MESSAGES = DEFAULT_INVITATION_MESSAGES_MIRACLE;
+
+export function getDefaultInvitationMessage(tier: 'general' | 'familyVip', coupleTitle: string = 'Miracle & Malvin'): string {
+  const isMiracle = coupleTitle.toLowerCase().includes('miracle');
+  return isMiracle ? DEFAULT_INVITATION_MESSAGES_MIRACLE[tier] : DEFAULT_INVITATION_MESSAGES_BUSONMA[tier];
+}
 
 export interface InvitationPostersConfig {
   generalUrl: string;
