@@ -118,7 +118,7 @@ export async function sendRsvpConfirmationEmail(params: {
         <p style="margin: 0 0 6px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">
           Wedding Details
         </p>
-        <p style="margin: 0 0 8px 0; font-size: 15px; color: #1c1917;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 1:00 PM</p>
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #1c1917;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 11:00 AM WAT</p>
         <p style="margin: 0; font-size: 15px; color: #1c1917;"><strong>Location:</strong> Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos</p>
       </div>
 

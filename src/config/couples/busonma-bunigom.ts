@@ -27,6 +27,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
   event: {
     date: '2027-03-27T13:00:00+01:00',
     displayDate: 'Saturday, March 27, 2027',
+    rsvpDeadline: 'February 27th, 2027',
     venueImage: '/assets/busonma-bunigom/venue.jpg',
     saveTheDateImage: '/assets/busonma-bunigom/save-the-date.jpg?v=12',
     confettiColors: ['#4E6A4B', '#738E70', '#A3885C', '#F5F6F2', '#FFFFFF'],

@@ -317,7 +317,7 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
             className="mt-6 inline-block border-t border-brand-gold/30 pt-4"
           >
             <p className="font-sans text-brand-muted text-[17px] sm:text-lg">
-              Kindly RSVP by <span className="font-semibold text-brand-espresso">{wedding.event.rsvpDeadline || (wedding.id === 'miracle-malvin' ? 'December 17th, 2026' : 'October 31st, 2026')}</span>
+              Kindly RSVP by <span className="font-semibold text-brand-espresso">{wedding.event.rsvpDeadline || (wedding.id === 'miracle-malvin' ? 'December 17th, 2026' : 'February 27th, 2027')}</span>
             </p>
           </motion.div>
         </div>

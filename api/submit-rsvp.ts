@@ -58,19 +58,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <p style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Wedding Celebration Details</p>
             
             <div style="margin-bottom: 14px;">
-              <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: bold; color: #1c1917;">1. Church Solemnization</p>
-              <p style="margin: 0; font-size: 13px; color: #44403c; line-height: 1.5;"><strong>Date & Time:</strong> Thursday, January 7, 2027 &bull; 11:00 AM</p>
+              <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: bold; color: #1c1917;">1. Church Solemnization & White Wedding</p>
+              <p style="margin: 0; font-size: 13px; color: #44403c; line-height: 1.5;"><strong>Date & Time:</strong> Thursday, January 7, 2027 &bull; 11:00 AM WAT</p>
               <p style="margin: 2px 0 0 0; font-size: 13px; color: #78716c; line-height: 1.4;">Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos</p>
             </div>
 
-            <div style="padding-top: 12px; border-top: 1px dashed #e7e0d3; margin-bottom: 12px;">
-              <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: bold; color: #1c1917;">2. Wedding Reception</p>
-              <p style="margin: 0; font-size: 13px; color: #44403c; line-height: 1.5;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 1:00 PM</p>
+            <div style="padding-top: 12px; border-top: 1px dashed #e7e0d3;">
+              <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: bold; color: #1c1917;">2. Grand Wedding Reception</p>
+              <p style="margin: 0; font-size: 13px; color: #44403c; line-height: 1.5;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 11:00 AM WAT</p>
               <p style="margin: 2px 0 0 0; font-size: 13px; color: #78716c; line-height: 1.4;">Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos</p>
-            </div>
-
-            <div style="padding-top: 10px; border-top: 1px solid #e7e0d3;">
-              <p style="margin: 0; font-size: 12px; color: #78716c; font-style: italic;">* Please note: Strictly an <strong>adult-only</strong> event (No children).</p>
             </div>
           </div>
         `;
@@ -78,11 +74,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         eventDetailsHtml = `
           <div style="background-color: #faf8f2; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px 25px; margin-bottom: 25px;">
             <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Church Solemnization Details</p>
-            <p style="margin: 0 0 4px 0; font-size: 14px; color: #1c1917;"><strong>Date & Time:</strong> Thursday, January 7, 2027 &bull; 11:00 AM</p>
-            <p style="margin: 0 0 12px 0; font-size: 13px; color: #78716c; line-height: 1.4;">Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos</p>
-            <div style="padding-top: 10px; border-top: 1px solid #e7e0d3;">
-              <p style="margin: 0; font-size: 12px; color: #78716c; font-style: italic;">* Please note: Strictly an <strong>adult-only</strong> event (No children).</p>
-            </div>
+            <p style="margin: 0 0 4px 0; font-size: 14px; color: #1c1917;"><strong>Date & Time:</strong> Thursday, January 7, 2027 &bull; 11:00 AM WAT</p>
+            <p style="margin: 0; font-size: 13px; color: #78716c; line-height: 1.4;">Anglican Church of the Pentecost Okota, 7/9 Femi Orebote Street, Ago Palace Way, Okota, Lagos</p>
           </div>
         `;
       } else {
@@ -90,11 +83,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         eventDetailsHtml = `
           <div style="background-color: #faf8f2; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px 25px; margin-bottom: 25px;">
             <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Wedding Reception Details</p>
-            <p style="margin: 0 0 4px 0; font-size: 14px; color: #1c1917;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 1:00 PM</p>
-            <p style="margin: 0 0 12px 0; font-size: 13px; color: #78716c; line-height: 1.4;">Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos</p>
-            <div style="padding-top: 10px; border-top: 1px solid #e7e0d3;">
-              <p style="margin: 0; font-size: 12px; color: #78716c; font-style: italic;">* Please note: Strictly an <strong>adult-only</strong> event (No children).</p>
-            </div>
+            <p style="margin: 0 0 4px 0; font-size: 14px; color: #1c1917;"><strong>Date & Time:</strong> Saturday, January 9, 2027 &bull; 11:00 AM WAT</p>
+            <p style="margin: 0; font-size: 13px; color: #78716c; line-height: 1.4;">Apata School, Plot 36/42 Godwin Omonua Street, Ire-Akari Estate, Isolo, Lagos</p>
           </div>
         `;
       }
