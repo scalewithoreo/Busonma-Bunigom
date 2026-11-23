@@ -12,6 +12,40 @@ export const QandA: FC = () => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
+  const renderAnswerText = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+    if (parts.length === 1) return text;
+    return parts.map((part, idx) => {
+      const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      if (match) {
+        return (
+          <a
+            key={idx}
+            href={match[2]}
+            className="text-brand-goldDark font-semibold underline hover:text-brand-gold transition-colors"
+            onClick={(e) => {
+              if (match[2].startsWith('#')) {
+                e.preventDefault();
+                const el = document.getElementById(match[2].slice(1));
+                if (el) {
+                  if ((window as any).lenis) {
+                    (window as any).lenis.scrollTo(el);
+                  } else {
+                    el.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }
+              }
+            }}
+          >
+            {match[1]}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <section id="qa" className="py-24 sm:py-32 bg-white relative">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
@@ -81,7 +115,7 @@ export const QandA: FC = () => {
                       {faq.contacts && faq.contacts.length > 0 ? (
                         <div>
                           {faq.answer ? (
-                            <p className="mb-3">{faq.answer}</p>
+                            <p className="mb-3">{renderAnswerText(faq.answer)}</p>
                           ) : (
                             <p className="mb-2">For any further inquiries or assistance, please feel free to contact our coordinators:</p>
                           )}
@@ -104,7 +138,7 @@ export const QandA: FC = () => {
                           </div>
                         </div>
                       ) : (
-                        faq.answer
+                        renderAnswerText(faq.answer)
                       )}
                     </div>
                   </motion.div>

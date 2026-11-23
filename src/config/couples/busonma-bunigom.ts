@@ -193,7 +193,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
     },
     {
       question: '5. What time should I arrive?',
-      answer: 'The traditional wedding is scheduled to begin at 1:00 PM (with doors opening from 10:00 AM). We recommend arriving early enough to park, find your seat and settle in before the event commences.',
+      answer: 'The traditional wedding is scheduled to begin at 1:00 PM. We recommend arriving early enough to park, find your seat and settle in before the event commences.',
     },
     {
       question: '6. Where exactly is the traditional wedding?',
@@ -213,7 +213,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
     },
     {
       question: '10. What if I can no longer attend after RSVPing?',
-      answer: 'Life happens! Please let us know as soon as possible so we can update our arrangements.',
+      answer: "Life happens! Please let us know as soon as possible so we can update our arrangements. If you'd still like to celebrate with us, you can [send us a gift](#wishlist) through our registry.",
     },
     {
       question: "11. What if I can't attend at all?",
