@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Maximize2,
   Images,
+  Phone,
+  MessageCircle,
   X
 } from 'lucide-react';
 import { useWedding } from '../context/WeddingContext';
@@ -267,7 +269,7 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
                         </div>
                       )}
 
-                      <div className="p-6 sm:p-8 flex flex-col justify-between flex-1">
+                      <div className="p-6 sm:p-7 flex flex-col justify-between flex-1">
                         <div>
                           <div className="flex items-center justify-between gap-2 mb-3">
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-cream text-brand-goldDark font-sans text-xs font-semibold uppercase tracking-wider border border-brand-sand/40">
@@ -285,22 +287,81 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
                           <p className="text-brand-muted font-sans text-sm sm:text-[15px] leading-relaxed mt-2.5">
                             {hotel.description}
                           </p>
+
+                          {/* Detailed Address & Contact Section */}
+                          <div className="mt-4 pt-3.5 border-t border-brand-sand/40 space-y-2.5">
+                            {hotel.address && (
+                              <div className="flex items-start gap-2.5 text-xs sm:text-[13px] text-brand-espresso/85 font-sans bg-brand-cream/40 p-2.5 rounded-xl border border-brand-sand/30">
+                                <MapPin className="w-4 h-4 text-brand-goldDark shrink-0 mt-0.5" />
+                                <div className="leading-snug">
+                                  <span className="font-semibold text-brand-espresso text-[11px] uppercase tracking-wider block text-brand-muted mb-0.5">Address</span>
+                                  <span>{hotel.address}</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {(hotel.contact || hotel.phone || hotel.whatsapp) && (
+                              <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-[13px] text-brand-espresso/85 font-sans bg-brand-cream/40 p-2.5 rounded-xl border border-brand-sand/30">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Phone className="w-4 h-4 text-brand-goldDark shrink-0" />
+                                  <div className="min-w-0">
+                                    <span className="font-semibold text-brand-espresso text-[11px] uppercase tracking-wider block text-brand-muted mb-0.5">Contact</span>
+                                    <span className="font-medium text-brand-espresso">{hotel.contact || hotel.phone}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 ml-auto">
+                                  {hotel.phone && (
+                                    <a
+                                      href={`tel:${hotel.phone.replace(/[^0-9+]/g, '')}`}
+                                      className="p-1.5 rounded-lg bg-white hover:bg-brand-sand/50 text-brand-espresso border border-brand-sand/60 transition-colors shadow-2xs"
+                                      title="Call Phone Number"
+                                    >
+                                      <Phone className="w-3.5 h-3.5 text-brand-goldDark" />
+                                    </a>
+                                  )}
+                                  {hotel.whatsapp && (
+                                    <a
+                                      href={`https://wa.me/${hotel.whatsapp.replace(/[^0-9]/g, '')}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-1 transition-colors shadow-2xs"
+                                      title="Chat on WhatsApp"
+                                    >
+                                      <MessageCircle className="w-3.5 h-3.5" />
+                                      <span>WhatsApp</span>
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="mt-6 pt-5 border-t border-brand-sand/30 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-sans uppercase tracking-wider text-brand-muted">Guest Code:</span>
-                            <span className="font-mono text-xs font-bold text-brand-espresso bg-brand-sand/40 px-2 py-0.5 rounded">
-                              {hotel.discountCode || accommodations.discountCode}
-                            </span>
+                        {/* Action Row */}
+                        <div className="mt-5 pt-4 border-t border-brand-sand/30 flex flex-wrap items-center justify-between gap-3">
+                          {(hotel.googleMapsUrl || hotel.mapUrl) ? (
+                            <a
+                              href={hotel.googleMapsUrl || hotel.mapUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-espresso hover:bg-brand-primary text-brand-cream text-xs font-sans font-medium transition-all hover:scale-[1.02] shadow-2xs"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-brand-gold" />
+                              <span>View on Google Maps</span>
+                            </a>
+                          ) : <div />}
+
+                          <div className="flex items-center gap-2 ml-auto">
+                            <span className="text-[11px] font-sans uppercase tracking-wider text-brand-muted">Guest Code:</span>
+                            <button
+                              onClick={() => handleCopyCode(hotel.discountCode || accommodations.discountCode)}
+                              className="font-mono text-xs font-bold text-brand-espresso bg-brand-sand/40 hover:bg-brand-sand/70 px-2.5 py-1 rounded-lg border border-brand-sand/50 flex items-center gap-1.5 transition-colors"
+                              title="Copy discount code"
+                            >
+                              <span>{hotel.discountCode || accommodations.discountCode}</span>
+                              <Copy className="w-3 h-3 text-brand-goldDark" />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => handleCopyCode(hotel.discountCode || accommodations.discountCode)}
-                            className="text-xs font-sans text-brand-goldDark hover:text-brand-espresso font-semibold uppercase tracking-wider flex items-center gap-1 transition-colors"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                            <span>Copy Code</span>
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -604,17 +665,38 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
                   </div>
 
                   {/* Modal Footer */}
-                  <div className="p-4 sm:p-5 border-t border-white/10 bg-black/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                    <p className="text-brand-sand/80 max-w-xl">{hotel.description}</p>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-brand-muted uppercase tracking-wider text-[11px]">Guest Code:</span>
-                      <button
-                        onClick={() => handleCopyCode(hotel.discountCode || accommodations.discountCode)}
-                        className="font-mono font-bold text-white bg-brand-gold/20 border border-brand-gold/40 px-3 py-1 rounded-full hover:bg-brand-gold hover:text-brand-espresso transition-colors flex items-center gap-1.5"
-                      >
-                        <Copy className="w-3 h-3" />
-                        <span>{hotel.discountCode || accommodations.discountCode}</span>
-                      </button>
+                  <div className="p-4 sm:p-5 border-t border-white/10 bg-black/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                    <div className="space-y-1 max-w-xl">
+                      <p className="text-brand-sand/90 font-sans">{hotel.description}</p>
+                      {hotel.address && (
+                        <p className="text-white/70 font-sans text-[11px] flex items-center gap-1.5">
+                          <MapPin className="w-3 h-3 text-brand-gold shrink-0" />
+                          <span>{hotel.address}</span>
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2.5 shrink-0 ml-auto">
+                      {(hotel.googleMapsUrl || hotel.mapUrl) && (
+                        <a
+                          href={hotel.googleMapsUrl || hotel.mapUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white hover:text-brand-gold text-xs flex items-center gap-1 transition-colors px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10"
+                        >
+                          <ExternalLink className="w-3 h-3 text-brand-gold" />
+                          <span>Maps</span>
+                        </a>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-brand-muted uppercase tracking-wider text-[11px]">Guest Code:</span>
+                        <button
+                          onClick={() => handleCopyCode(hotel.discountCode || accommodations.discountCode)}
+                          className="font-mono font-bold text-white bg-brand-gold/20 border border-brand-gold/40 px-3 py-1 rounded-full hover:bg-brand-gold hover:text-brand-espresso transition-colors flex items-center gap-1.5"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>{hotel.discountCode || accommodations.discountCode}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>

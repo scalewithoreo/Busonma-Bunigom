@@ -204,8 +204,13 @@ export interface HotelOption {
   area: string;
   description: string;
   type: string;
-  discountCode?: string;
+  address?: string;
+  contact?: string;
+  phone?: string;
   whatsapp?: string;
+  googleMapsUrl?: string;
+  mapUrl?: string;
+  discountCode?: string;
   image?: string;
   images?: string[];
 }
