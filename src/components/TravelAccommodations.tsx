@@ -153,9 +153,9 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
             className="space-y-12"
           >
             {/* Promo Discount Banner */}
-            <div className="bg-gradient-to-r from-brand-espresso via-brand-charcoal to-brand-espresso text-brand-cream rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-brand-gold/30">
-              <div className="flex items-center gap-4 text-center md:text-left">
-                <div className="w-12 h-12 rounded-2xl bg-brand-gold/20 flex items-center justify-center shrink-0 border border-brand-gold/30">
+            <div className="bg-gradient-to-r from-brand-espresso via-brand-charcoal to-brand-espresso text-brand-cream rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-brand-gold/30 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-brand-gold/20 flex items-center justify-center shrink-0 border border-brand-gold/30 mx-auto md:mx-0">
                   <Tag className="w-6 h-6 text-brand-gold" />
                 </div>
                 <div>
@@ -163,16 +163,16 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
                     Special Wedding Guest Discount
                   </span>
                   <h3 className="font-serif text-2xl sm:text-3xl text-brand-ivory font-light">
-                    Use Discount Code: <span className="font-mono font-bold text-white tracking-wider">{accommodations.discountCode}</span>
+                    Use Discount Code: <span className="font-mono font-bold text-white tracking-wider ml-1">{accommodations.discountCode}</span>
                   </h3>
-                  <p className="text-brand-sand/80 text-xs sm:text-sm font-sans mt-1">
+                  <p className="text-brand-sand/80 text-xs sm:text-sm font-sans mt-1 max-w-xl">
                     Quote this code when making your reservation at partner properties in Lagos &amp; Abuja.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => handleCopyCode(accommodations.discountCode)}
-                className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-gold hover:bg-brand-goldDark text-brand-espresso font-sans text-xs font-bold tracking-widest uppercase transition-all duration-300 shadow-md hover:scale-105"
+                className="shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-brand-gold hover:bg-brand-goldDark text-brand-espresso font-sans text-xs font-bold tracking-widest uppercase transition-all duration-300 shadow-md hover:scale-105 w-full sm:w-auto"
               >
                 {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 <span>{copiedCode ? 'Code Copied!' : 'Copy Code'}</span>
@@ -272,11 +272,11 @@ export const TravelAccommodations: FC<TravelAccommodationsProps> = ({ onNotify }
                       <div className="p-6 sm:p-7 flex flex-col justify-between flex-1">
                         <div>
                           <div className="flex items-center justify-between gap-2 mb-3">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-cream text-brand-goldDark font-sans text-xs font-semibold uppercase tracking-wider border border-brand-sand/40">
-                              <MapPin className="w-3.5 h-3.5" />
-                              {hotel.city} &bull; {hotel.area}
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-brand-cream text-brand-goldDark font-sans text-[10px] sm:text-xs font-semibold uppercase tracking-wide border border-brand-sand/40 whitespace-nowrap shrink-0">
+                              <MapPin className="w-3 h-3 text-brand-goldDark shrink-0" />
+                              <span>{hotel.city} &bull; {hotel.area}</span>
                             </span>
-                            <span className="text-xs font-sans text-brand-muted uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-sans text-brand-muted uppercase tracking-wider text-right truncate">
                               {hotel.type}
                             </span>
                           </div>

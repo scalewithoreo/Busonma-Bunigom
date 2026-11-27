@@ -478,7 +478,7 @@ export const busonmaBunigomConfig: WeddingConfig = {
         {
           name: 'Time Oak Hotels and Spa Royale Ikate Lekki - Lagos',
           city: 'Lagos',
-          area: 'Ikate, Lekki',
+          area: 'Ikate',
           type: 'Luxury Hotel & Spa',
           address: '12 Nike Art Gallery Rd, Eti-Osa, Ikate Lekki, Lagos',
           contact: 'WhatsApp +234 809 040 0050',
