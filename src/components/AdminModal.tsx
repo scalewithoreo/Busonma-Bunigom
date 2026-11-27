@@ -5,7 +5,7 @@ import {
   getStoredRsvps, deleteRsvp,
   getStoredGiftPledgesAdmin, exportGiftPledgesCsv, deleteGiftPledge,
   getInviteCodes, generateInviteCode, bulkGenerateInviteCodes, deleteInviteCodes, markInviteCodeAsShared, unmarkInviteCodeAsShared, resetInviteCode, reallocateInviteCode, assignInviteCode, exportInviteCodesCsv, InviteCode,
-  getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem,
+  getStoredWishlistItems, saveWishlistItem, deleteWishlistItem, updateWishlistItem, sortWishlistItems,
   getStoredReminders, deleteReservation, markReservationFulfilled,
   getStoredInvitationPosters, getLocalInvitationPosters, saveStoredInvitationPosters, uploadInvitationPoster, InvitationPostersConfig, formatInviteMessage,
   toggleRsvpCheckIn, saveAdminPin, getDefaultInvitationMessage
@@ -342,7 +342,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
             setRsvps(loadedRsvps);
             setPledges(loadedPledges);
             setCodes(loadedCodes);
-            setWishlistItems(loadedItems.length > 0 ? loadedItems : INITIAL_WISHLIST_ITEMS);
+            setWishlistItems(loadedItems.length > 0 ? sortWishlistItems(loadedItems) : INITIAL_WISHLIST_ITEMS);
             setReservations(loadedReservations);
             setInvitationPosters(loadedPosters);
           } else if (isCoordinator) {
@@ -1029,7 +1029,7 @@ export const AdminModal: FC<AdminDashboardProps> = ({ isOpen, onClose, onNotify,
           description: newItemDesc
         });
 
-        setWishlistItems([...wishlistItems, newItem]);
+        setWishlistItems(sortWishlistItems([...wishlistItems, newItem]));
         onNotify('Item Added', `${newItemName} was added to the wishlist.`);
       }
       

@@ -705,13 +705,40 @@ export async function deleteReservation(id: string, itemId?: string): Promise<vo
 // --- WISHLIST ITEMS ---
 // ============================================================
 
+export function sortWishlistItems(items: WishlistItem[]): WishlistItem[] {
+  return [...items].sort((a, b) => {
+    const aIsCash = a.id === 'wishlist-cash-gift' || a.name.toLowerCase().includes('cash gift') || a.price === 0;
+    const bIsCash = b.id === 'wishlist-cash-gift' || b.name.toLowerCase().includes('cash gift') || b.price === 0;
+    if (aIsCash && !bIsCash) return -1;
+    if (!aIsCash && bIsCash) return 1;
+    if (aIsCash && bIsCash) return 0;
+
+    const getTime = (item: WishlistItem) => {
+      if (item.createdAt) {
+        const t = new Date(item.createdAt).getTime();
+        if (!isNaN(t)) return t;
+      }
+      if (item.id && item.id.startsWith('item_')) {
+        const num = parseInt(item.id.replace('item_', ''), 10);
+        if (!isNaN(num)) return num;
+      }
+      return 0;
+    };
+
+    const timeA = getTime(a);
+    const timeB = getTime(b);
+    if (timeA !== timeB) return timeA - timeB;
+    return 0;
+  });
+}
+
 export async function getStoredWishlistItems(): Promise<WishlistItem[]> {
   if (isTursoConfigured()) {
     try {
       const client = getTursoClient();
       if (client) {
-        const res = await client.execute("SELECT * FROM wishlist WHERE id != '00000000-0000-0000-0000-000000000001' AND name != '__APP_INVITATION_POSTERS__' ORDER BY created_at DESC");
-        if (res.rows.length > 0) {
+        const res = await client.execute("SELECT * FROM wishlist WHERE id != '00000000-0000-0000-0000-000000000001' AND name != '__APP_INVITATION_POSTERS__' ORDER BY created_at ASC");
+        if (res.rows) {
           const items: WishlistItem[] = res.rows.map((row: any) => ({
             id: String(row.id),
             name: String(row.name),
@@ -721,6 +748,7 @@ export async function getStoredWishlistItems(): Promise<WishlistItem[]> {
             category: row.category as any,
             image: String(row.image || ''),
             description: String(row.description || ''),
+            createdAt: row.created_at ? String(row.created_at) : undefined,
             isFunded: Boolean(row.is_funded),
             fundedBy: row.funded_by ? String(row.funded_by) : undefined,
             isReserved: Boolean(row.is_reserved),
@@ -729,8 +757,9 @@ export async function getStoredWishlistItems(): Promise<WishlistItem[]> {
             reservedByName: row.reserved_by_name ? String(row.reserved_by_name) : undefined,
             isAnonymousReservation: Boolean(row.is_anonymous_reservation)
           }));
-          setLocalDb(MM_DB_WISHLIST, items);
-          return items;
+          const sorted = sortWishlistItems(items);
+          setLocalDb(MM_DB_WISHLIST, sorted);
+          return sorted;
         }
       }
     } catch (err) {
@@ -739,21 +768,24 @@ export async function getStoredWishlistItems(): Promise<WishlistItem[]> {
   }
 
   const customItems = getLocalDb<WishlistItem[] | null>(MM_DB_WISHLIST, null);
-  if (customItems && customItems.length > 0) {
-    return customItems.filter(i => i.id !== '00000000-0000-0000-0000-000000000001' && i.name !== '__APP_INVITATION_POSTERS__');
+  if (customItems !== null && customItems.length > 0) {
+    return sortWishlistItems(customItems.filter(i => i.id !== '00000000-0000-0000-0000-000000000001' && i.name !== '__APP_INVITATION_POSTERS__'));
   }
-  return INITIAL_WISHLIST_ITEMS;
+  return sortWishlistItems(INITIAL_WISHLIST_ITEMS);
 }
 
 export async function saveWishlistItem(item: Omit<WishlistItem, 'id' | 'isFunded' | 'fundedBy' | 'isReserved' | 'reservedUntil' | 'reservedByEmail' | 'reservedByName'>): Promise<WishlistItem> {
   const current = await getStoredWishlistItems();
+  const now = new Date().toISOString();
   const newItem: WishlistItem = {
     ...item,
     id: 'item_' + Date.now(),
+    createdAt: now,
     isFunded: false,
     isReserved: false
   };
-  setLocalDb(MM_DB_WISHLIST, [newItem, ...current]);
+  const updatedList = sortWishlistItems([...current, newItem]);
+  setLocalDb(MM_DB_WISHLIST, updatedList);
 
   if (isTursoConfigured()) {
     try {
@@ -771,7 +803,7 @@ export async function saveWishlistItem(item: Omit<WishlistItem, 'id' | 'isFunded
             newItem.category,
             newItem.image,
             newItem.description,
-            new Date().toISOString()
+            now
           ]
         });
       }

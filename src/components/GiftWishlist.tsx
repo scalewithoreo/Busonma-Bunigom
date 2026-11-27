@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { INITIAL_WISHLIST_ITEMS } from '../data/wishlistData';
 import { WishlistItem, GiftPledge } from '../types';
-import { getStoredGiftPledges, saveGiftPledge, saveReminder, getActiveReservations, getStoredWishlistItems } from '../utils/storage';
+import { getStoredGiftPledges, saveGiftPledge, saveReminder, getActiveReservations, getStoredWishlistItems, sortWishlistItems } from '../utils/storage';
 import { sendReservationConfirmationEmail, sendGiftNotificationEmail } from '../utils/email';
 import { useWedding } from '../context/WeddingContext';
 
@@ -17,7 +17,16 @@ interface GiftWishlistProps {
 
 export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
   const { wedding } = useWedding();
-  const [items, setItems] = useState<WishlistItem[]>(INITIAL_WISHLIST_ITEMS);
+  const [items, setItems] = useState<WishlistItem[]>(() => {
+    try {
+      const local = localStorage.getItem('mm_db_wishlist');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) return sortWishlistItems(parsed);
+      }
+    } catch {}
+    return INITIAL_WISHLIST_ITEMS;
+  });
 
   const [activeItem, setActiveItem] = useState<WishlistItem | null>(null);
   
@@ -73,13 +82,8 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
         getStoredWishlistItems()
       ]);
 
-      // Deduplicate: if an item with the same name exists in dbItems, use the dbItem version
-      const baseItems = dbItems.length === 0 
-        ? INITIAL_WISHLIST_ITEMS 
-        : [
-            ...dbItems,
-            ...INITIAL_WISHLIST_ITEMS.filter(init => !dbItems.some(db => db.name.toLowerCase() === init.name.toLowerCase()))
-          ];
+      // Use active items from database/storage; only fallback to INITIAL_WISHLIST_ITEMS if database is completely empty
+      const baseItems = dbItems.length > 0 ? dbItems : INITIAL_WISHLIST_ITEMS;
 
       const mappedItems = baseItems.map((item) => {
         const pledgeMatch = pledges.find((p) => p.itemId === item.id || p.itemName.toLowerCase() === item.name.toLowerCase());
@@ -97,14 +101,8 @@ export const GiftWishlist: FC<GiftWishlistProps> = ({ onNotify }) => {
         };
       });
 
-      // Unconditionally sort Cash Gift to be the 1st item in the registry
-      const sortedItems = [...mappedItems].sort((a, b) => {
-        const aIsCash = a.id === 'wishlist-cash-gift' || a.name.toLowerCase().includes('cash gift') || a.price === 0;
-        const bIsCash = b.id === 'wishlist-cash-gift' || b.name.toLowerCase().includes('cash gift') || b.price === 0;
-        if (aIsCash && !bIsCash) return -1;
-        if (!aIsCash && bIsCash) return 1;
-        return 0;
-      });
+      // Unconditionally sort Cash Gift to be 1st, then oldest on top, newest uploads under (chronological ASC)
+      const sortedItems = sortWishlistItems(mappedItems);
 
       setItems(sortedItems);
     };

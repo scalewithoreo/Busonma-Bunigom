@@ -45,6 +45,7 @@ export interface WishlistItem {
   category: 'Living & Comfort' | 'Kitchen & Dining' | 'Home & Bedding' | 'Milestone Gift';
   image: string;
   description: string;
+  createdAt?: string;
   isFunded?: boolean;
   fundedBy?: string;
   isReserved?: boolean;
