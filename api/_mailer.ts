@@ -2,11 +2,12 @@ export interface SendEmailOptions {
   to: string | string[];
   subject: string;
   html: string;
+  from?: string;
 }
 
 export interface EmailDispatchResult {
   success: boolean;
-  provider?: 'zeptomail' | 'resend';
+  provider?: 'brevo' | 'zeptomail' | 'resend';
   status?: number;
   data?: any;
   error?: any;
@@ -32,34 +33,80 @@ export function parseEmailRecipient(raw: string): { address: string; name?: stri
 }
 
 /**
- * Dispatches an email via Zoho CPaaS / ZeptoMail (primary if configured)
- * or Resend (fallback).
+ * Dispatches an email via Brevo (Sendinblue), ZeptoMail (Zoho CPaaS),
+ * or Resend.
  */
-export async function dispatchEmail({ to, subject, html }: SendEmailOptions): Promise<EmailDispatchResult> {
+export async function dispatchEmail({ to, subject, html, from }: SendEmailOptions): Promise<EmailDispatchResult> {
+  const BREVO_API_KEY = process.env.BREVO_API_KEY || process.env.VITE_BREVO_API_KEY || process.env.SENDINBLUE_API_KEY;
   const ZEPTOMAIL_TOKEN = process.env.ZEPTOMAIL_TOKEN || process.env.ZOHO_CPAAS_TOKEN || process.env.VITE_ZEPTOMAIL_TOKEN;
   const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
   const ZEPTOMAIL_URL = process.env.ZEPTOMAIL_URL || 'https://api.zeptomail.com/v1.1/email';
 
-  // Sender fallback: twochasing10k.site if ZeptoMail token exists, else onboarding@resend.dev
-  const defaultSender = ZEPTOMAIL_TOKEN
-    ? "Miracle & Malvin's Wedding <weddings@twochasing10k.site>"
-    : "Miracle & Malvin's Wedding <onboarding@resend.dev>";
-  const SENDER_EMAIL = process.env.EMAIL_SENDER || process.env.VITE_EMAIL_SENDER || defaultSender;
+  // Sender fallback: twochasing10k.site if token exists, else onboarding@resend.dev
+  const defaultSender = BREVO_API_KEY || ZEPTOMAIL_TOKEN
+    ? "Wedding Celebration <weddings@twochasing10k.site>"
+    : "Wedding Celebration <onboarding@resend.dev>";
+  const SENDER_EMAIL = from || process.env.EMAIL_SENDER || process.env.VITE_EMAIL_SENDER || defaultSender;
 
-  // --- Provider 1: Zoho CPaaS / ZeptoMail ---
-  if (ZEPTOMAIL_TOKEN) {
+  const sender = parseEmailRecipient(SENDER_EMAIL);
+  const recipientList = (Array.isArray(to) ? to : [to]).map(item => parseEmailRecipient(item));
+
+  // --- Provider 1: Brevo (Sendinblue) ---
+  if (BREVO_API_KEY) {
     try {
-      const sender = parseEmailRecipient(SENDER_EMAIL);
-      const recipientList = (Array.isArray(to) ? to : [to]).map(item => {
-        const parsed = parseEmailRecipient(item);
-        return {
-          email_address: {
-            address: parsed.address,
-            ...(parsed.name ? { name: parsed.name } : {})
-          }
-        };
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': BREVO_API_KEY,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: {
+            email: sender.address,
+            ...(sender.name ? { name: sender.name } : {})
+          },
+          to: recipientList.map(r => ({
+            email: r.address,
+            ...(r.name ? { name: r.name } : {})
+          })),
+          subject,
+          htmlContent: html
+        })
       });
 
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        console.error('Brevo API error response:', response.status, data);
+        return {
+          success: false,
+          status: response.status,
+          provider: 'brevo',
+          error: data
+        };
+      }
+
+      return {
+        success: true,
+        provider: 'brevo',
+        status: response.status,
+        data
+      };
+    } catch (err: any) {
+      console.error('Brevo request exception:', err);
+      return {
+        success: false,
+        status: 500,
+        provider: 'brevo',
+        error: err?.message || String(err)
+      };
+    }
+  }
+
+  // --- Provider 2: Zoho CPaaS / ZeptoMail ---
+  if (ZEPTOMAIL_TOKEN) {
+    try {
       const authHeader = ZEPTOMAIL_TOKEN.startsWith('Zoho-enczapikey ')
         ? ZEPTOMAIL_TOKEN
         : `Zoho-enczapikey ${ZEPTOMAIL_TOKEN}`;
@@ -76,7 +123,12 @@ export async function dispatchEmail({ to, subject, html }: SendEmailOptions): Pr
             address: sender.address,
             ...(sender.name ? { name: sender.name } : {})
           },
-          to: recipientList,
+          to: recipientList.map(r => ({
+            email_address: {
+              address: r.address,
+              ...(r.name ? { name: r.name } : {})
+            }
+          })),
           subject,
           htmlbody: html
         })
@@ -111,7 +163,7 @@ export async function dispatchEmail({ to, subject, html }: SendEmailOptions): Pr
     }
   }
 
-  // --- Provider 2: Resend (Fallback) ---
+  // --- Provider 3: Resend (Fallback) ---
   if (RESEND_API_KEY) {
     try {
       const response = await fetch('https://api.resend.com/emails', {
@@ -158,10 +210,10 @@ export async function dispatchEmail({ to, subject, html }: SendEmailOptions): Pr
   }
 
   // Neither configured
-  console.error('Email sending failed: neither ZEPTOMAIL_TOKEN nor RESEND_API_KEY is configured');
+  console.error('Email sending failed: neither BREVO_API_KEY, ZEPTOMAIL_TOKEN nor RESEND_API_KEY is configured');
   return {
     success: false,
     status: 500,
-    error: 'Email service is not configured. Please set ZEPTOMAIL_TOKEN or RESEND_API_KEY.'
+    error: 'Email service is not configured. Please set BREVO_API_KEY, ZEPTOMAIL_TOKEN, or RESEND_API_KEY.'
   };
 }

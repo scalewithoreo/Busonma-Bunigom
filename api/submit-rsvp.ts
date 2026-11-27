@@ -19,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { firstName, lastName, email, attendance, selectedDate, message, code, creator, websiteUrl } = req.body || {};
+  const { firstName, lastName, email, attendance, selectedDate, message, code, creator, websiteUrl, coupleId } = req.body || {};
 
   try {
     // 1. Google Sheets Webhook (Hidden from browser)
@@ -50,9 +50,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
       const registryUrl = websiteUrl ? `${websiteUrl}/#gifts` : '/#gifts';
 
-      // Celebration details block depending on guest selection
+      const isBusonma = coupleId === 'busonma-bunigom' || (websiteUrl && websiteUrl.toLowerCase().includes('busonma'));
+      const coupleTitle = isBusonma ? 'Busonma & Bunigom' : 'Miracle & Malvin';
+      const coupleDateStr = isBusonma ? 'Saturday, March 27, 2027 &bull; Lagos, Nigeria' : 'January 2027 &bull; Lagos, Nigeria';
+      const coupleHashtag = isBusonma ? '#BB2ONE' : '#MiracleAndMalvin';
+      const senderName = isBusonma ? "Busonma & Bunigom's Wedding" : "Miracle & Malvin's Wedding";
+
+      // Celebration details block depending on couple and guest selection
       let eventDetailsHtml = '';
-      if (selectedDate === 'both') {
+      if (isBusonma) {
+        eventDetailsHtml = `
+          <div style="background-color: #faf8f2; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px 25px; margin-bottom: 25px;">
+            <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Wedding Celebration Details</p>
+            <p style="margin: 0 0 4px 0; font-size: 14px; color: #1c1917;"><strong>Date & Time:</strong> Saturday, March 27, 2027 &bull; 1:00 PM WAT</p>
+            <p style="margin: 0; font-size: 13px; color: #78716c; line-height: 1.4;">Admiralty Conference Centre, Naval Dockyard Limited, Ahmadu Bello Way, Victoria Island, Lagos</p>
+          </div>
+        `;
+      } else if (selectedDate === 'both') {
         eventDetailsHtml = `
           <div style="background-color: #faf8f2; border: 1px solid #e7e0d3; border-radius: 16px; padding: 20px 25px; margin-bottom: 25px;">
             <p style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8c734e; font-weight: 600;">Wedding Celebration Details</p>
@@ -100,8 +114,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     <tr>
                       <td align="center" style="background-color: #1c1917; padding: 40px 30px; text-align: center;">
                         <p style="margin: 0 0 10px 0; color: #c5a880; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; font-weight: 600;">The Wedding Of</p>
-                        <h1 style="margin: 0; color: #faf8f2; font-size: 32px; font-family: Georgia, serif; font-weight: normal; letter-spacing: 1px;">Miracle & Malvin</h1>
-                        <p style="margin: 12px 0 0 0; color: #c5a880; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;">January 2027 &bull; Lagos, Nigeria</p>
+                        <h1 style="margin: 0; color: #faf8f2; font-size: 32px; font-family: Georgia, serif; font-weight: normal; letter-spacing: 1px;">${coupleTitle}</h1>
+                        <p style="margin: 12px 0 0 0; color: #c5a880; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;">${coupleDateStr}</p>
                       </td>
                     </tr>
                     <tr>
@@ -136,7 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     </tr>
                     <tr>
                       <td align="center" style="background-color: #faf8f2; padding: 30px; text-align: center; border-top: 1px solid #e7e0d3;">
-                        <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #1c1917; letter-spacing: 0.1em; text-transform: uppercase;">#MiracleAndMalvin</p>
+                        <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #1c1917; letter-spacing: 0.1em; text-transform: uppercase;">${coupleHashtag}</p>
                         <p style="margin: 0; font-size: 12px; color: #78716c; line-height: 1.5;">Thank you for your love, prayers, and support as we begin this new chapter together.</p>
                       </td>
                     </tr>
@@ -148,11 +162,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         </html>
       `;
 
-      // Dispatch via ZeptoMail or Resend
+      // Dispatch via Brevo, ZeptoMail, or Resend
+      const defaultEmail = process.env.EMAIL_SENDER || 'weddings@twochasing10k.site';
+      const senderAddress = defaultEmail.includes('<')
+        ? defaultEmail.replace(/^.*<([^>]+)>.*$/, '$1')
+        : defaultEmail;
+
       const result = await dispatchEmail({
         to: email,
         subject,
-        html: emailHtml
+        html: emailHtml,
+        from: `${senderName} <${senderAddress}>`
       });
       if (!result.success) {
         console.warn('RSVP confirmation email delivery warning:', result.error);

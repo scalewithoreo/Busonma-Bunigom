@@ -257,7 +257,8 @@ export const RsvpForm: FC<RsvpFormProps> = ({ onNotify }) => {
           message: message.trim() || undefined,
           code: passcode.trim(),
           creator: creatorLabel,
-          websiteUrl: window.location.origin
+          websiteUrl: window.location.origin,
+          coupleId: wedding.id
         })
       }).catch(err => console.error('Backend tasks failed:', err));
 
